@@ -1,3 +1,22 @@
+#' MatchConfidenceLevel1
+#'
+#' Compare a dataframe of experimental values with a dataframe of all theoretical values from the Ingalls
+#' Lab Standards sheet.
+#'
+#' @param experimental.values A dataframe of unknown experimental values, created by the user.
+#' It is important to note that it must be in the following format, including capitalization and class:
+#' mz (numeric), rt (numeric, in seconds), column (numeric), z (numeric), MS2 (in concatenated format, character).
+#' @param theoretical.values TODO A dataframe of known, theoretical values, i.e, the Ingalls Standards list.
+#' Like its partner the experimental.values dataframe, the theoretical.values dataframe columns need to be in
+#' the following exact format: compound (character), mz (numeric), rt (numeric, in seconds),
+#' column (all caps, character), z (numeric), OPTIONAL filename (character), and MS2 (concatenated format, character).
+#' @param mz.flexibility TODO Usually defined as 0.02.
+#' @param rt.flexibility Usually defined as ~ 15-30 seconds.
+#'
+#' @return A complete dataframe, annotated for Confidence Level 1.
+#' @export
+#'
+#' @examples
 MatchConfidenceLevel1 <- function(experimental.values, theoretical.values, mz.flexibility, rt.flexibility) {
   My.Fuzzy.Join <- theoretical.values %>%
     difference_left_join(experimental.values, by = c("mz"), max_dist = mz.flexibility) %>%

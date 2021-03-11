@@ -2,13 +2,16 @@ Package: phobos
 Type: Package
 Title: What the Package Does (Title Case)
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Authors@R:
+    person("Regina", "Lionheart", email = "regina@lionhe.art", role = c("aut", "cre"))
+Maintainer: The package maintainer <regina@lionhe.art>
+Description: This package allows for comparing experimental unknown mass features with known theoretical values, both from the Ingalls Lab Standards and from online sources.
+    Utilizes a database of mass features with m/z, retention time (seconds),
+    and MS2 data paired with a systematic process for annotating mass features using a tiered annotation system. 
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+RoxygenNote: 7.1.1
