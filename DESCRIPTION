@@ -1,6 +1,6 @@
 Package: phobos
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Metabolite Annotation, Rank and Sort
 Version: 0.1.0
 Authors@R:
     person("Regina", "Lionheart", email = "regina@lionhe.art", role = c("aut", "cre"))
@@ -16,4 +16,6 @@ Suggests:
 Config/testthat/edition: 2
 RoxygenNote: 7.1.1
 Imports: 
-    dplyr
+    dplyr,
+    fuzzyjoin,
+    stringr
