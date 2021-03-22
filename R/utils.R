@@ -19,9 +19,16 @@ MakeScantable <- function(scan) {
   return(scantable)
 }
 
+#' Finds the weighted cosine similarity between two sets of MS2 spectra.
+#'
+#' @param scan1 Tiny dataframe of MS2, from first set of values to be compared. Column 1 is mz, column 2 is intensity. Dataframe is the output of the MakeScantable() function.
+#' @param scan2 Tiny dataframe of MS2, from second set of values to be compared. Column 1 is mz, column 2 is intensity. Dataframe is the output of the MakeScantable() function.
+#'
+#' @return cosine.similarity: A weighted similarity score between 0 and 1, indicating the cosinerelationship of the two vectors.
+#'
+#' @examples
 MS2CosineSimilarity <- function(scan1, scan2) {
-  # Finds the weighted cosine similarity between two sets of MS2 spectra.
-  #
+
   # Args
   #   scan1 & scan2: Tiny dataframes of MS2. First column is mz, second column is intensity.
   #                  These are outputs of the MakeScantable() function.

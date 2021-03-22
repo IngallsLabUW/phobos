@@ -18,9 +18,16 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of phobos is to ...
+phobos is a package comprising of custom functions that accompany the Ingalls Lab MARS Project.
 
-Here is an awesome description of phobos.
+The MARS project is a way to easily identify unknown mass features (MFs) in your data. It consists of three major sections: 
+
+- A central database containing unknown mass features (MFs) with mz, rt and ms2 data detected by the Ingalls lab 
+- *phobos*: A series of processes and functions for annotating, ranking, and scoring those MFs
+- A central database containing annotated MFs from previous MARS missions
+
+Flexible, updatable, searchable, rankable, exportable. 
+
 
 ## Installation
 
