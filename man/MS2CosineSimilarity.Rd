@@ -12,7 +12,7 @@ MS2CosineSimilarity(scan1, scan2)
 \item{scan2}{Tiny dataframe of MS2, from second set of values to be compared. Column 1 is mz, column 2 is intensity. Dataframe is the output of the MakeScantable() function.}
 }
 \value{
-cosine.similarity: A weighted similarity score between 0 and 1, indicating the cosinerelationship of the two vectors.
+cosine.similarity: A weighted similarity score between 0 and 1, indicating the cosine relationship of the two vectors.
 }
 \description{
 Finds the weighted cosine similarity between two sets of MS2 spectra.

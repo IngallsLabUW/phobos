@@ -1,4 +1,4 @@
-#' MatchConfidenceLevel1
+#' AnnotateConfidenceLevel1
 #'
 #' Compare a dataframe of experimental values with a dataframe of all theoretical values from the Ingalls
 #' Lab Standards sheet.
@@ -11,14 +11,29 @@
 #' Like its partner the experimental.values dataframe, the theoretical.values dataframe columns need to be in
 #' the following exact format: compound (character), mz (numeric), rt (numeric, in seconds),
 #' column (all caps, character), z (numeric), OPTIONAL filename (character), and MS2 (concatenated format, character).
-#' @param mz.flexibility TODO Usually defined as 0.02.
-#' @param rt.flexibility Usually defined as ~ 15-30 seconds.
+#' @param mz.flexibility Flexibility for m/z matching between experimental and theoretical values. Usually defined as 0.02.
+#' @param rt.flexibility Flexibility for retention time matching between experimental and theoretical values. Usually defined as ~ 15-30 seconds.
 #'
 #' @return A complete dataframe, annotated for Confidence Level 1.
 #' @export
 #'
 #' @examples
-MatchConfidenceLevel1 <- function(experimental.values, theoretical.values, mz.flexibility, rt.flexibility) {
+#' library(phobos)
+#' # Isolate experimental data. Remember that phobos REQUIRES all experimental dataframes to be in the following format:
+#' # - "MassFeature": Your unique mass feature, character.
+#' # - "mz": The mz value, numeric.
+#' # - "rt": The retention time, in seconds, numeric.
+#' # - "column": Column the mass feature was run on, character.
+#' # - "z": The ion mode, numeric.
+#' # - "MS2": MS2 data for those compounds that have it, character, in concatenated format.
+#'
+#' example_dir <- system.file("example_data", package = "phobos")
+#' example_data <- list.files(example_dir, full.names = TRUE)
+#' experimental.values <- read.csv(grep("Example_Experimental", example_data, value = TRUE))
+#' theoretical.values <- read.csv(grep("Theoretical_Data", example_data, value = TRUE))
+#' example_confidenceL1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values,
+#' mz.flexibility = 0.02, rt.flexibility = 30)
+AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz.flexibility, rt.flexibility) {
   My.Fuzzy.Join <- theoretical.values %>%
     fuzzyjoin::difference_left_join(experimental.values, by = c("mz"), max_dist = mz.flexibility) %>%
     dplyr::rename(compound_theoretical = compound,

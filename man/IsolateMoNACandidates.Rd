@@ -4,7 +4,7 @@
 \alias{IsolateMoNACandidates}
 \title{Compare experimental mass features to scraped MoNA data, based on MS1 and MS2 information.}
 \usage{
-IsolateMoNACandidates(MoNA.Mass, experimental.df)
+IsolateMoNACandidates(MoNA.Mass, experimental.df, potential.candidates)
 }
 \arguments{
 \item{MoNA.Mass}{Single MoNA mass, isolated from scraped MoNA df.}

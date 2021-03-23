@@ -1,16 +1,32 @@
-MatchMoNAConfidenceLevel2 <- function(Confidence.Level.1, mz.flexibility, rt.flexibility, ion.mode) {
-  # cosine.score.cutoff <- 0.5
-  # massbank.ppm.cutoff <- 5
-  # mz.flexibility <- 0.02
-  # rt.flexibility <- 30 # seconds
-  # ion.mode <- "negative"
-
+#' Compare experimental values to MassBank of North America (MoNA) in order to annotate unknown values for confidence level 2: a good match to MS1 and MS2.
+#'
+#' @param Confidence.Level.1 A dataframe of experimental values, already annotated for Confidence Level 1.
+#' Please refer to the AnnotateConfidenceLevel1 function for details!
+#' @param mz.flexibility Flexibility for m/z matching between experimental and theoretical values. Usually defined as 0.02.
+#' @param rt.flexibility Flexibility for retention time matching between experimental and theoretical values. Usually defined as ~ 15-30 seconds.
+#' @param ion.mode Choose positive or negative mode for appropriate value comparison (e.g, "positive" or "negative")
+#'
+#' @return A complete dataframe, annotated for Confidence Level 1.
+#' @export
+#'
+#' @examples
+#' #' library(phobos)
+#' # Load experimental data that has already been annotated for Confidence Level 1 using the AnnotateConfidenceLevel1 function.
+#' # Remember that dataframe format is important: please refer to README or the documentation for AnnotateConfidenceLevel1() for details.
+#'
+#' example_dir <- system.file("example_data", package = "phobos")
+#' example_data <- list.files(example_dir, full.names = TRUE)
+#' Confidence.Level.1 <- read.csv(grep("Example_ConfidenceLevel1", example_data, value = TRUE))
+#' ion.mode <- "positive"
+#' example_confidenceL2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, ion.mode = ion.mode,
+#' mz.flexibility = 0.02, rt.flexibility = 30)
+AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, mz.flexibility, rt.flexibility, ion.mode) {
   # Subtract hydrogen for reference database
   if (ion.mode == "negative") {
-    MoNA.Spectra <- read.csv("test_data/MoNA_RelationalSpreadsheets/NEG_Spectra.csv") %>%
+    MoNA.Spectra <- read.csv("example_data/MoNA_RelationalSpreadsheets/NEG_Spectra.csv") %>%
       dplyr::mutate(MH_mass = M_mass - 1.0072766)
   } else {
-    MoNA.Spectra <- read.csv("test_data/MoNA_RelationalSpreadsheets/POS_Spectra.csv") %>%
+    MoNA.Spectra <- read.csv("example_data/MoNA_RelationalSpreadsheets/POS_Spectra.csv") %>%
       dplyr::mutate(MH_mass = M_mass + 1.0072766)
   }
 
@@ -21,7 +37,7 @@ MatchMoNAConfidenceLevel2 <- function(Confidence.Level.1, mz.flexibility, rt.fle
     tidyr::drop_na()
 
   # Experimental Spectra ----------------------------------------------------
-  Confidence.Level.1 <- Confidence.Level.1
+  #Confidence.Level.1 <- Confidence.Level.1
   Experimental.Spectra <- Confidence.Level.1 %>%
     dplyr::filter(!is.na(MS2_experimental),
                   z_experimental == 1) %>%
