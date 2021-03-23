@@ -4,9 +4,6 @@
 #' @param experimental.df experimental dataframe, islated to contain only MS1 and MS2 data.
 #'
 #' @return final.candidates: dataframe of experimental data, matched with information from MoNA.
-#' @export
-#'
-#' @examples
 IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidates) {
   potential.candidates <- potential.candidates %>%
     dplyr::filter(MH_mass > MoNA.Mass - 0.020,
@@ -36,7 +33,7 @@ IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidat
     dplyr::mutate(massbank_match = paste(Names, ID, sep = " ID:"),
                   massbank_ppm = abs(mass2 - mass1) / mass1 * 10^6) %>%
     dplyr::rename(MS2_massbank = scan1,
-                  mz_massbank = mass1, # should maybe name it something else because of mh?...
+                  mz_massbank = mass1,
                   MS2_experimental = scan2,
                   mz_experimental = mass2) %>%
     unique() %>%
@@ -47,35 +44,20 @@ IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidat
   return(final.candidates)
 }
 
-#' Create a small dataframe of
+#' Create a filtered mini dataframe (a scantable) from two columns in a user-defined dataframe.
 #'
-#' @param df
+#' @param df A dataframe containing "scan1" and "scan2" columns.
 #'
 #' @return
-#' @export
-#'
-#' @examples
 MakeMS2CosineDataframe <- function(df) {
   scan1 <- MakeScantable(df["scan1"])
   scan2 <- MakeScantable(df["scan2"])
-  # mass1 <- df["mass1"]
-  # mass2 <- df["mass2"]
 
   mz.tolerance <- 0.02
 
   similarity <- MS2CosineSimilarity(scan1 = scan1, scan2 = scan2)
-  return(similarity)
 
-  # weight1 <- (scan1[, 1] ^ 2) * sqrt(scan1[, 2])
-  # weight2 <- (scan2[, 1] ^ 2) * sqrt(scan2[, 2])
-  #
-  # difference.matrix <- sapply(scan1[, 1], function(x) scan2[, 1] - x)
-  # same.index <- which(abs(difference.matrix) < mz.tolerance, arr.ind = TRUE)
-  #
-  # similarity <- sum(weight1[same.index[, 2]] * weight2[same.index[, 1]]) /
-  #   (sqrt(sum(weight2 ^ 2)) * sqrt(sum(weight1 ^ 2)))
-  #
-  # return(similarity)
+  return(similarity)
 }
 
 #' Create a filtered mini dataframe from a concatenated scanlist of MS2s.
@@ -85,7 +67,6 @@ MakeMS2CosineDataframe <- function(df) {
 #' @return scantable: A tiny dataframe, containing columns of mz and intensity.
 #' Intensity is scaled to 100 and filtered to drop all intensity values below 0.5.
 #'
-#' @examples
 MakeScantable <- function(scan) {
   requireNamespace("dplyr", quietly = TRUE)
   scantable <- read.table(text = as.character(scan),
@@ -104,9 +85,8 @@ MakeScantable <- function(scan) {
 #' @param scan1 Tiny dataframe of MS2, from first set of values to be compared. Column 1 is mz, column 2 is intensity. Dataframe is the output of the MakeScantable() function.
 #' @param scan2 Tiny dataframe of MS2, from second set of values to be compared. Column 1 is mz, column 2 is intensity. Dataframe is the output of the MakeScantable() function.
 #'
-#' @return cosine.similarity: A weighted similarity score between 0 and 1, indicating the cosinerelationship of the two vectors.
+#' @return cosine.similarity: A weighted similarity score between 0 and 1, indicating the cosine relationship of the two vectors.
 #'
-#' @examples
 MS2CosineSimilarity <- function(scan1, scan2) {
   mz.tolerance <- 0.02
 
@@ -126,9 +106,6 @@ MS2CosineSimilarity <- function(scan1, scan2) {
 #' @param column Character column that contains one or more "NA;" values.
 #'
 #' @return
-#' @export
-#'
-#' @examples
 ReplaceNA <- function(column) {
   gsub("NA; ", "", column)
 }
