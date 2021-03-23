@@ -18,4 +18,6 @@ RoxygenNote: 7.1.1
 Imports: 
     dplyr,
     fuzzyjoin,
-    stringr
+    parallel,
+    stringr,
+    tidyr
