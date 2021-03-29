@@ -20,37 +20,98 @@ knitr::opts_chunk$set(
 
 phobos is a package comprising of custom functions that accompany the Ingalls Lab MARS Project.
 
-The MARS project is a way to easily identify unknown mass features (MFs) in your data. It consists of three major sections: 
+The MARS project is an easy way to identify and rank unknown mass features (MFs) in your data. It consists of three major sections: 
 
-- A central database containing unknown mass features (MFs) with mz, rt and ms2 data detected by the Ingalls lab 
-- *phobos*: A series of processes and functions for annotating, ranking, and scoring those MFs
-- A central database containing annotated MFs from previous MARS missions
+- A central database containing compiled unknown mass features with mz (mass/charge), rt (retention time, seconds) and ms2 data detected by the Ingalls lab 
+- *phobos*: A series of processes and functions for annotating, ranking, and scoring the unknown mass features
+- A central database containing annotated mass features from previous MARS missions
 
 Flexible, updatable, searchable, rankable, exportable. 
 
 
 ## Installation
 
-You can install the released version of phobos from [CRAN](https://CRAN.R-project.org) with:
+You can install the development version of phobos from [Github](https://github.com) with:
+
+``` r
+devtools::install_github("IngallsLabUW/phobos")
+```
+
+Load phobos:
 
 ``` r
 install.packages("phobos")
 ```
 
-## Example
+## Description
 
-This is a basic example which shows you how to solve a common problem:
+A common problem in metabolomics is how to handle unknown but determinable mass features. The output of non-targeted metabolite runs produces an abundance of spectra that can be discretely separated and isolated, but often remain unidentified. 
+
+The phobos package, designed as part of the Ingalls MARS Project *TODO LINK TO FUTURE GITHUB WEBSITE HERE?*, prioritizes simplicity, efficiency, and confidence in metabolite identification. phobos adheres to the proposed minimum reporting standards for chemical analysis as laid out in the Metabolomics Standards Initiative (MSI) [2007 paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3772505/pdf/nihms504189.pdf). In addition to utilizing the [Ingalls Lab Standards](https://github.com/IngallsLabUW/Ingalls_Standards) for foremost confidence annotations, phobos provides functionality for incorporating spectral comparison to third-party sources such as [MassBank of North America (MoNA)](https://mona.fiehnlab.ucdavis.edu/, [Metlin](https://metlin.scripps.edu/landing_page.php?pgcontent=mainPage), *TODO METLIN TBD* and [KEGG](https://www.genome.jp/kegg/) *TODO KEGG TBD*.
+
+*Maybe can remove this section?*
+There are currently several available packages in R that handle metabolite identification, including the well-established [xcms](https://bioconductor.org/packages/release/bioc/html/xcms.html), as well as newly-released packages such as [RHermes](https://rogerginber.github.io/RHermes/articles/RHermes_UserGuide.html). 
+
+## Usage
+
+phobos simplifies the identification process by transforming the MSI standards [paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3772505/pdf/nihms504189.pdf) into steps for annotation. Users begin with experimental (unknown) values, and systematically compare those values to various dataframes of theoretical (known) values. Each step corresponds to a custom phobos function.
+
+```{r load data, echo=FALSE}
+library(tidyverse)
+options(digits = 2)
+experimental.values <- read.csv("example_data/Example_Experimental_Data.csv") 
+experimental.values$MS2 <- sub("^([^;]+;[^;]+).*", "\\1", experimental.values$MS2)
+
+theoretical.values <- read.csv("example_data/Theoretical_Data.csv") %>%
+  select(-file_name)
+theoretical.values$MS2 <- sub("^([^;]+;[^;]+).*", "\\1", theoretical.values$MS2)
+```
+
+The user begins with a dataframe of experimental data, transformed *by the user* into a standardized format. It is important to pay attention to both the column names and the class; the code will not run if they are not in the correct configuration!
+
+- "MassFeature": An identifier for a unique mass feature, character. 
+- "mz": The mz value, numeric. 
+- "rt": The retention time, in seconds, numeric. 
+- "column": Column the mass feature was run on, character. 
+- "z": The ion mode, numeric. 
+- "MS2": MS2 data for those compounds that have it, character. 
+  - **Important**: The MS2 data must be in the filtered, scaled and concatenated format of "mz, intensity;", as below. For example purposes, the MS2 column has been cut off at two instances of "mz, intensity;" but real data should have many more entries. For more information on how to get your MS2 data into the correct format, *TODO PUT INFORMATION HERE*.
+  
+For clarity, phobos also adds an additional identifier column to the dataframe titled "compound_experimental": a simple keys column consisting of 1-n rows.
 
 ```{r example}
 library(phobos)
-## basic example code
+
+knitr::kable(head(experimental.values, 5), caption = "Experimental Data")
+knitr::kable(theoretical.values[c(1, 9, 18, 25), ], caption = "Theoretical Data")
+
+```
+---
+### Confidence Level 1
+Create a dataframe annotated for Confidence Level 1 by comparing exerimental and theoretical data, using the AnnotateConfidenceLevel1() function.
+
+```{r Confidence Level 1}
+ConfidenceLevel1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values, 
+                                             mz.flexibility = 0.02, rt.flexibility = 30)
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
-
-```{r cars}
-summary(cars)
+```{r Tidy CL1, echo=FALSE}
+ConfidenceLevel1 <- ConfidenceLevel1 %>% 
+  arrange(ConfidenceLevel1) %>%
+  select(compound_experimental, mz_similarity_score:confidence_source)
 ```
+
+```{r Display CL1}
+knitr::kable(head(ConfidenceLevel1, 10))
+```
+
+2. Run through Annotate_Confidence_Level1.R script. All required extra data (Ingalls standards and MS2) are included in this repository. When you have produced your confidence level 1 datasheet, write the csv and save it for the next step.
+
+3. Move to Annotate_Confidence_Level2_MoNA.R. As in the previous step, all the required extra data (scraped MoNA sheets) are available in the data_extra/MoNA_RelationalSpreadsheets directory. 
+- Be aware that some of the column selections/renaming are to avoid explosion joins. If you want to see more data included in your joins, adjust the selections as you need. This will cause your datasheet to balloon!
+
+Over time, phobos increases in efficiency as the user applies the package to more and more datasets.
+
 
 You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this. You could also use GitHub Actions to re-render `README.Rmd` every time you push. An example workflow can be found here: <https://github.com/r-lib/actions/tree/master/examples>.
 
@@ -60,4 +121,3 @@ You can also embed plots, for example:
 plot(pressure)
 ```
 
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.

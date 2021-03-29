@@ -47,7 +47,7 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
                   column_experimental = column.y,
                   z_experimental = z.y,
                   MS2_experimental = MS2.y) %>%
-    dplyr::select(compound_experimental, KRH_identification, compound_theoretical, mz_experimental, mz_theoretical, rt_sec_experimental, rt_sec_theoretical,
+    dplyr::select(compound_experimental, compound_theoretical, mz_experimental, mz_theoretical, rt_sec_experimental, rt_sec_theoretical,
                   column_experimental, column_theoretical, z_experimental, z_theoretical, MS2_experimental, MS2_theoretical)  %>%
     dplyr::arrange(compound_experimental)
 
