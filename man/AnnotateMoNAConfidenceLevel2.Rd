@@ -8,7 +8,7 @@ AnnotateMoNAConfidenceLevel2(
   Confidence.Level.1,
   mz.flexibility,
   rt.flexibility,
-  ion.mode
+  z
 )
 }
 \arguments{
@@ -19,7 +19,7 @@ Please refer to the AnnotateConfidenceLevel1 function for details!}
 
 \item{rt.flexibility}{Flexibility for retention time matching between experimental and theoretical values. Usually defined as ~ 15-30 seconds.}
 
-\item{ion.mode}{Choose positive or negative mode for appropriate value comparison (e.g, "positive" or "negative")}
+\item{z}{Choose positive or negative charge for appropriate value comparison. The options are 1 for positive mode and -1 for negative.}
 }
 \value{
 A complete dataframe, annotated for Confidence Level 1.
@@ -35,7 +35,7 @@ Compare experimental values to MassBank of North America (MoNA) in order to anno
 example_dir <- system.file("example_data", package = "phobos")
 example_data <- list.files(example_dir, full.names = TRUE)
 Confidence.Level.1 <- read.csv(grep("Example_ConfidenceLevel1", example_data, value = TRUE))
-ion.mode <- "positive"
-example_confidenceL2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, ion.mode = ion.mode,
+z <- 1
+example_confidenceL2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, z = z,
 mz.flexibility = 0.02, rt.flexibility = 30)
 }

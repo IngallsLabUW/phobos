@@ -137,57 +137,51 @@ knitr::kable(theoretical.values[c(1, 9, 18, 25), ], caption = "Theoretical Data"
 
 Theoretical Data
 
-------------------------------------------------------------------------
+|                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| \#\#\# Confidence Level 1 Create a dataframe annotated for Confidence Level 1 by comparing exerimental and theoretical data, using the AnnotateConfidenceLevel1() function.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `r ConfidenceLevel1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values, mz.flexibility = 0.02, rt.flexibility = 30)`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| *TODO CHECK THIS STEP*                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `r knitr::kable(head(ConfidenceLevel1, 10))`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| \| compound\_experimental\| mz\_similarity\_score\| rt\_similarity\_score\| ppm\_mass\_error\| MS2\_cosine\_similarity\| total\_similarity\_score\| confidence\_rank\|confidence\_source \| \|———————:\|——————-:\|——————-:\|————–:\|———————:\|———————-:\|—————:\|:—————–\| \| 106\| 1.00\| 1\| 0\| 0.00\| 67\| 1\|Ingalls\_Standards \| \| 106\| 1.00\| 1\| 0\| 0.00\| 67\| 1\|Ingalls\_Standards \| \| 106\| 1.00\| 1\| 0\| 0.97\| 99\| 1\|Ingalls\_Standards \| \| 106\| 1.00\| 1\| 0\| 0.98\| 99\| 1\|Ingalls\_Standards \| \| 106\| 1.00\| 1\| 0\| 0.98\| 99\| 1\|Ingalls\_Standards \| \| 106\| 1.00\| 1\| 0\| 0.98\| 99\| 1\|Ingalls\_Standards \| \| 106\| 1.00\| 1\| 0\| 0.97\| 99\| 1\|Ingalls\_Standards \| \| 106\| 1.00\| 1\| 0\| 0.98\| 99\| 1\|Ingalls\_Standards \| \| 106\| 0.63\| 0\| 140\| NA\| 32\| NA\|NA \| \| 203\| 1.00\| 1\| 0\| 1.00\| 100\| 1\|Ingalls\_Standards \| |
 
-Create a dataframe annotated for Confidence Level 1 by comparing
-exerimental and theoretical data, using the AnnotateConfidenceLevel1()
-function.
+### Confidence Level 2
+
+Compounds that receive a confidence level of 2 are considered putatively
+annotated compounds: there are no available chemical reference
+standards, but they have good MS1 and MS2 spectral similarity with
+public/commercial spectral libraries. External libraries used for
+confidence level 2 are MoNA and Metlin.
+
+The comparison MoNA spectra can be downloaded directly from the [public
+website](https://mona.fiehnlab.ucdavis.edu/downloads). Unlike the
+Ingalls Standards sheets, the downloaded MoNA sheets require
+transformation from JSON to csv, and are large enough to need external
+storage. The code to transform the JSONs to csvs is included in the
+phobos package. The pre-downloaded and cleaned MoNA csvs live on the
+shared Ingalls Google Drive [MARS
+project](https://drive.google.com/drive/folders/1lzIsDJJ7EyDpJrCTLdspHc0KS6zxUIDQ)
+folder.
 
 ``` r
-ConfidenceLevel1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values, 
-                                             mz.flexibility = 0.02, rt.flexibility = 30)
+ConfidenceLevel2_Pos <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, mz.flexibility = 0.02, rt.flexibility = 30, z = 1)
+#> [1] "Making potential candidates"
+#> Joining, by = c("compound_experimental", "mz_experimental", "MS2_experimental")
+ConfidenceLevel2_Neg <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, mz.flexibility = 0.02, rt.flexibility = 30, z = -1)
+#> [1] "Making potential candidates"
+#> Joining, by = c("compound_experimental", "mz_experimental", "MS2_experimental")
+
+tneg <- ConfidenceLevel2_Neg %>% select(MassFeature, compound_experimental, z_theoretical, z_experimental, confidence_rank, confidence_source)
+tpos <- ConfidenceLevel2_Pos %>% select(MassFeature, compound_experimental, z_theoretical, z_experimental, confidence_rank, confidence_source)
 ```
 
-``` r
-knitr::kable(head(ConfidenceLevel1, 10))
-```
+|                                                                                                                                                                                                                                 |
+|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| \#\#\# Confidence Level 3                                                                                                                                                                                                       |
+| Compounds that receive a confidence level of 3 are also considered putatively annotated with fewer restrictions. The MARS project and the phobos package define a confidence level 3 as an MS1 match from MoNA, Metlin or KEGG. |
 
-| compound\_experimental | mz\_similarity\_score | rt\_similarity\_score | ppm\_mass\_error | MS2\_cosine\_similarity | total\_similarity\_score | MassFeature     | confidence\_rank | confidence\_source |
-|-----------------------:|----------------------:|----------------------:|-----------------:|------------------------:|-------------------------:|:----------------|-----------------:|:-------------------|
-|                      1 |                    NA |                    NA |               NA |                      NA |                       NA | I102.0549R12.14 |               NA | NA                 |
-|                      2 |                     1 |                  1.00 |              0.0 |                    0.00 |                       67 | NA              |                1 | Ingalls\_Standards |
-|                      2 |                     1 |                  1.00 |              0.0 |                    0.00 |                       67 | NA              |                1 | Ingalls\_Standards |
-|                      2 |                     1 |                  1.00 |              0.0 |                    0.00 |                       67 | NA              |                1 | Ingalls\_Standards |
-|                      2 |                     1 |                  1.00 |              0.0 |                    0.00 |                       67 | NA              |                1 | Ingalls\_Standards |
-|                      2 |                     1 |                  1.00 |              0.0 |                    0.00 |                       67 | NA              |                1 | Ingalls\_Standards |
-|                      2 |                     1 |                  1.00 |              0.0 |                    0.00 |                       67 | NA              |                1 | Ingalls\_Standards |
-|                      2 |                     1 |                  1.00 |              0.0 |                    0.00 |                       67 | NA              |                1 | Ingalls\_Standards |
-|                      2 |                     1 |                  1.00 |              0.0 |                    0.00 |                       67 | NA              |                1 | Ingalls\_Standards |
-|                      3 |                     1 |                  0.88 |              3.6 |                    0.75 |                       88 | NA              |               NA | NA                 |
+### Confidence Level 4
 
-2.  Run through Annotate\_Confidence\_Level1.R script. All required
-    extra data (Ingalls standards and MS2) are included in this
-    repository. When you have produced your confidence level 1
-    datasheet, write the csv and save it for the next step.
-
-3.  Move to Annotate\_Confidence\_Level2\_MoNA.R. As in the previous
-    step, all the required extra data (scraped MoNA sheets) are
-    available in the data\_extra/MoNA\_RelationalSpreadsheets directory.
-
--   Be aware that some of the column selections/renaming are to avoid
-    explosion joins. If you want to see more data included in your
-    joins, adjust the selections as you need. This will cause your
-    datasheet to balloon!
-
-Over time, phobos increases in efficiency as the user applies the
-package to more and more datasets.
-
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date. `devtools::build_readme()` is handy for this. You could also
-use GitHub Actions to re-render `README.Rmd` every time you push. An
-example workflow can be found here:
-<https://github.com/r-lib/actions/tree/master/examples>.
-
-You can also embed plots, for example:
-
-<img src="man/figures/README-pressure-1.png" width="100%" />
+Confidence level 4 is everything else. It should be filtered for
+possible contaminants and made sure that the potential mass feature is
+quality.
