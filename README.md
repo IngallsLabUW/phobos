@@ -163,16 +163,12 @@ shared Ingalls Google Drive [MARS
 project](https://drive.google.com/drive/folders/1lzIsDJJ7EyDpJrCTLdspHc0KS6zxUIDQ)
 folder.
 
-``` r
-ConfidenceLevel2_Pos <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, mz.flexibility = 0.02, rt.flexibility = 30, z = 1)
-#> [1] "Making potential candidates"
-#> Joining, by = c("compound_experimental", "mz_experimental", "MS2_experimental")
-ConfidenceLevel2_Neg <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, mz.flexibility = 0.02, rt.flexibility = 30, z = -1)
-#> [1] "Making potential candidates"
-#> Joining, by = c("compound_experimental", "mz_experimental", "MS2_experimental")
+*TODO variable renaming for clarity*
 
-tneg <- ConfidenceLevel2_Neg %>% select(MassFeature, compound_experimental, z_theoretical, z_experimental, confidence_rank, confidence_source)
-tpos <- ConfidenceLevel2_Pos %>% select(MassFeature, compound_experimental, z_theoretical, z_experimental, confidence_rank, confidence_source)
+``` r
+ConfidenceLevel2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, mz.flexibility = 0.02, rt.flexibility = 30)
+#> [1] "Making potential candidates"
+#> Joining, by = c("compound_experimental", "z_experimental", "mz_experimental", "MS2_experimental")
 ```
 
 |                                                                                                                                                                                                                                 |

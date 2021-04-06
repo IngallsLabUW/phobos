@@ -20,28 +20,26 @@
 #' z <- 1
 #' example_confidenceL2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, z = z,
 #' mz.flexibility = 0.02, rt.flexibility = 30)
-AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, mz.flexibility, rt.flexibility, z) {
+AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, mz.flexibility, rt.flexibility) {
   # Subtract hydrogen for reference database
-  if (z == -1) {
-    MoNA.Spectra <- read.csv("example_data/MoNA_RelationalSpreadsheets/NEG_Spectra.csv") %>%
-      dplyr::mutate(MH_mass = M_mass - 1.0072766)
-  } else if (z == 1) {
-    MoNA.Spectra <- read.csv("example_data/MoNA_RelationalSpreadsheets/POS_Spectra.csv") %>%
-      dplyr::mutate(MH_mass = M_mass + 1.0072766)
-  }
+  MoNA.Spectra.Neg <- read.csv("example_data/MoNA_RelationalSpreadsheets/NEG_Spectra.csv") %>%
+    dplyr::mutate(MH_mass = M_mass - 1.0072766,
+                  z_massbank = -1)
+  MoNA.Spectra.Pos <- read.csv("example_data/MoNA_RelationalSpreadsheets/POS_Spectra.csv") %>%
+    dplyr::mutate(MH_mass = M_mass + 1.0072766,
+                  z_massbank = 1)
 
   # Tidy theoretical spectra, dropping NA MS2s
-  MoNA.Spectra <- MoNA.Spectra %>%
-    dplyr::select(ID, Names, spectrum_KRHform_filtered, MH_mass) %>%
+  MoNA.Spectra <- MoNA.Spectra.Neg %>%
+    rbind(MoNA.Spectra.Pos) %>%
+    dplyr::select("massbank_ID" = ID, Names, spectrum_KRHform_filtered, z_massbank, MH_mass) %>%
     dplyr::mutate_all(., list(~dplyr::na_if(., ""))) %>%
     tidyr::drop_na()
 
   # Experimental Spectra ----------------------------------------------------
-  # Confidence.Level.1 <- Confidence.Level.1
   Experimental.Spectra <- Confidence.Level.1 %>%
-    dplyr::filter(!is.na(MS2_experimental),
-                  z_experimental == z) %>%
-    dplyr::select(compound_experimental, MH_mass = "mz_experimental", MS2_experimental) %>%
+    dplyr::filter(!is.na(MS2_experimental)) %>%
+    dplyr::select(compound_experimental, z_experimental, MH_mass = "mz_experimental", MS2_experimental) %>%
     unique()
 
   # Reassign variables from Experimental.Spectra
@@ -57,11 +55,12 @@ AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, mz.flexibility, rt.
 
   # Compare
   MoNA.Matched <- parallel::mclapply(MoNA.Spectra["MH_mass"], IsolateMoNACandidates,
-                                     experimental.df = experimental.df, potential.candidates = potential.candidates, mc.cores = numCores) %>%
+                                     experimental.df = experimental.df, potential.candidates = potential.candidates,
+                                     mc.cores = numCores) %>%
     dplyr::bind_rows() %>%
     dplyr::full_join(Confidence.Level.1) %>%
-    dplyr::select(MassFeature, compound_experimental, compound_theoretical, massbank_match, ID, mz_experimental, mz_theoretical, mz_massbank,
-                  rt_sec_experimental, rt_sec_theoretical, column_experimental, column_theoretical, z_experimental, z_theoretical,
+    dplyr::select(MassFeature, compound_experimental, compound_theoretical, massbank_match, massbank_ID, mz_experimental, mz_theoretical, mz_massbank,
+                  rt_sec_experimental, rt_sec_theoretical, column_experimental, column_theoretical, z_experimental, z_theoretical, z_massbank,
                   MS2_experimental, MS2_theoretical, MS2_massbank, ppm_mass_error, massbank_ppm, mz_similarity_score, rt_similarity_score,
                   MS2_cosine_similarity, total_similarity_score, massbank_cosine_similarity, confidence_rank, confidence_source) %>%
     dplyr::arrange(compound_experimental)

@@ -119,11 +119,7 @@ Confidence.Level.1 <- read.csv("example_data/Example_ConfidenceLevel1.csv")
 ```
 
 ```{r Confidence Level 2}
-ConfidenceLevel2_Pos <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, mz.flexibility = 0.02, rt.flexibility = 30, z = 1)
-ConfidenceLevel2_Neg <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, mz.flexibility = 0.02, rt.flexibility = 30, z = -1)
-
-tpos <- ConfidenceLevel2_Pos %>% select(MassFeature, compound_experimental, z_theoretical, z_experimental, confidence_rank, confidence_source)
-tneg <- ConfidenceLevel2_Neg %>% select(MassFeature, compound_experimental, z_theoretical, z_experimental, confidence_rank, confidence_source)
+ConfidenceLevel2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, mz.flexibility = 0.02, rt.flexibility = 30)
 ```
 
 ---

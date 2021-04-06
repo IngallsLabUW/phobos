@@ -9,12 +9,13 @@ IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidat
     dplyr::filter(MH_mass > MoNA.Mass - 0.020,
            MH_mass < MoNA.Mass + 0.020) %>%
     fuzzyjoin::difference_inner_join(experimental.df, by = "MH_mass", max_dist = 0.02) %>%
+    dplyr::filter(z_massbank == z_experimental) %>%
     dplyr::rename(scan1 = spectrum_KRHform_filtered, # scan1 is MS2 from MoNA
                   scan2 = MS2_experimental,          # scan2 is MS2 from the experimental data
                   mass1 = MH_mass.x,                 # mass1 is the mass from MoNA
                   mass2 = MH_mass.y)                 # mass2 is the mass from experimental data
 
-  if (length(potential.candidates$ID) == 0) {
+  if (length(potential.candidates$massbank_ID) == 0) {
     print("There are no potential candidates.")
     No.Match.Return <- Mass.Feature %>%
       dplyr::mutate(massbank_match = NA,
@@ -30,7 +31,7 @@ IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidat
   potential.candidates$massbank_cosine_similarity <- apply(potential.candidates, 1, FUN = function(x) MakeMS2CosineDataframe(x))
 
   final.candidates <- potential.candidates %>%
-    dplyr::mutate(massbank_match = paste(Names, ID, sep = " ID:"),
+    dplyr::mutate(massbank_match = paste(Names, massbank_ID, sep = " ID:"),
                   massbank_ppm = abs(mass2 - mass1) / mass1 * 10^6) %>%
     dplyr::rename(MS2_massbank = scan1,
                   mz_massbank = mass1,
