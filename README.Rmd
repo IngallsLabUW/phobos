@@ -86,24 +86,19 @@ knitr::kable(head(experimental.values, 5), caption = "Experimental Data")
 knitr::kable(theoretical.values[c(1, 9, 18, 25), ], caption = "Theoretical Data")
 
 ```
+
 ---
 ### Confidence Level 1
-Create a dataframe annotated for Confidence Level 1 by comparing exerimental and theoretical data, using the AnnotateConfidenceLevel1() function.
+Create a dataframe annotated for Confidence Level 1 by comparing experimental and theoretical data, using the AnnotateConfidenceLevel1() function.
 
 ```{r Confidence Level 1}
-ConfidenceLevel1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values, 
+Confidence.Level.1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values, 
                                              mz.flexibility = 0.02, rt.flexibility = 30)
 ```
 
-*TODO CHECK THIS STEP*
-```{r Tidy CL1, echo=FALSE}
-ConfidenceLevel1 <- ConfidenceLevel1 %>% 
-  arrange(ConfidenceLevel1) %>%
-  select(compound_experimental, mz_similarity_score:confidence_source)
-```
-
+*TODO: fix display of this table* 
 ```{r Display CL1}
-knitr::kable(head(ConfidenceLevel1, 10))
+knitr::kable(head(Confidence.Level.1, 10))
 ```
 
 ---
@@ -113,13 +108,12 @@ Compounds that receive a confidence level of 2 are considered putatively annotat
 
 The comparison MoNA spectra can be downloaded directly from the [public website](https://mona.fiehnlab.ucdavis.edu/downloads). Unlike the Ingalls Standards sheets, the downloaded MoNA sheets require transformation from JSON to csv, and are large enough to need external storage. The code to transform the JSONs to csvs is included in the phobos package. The pre-downloaded and cleaned MoNA csvs live on the shared Ingalls Google Drive [MARS project](https://drive.google.com/drive/folders/1lzIsDJJ7EyDpJrCTLdspHc0KS6zxUIDQ) folder.
 
-*TODO variable renaming for clarity*
 ```{r load CL2 data, echo=FALSE}
 Confidence.Level.1 <- read.csv("example_data/Example_ConfidenceLevel1.csv") 
 ```
 
 ```{r Confidence Level 2}
-ConfidenceLevel2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, mz.flexibility = 0.02, rt.flexibility = 30)
+Confidence.Level.2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, mz.flexibility = 0.02, rt.flexibility = 30)
 ```
 
 ---
