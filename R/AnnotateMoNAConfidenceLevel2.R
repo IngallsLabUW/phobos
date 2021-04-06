@@ -4,7 +4,7 @@
 #' Please refer to the AnnotateConfidenceLevel1 function for details!
 #' @param mz.flexibility Flexibility for m/z matching between experimental and theoretical values. Usually defined as 0.02.
 #' @param rt.flexibility Flexibility for retention time matching between experimental and theoretical values. Usually defined as ~ 15-30 seconds.
-#' @param ion.mode Choose positive or negative mode for appropriate value comparison (e.g, "positive" or "negative")
+#' @param z Choose positive or negative charge for appropriate value comparison. The options are 1 for positive mode and -1 for negative.
 #'
 #' @return A complete dataframe, annotated for Confidence Level 1.
 #' @export
@@ -17,15 +17,15 @@
 #' example_dir <- system.file("example_data", package = "phobos")
 #' example_data <- list.files(example_dir, full.names = TRUE)
 #' Confidence.Level.1 <- read.csv(grep("Example_ConfidenceLevel1", example_data, value = TRUE))
-#' ion.mode <- "positive"
-#' example_confidenceL2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, ion.mode = ion.mode,
+#' z <- 1
+#' example_confidenceL2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, z = z,
 #' mz.flexibility = 0.02, rt.flexibility = 30)
-AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, mz.flexibility, rt.flexibility, ion.mode) {
+AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, mz.flexibility, rt.flexibility, z) {
   # Subtract hydrogen for reference database
-  if (ion.mode == "negative") {
+  if (z == -1) {
     MoNA.Spectra <- read.csv("example_data/MoNA_RelationalSpreadsheets/NEG_Spectra.csv") %>%
       dplyr::mutate(MH_mass = M_mass - 1.0072766)
-  } else {
+  } else if (z == 1) {
     MoNA.Spectra <- read.csv("example_data/MoNA_RelationalSpreadsheets/POS_Spectra.csv") %>%
       dplyr::mutate(MH_mass = M_mass + 1.0072766)
   }
@@ -33,14 +33,14 @@ AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, mz.flexibility, rt.
   # Tidy theoretical spectra, dropping NA MS2s
   MoNA.Spectra <- MoNA.Spectra %>%
     dplyr::select(ID, Names, spectrum_KRHform_filtered, MH_mass) %>%
-    dplyr::mutate_all(., list(~dplyr::na_if(.,""))) %>%
+    dplyr::mutate_all(., list(~dplyr::na_if(., ""))) %>%
     tidyr::drop_na()
 
   # Experimental Spectra ----------------------------------------------------
-  #Confidence.Level.1 <- Confidence.Level.1
+  # Confidence.Level.1 <- Confidence.Level.1
   Experimental.Spectra <- Confidence.Level.1 %>%
     dplyr::filter(!is.na(MS2_experimental),
-                  z_experimental == 1) %>%
+                  z_experimental == z) %>%
     dplyr::select(compound_experimental, MH_mass = "mz_experimental", MS2_experimental) %>%
     unique()
 
@@ -60,7 +60,7 @@ AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, mz.flexibility, rt.
                                      experimental.df = experimental.df, potential.candidates = potential.candidates, mc.cores = numCores) %>%
     dplyr::bind_rows() %>%
     dplyr::full_join(Confidence.Level.1) %>%
-    dplyr::select(compound_experimental, KRH_identification, compound_theoretical, massbank_match, ID, mz_experimental, mz_theoretical, mz_massbank,
+    dplyr::select(MassFeature, compound_experimental, compound_theoretical, massbank_match, ID, mz_experimental, mz_theoretical, mz_massbank,
                   rt_sec_experimental, rt_sec_theoretical, column_experimental, column_theoretical, z_experimental, z_theoretical,
                   MS2_experimental, MS2_theoretical, MS2_massbank, ppm_mass_error, massbank_ppm, mz_similarity_score, rt_similarity_score,
                   MS2_cosine_similarity, total_similarity_score, massbank_cosine_similarity, confidence_rank, confidence_source) %>%
