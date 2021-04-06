@@ -7,8 +7,7 @@
 AnnotateMoNAConfidenceLevel2(
   Confidence.Level.1,
   mz.flexibility,
-  rt.flexibility,
-  z
+  rt.flexibility
 )
 }
 \arguments{
