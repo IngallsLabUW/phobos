@@ -2,7 +2,7 @@
 % Please edit documentation in R/AnnotateMoNAConfidenceLevel2.R
 \name{AnnotateMoNAConfidenceLevel2}
 \alias{AnnotateMoNAConfidenceLevel2}
-\title{Compare experimental values to MassBank of North America (MoNA) in order to annotate unknown values for confidence level 2: a good match to MS1 and MS2.}
+\title{Annotate Confidence Level 2: MoNA}
 \usage{
 AnnotateMoNAConfidenceLevel2(
   Confidence.Level.1,
@@ -24,10 +24,10 @@ Please refer to the AnnotateConfidenceLevel1 function for details!}
 A complete dataframe, annotated for Confidence Level 1.
 }
 \description{
-Compare experimental values to MassBank of North America (MoNA) in order to annotate unknown values for confidence level 2: a good match to MS1 and MS2.
+Annotate Confidence Level 2: MoNA
 }
 \examples{
-#' library(phobos)
+library(phobos)
 # Load experimental data that has already been annotated for Confidence Level 1 using the AnnotateConfidenceLevel1 function.
 # Remember that dataframe format is important: please refer to README or the documentation for AnnotateConfidenceLevel1() for details.
 
