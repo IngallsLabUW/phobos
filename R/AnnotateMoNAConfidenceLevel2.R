@@ -1,4 +1,4 @@
-#' Compare experimental values to MassBank of North America (MoNA) in order to annotate unknown values for confidence level 2: a good match to MS1 and MS2.
+#' Annotate Confidence Level 2: MoNA
 #'
 #' @param Confidence.Level.1 A dataframe of experimental values, already annotated for Confidence Level 1.
 #' Please refer to the AnnotateConfidenceLevel1 function for details!
@@ -10,7 +10,7 @@
 #' @export
 #'
 #' @examples
-#' #' library(phobos)
+#' library(phobos)
 #' # Load experimental data that has already been annotated for Confidence Level 1 using the AnnotateConfidenceLevel1 function.
 #' # Remember that dataframe format is important: please refer to README or the documentation for AnnotateConfidenceLevel1() for details.
 #'
