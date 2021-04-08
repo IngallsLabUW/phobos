@@ -21,11 +21,11 @@
 #' example_confidenceL2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, z = z,
 #' mz.flexibility = 0.02, rt.flexibility = 30)
 AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, mz.flexibility, rt.flexibility) {
-  # Subtract hydrogen for reference database
-  MoNA.Spectra.Neg <- read.csv("example_data/MoNA_RelationalSpreadsheets/NEG_Spectra.csv") %>%
+  # Subtract hydrogen for reference database: this will be changed
+  MoNA.Spectra.Neg <- read.csv("data/MoNA_RelationalSpreadsheets/NEG_Spectra.csv") %>%
     dplyr::mutate(MH_mass = M_mass - 1.0072766,
                   z_massbank = -1)
-  MoNA.Spectra.Pos <- read.csv("example_data/MoNA_RelationalSpreadsheets/POS_Spectra.csv") %>%
+  MoNA.Spectra.Pos <- read.csv("data/MoNA_RelationalSpreadsheets/POS_Spectra.csv") %>%
     dplyr::mutate(MH_mass = M_mass + 1.0072766,
                   z_massbank = 1)
 
