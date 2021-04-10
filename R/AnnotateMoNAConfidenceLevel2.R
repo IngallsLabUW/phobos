@@ -61,8 +61,8 @@ AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, mz.flexibility, rt.
     dplyr::full_join(Confidence.Level.1) %>%
     dplyr::select(MassFeature, compound_experimental, compound_theoretical, massbank_match, massbank_ID, mz_experimental, mz_theoretical, mz_massbank,
                   rt_sec_experimental, rt_sec_theoretical, column_experimental, column_theoretical, z_experimental, z_theoretical, z_massbank,
-                  MS2_experimental, MS2_theoretical, MS2_massbank, ppm_mass_error, massbank_ppm, mz_similarity_score, rt_similarity_score,
-                  MS2_cosine_similarity, total_similarity_score, massbank_cosine_similarity, confidence_rank, confidence_source) %>%
+                  MS2_experimental, MS2_theoretical, MS2_massbank, ppm_mass_error, massbank_ppm, mz_similarity_score1, rt_similarity_score1,
+                  MS2_cosine_similarity1, massbank_cosine_similarity, total_similarity_score, confidence_rank, confidence_source) %>%
     dplyr::arrange(compound_experimental)
 
   # Combine Confidence Level 2 with Confidence Level 1 ----------------------

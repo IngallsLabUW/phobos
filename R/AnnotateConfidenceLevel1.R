@@ -55,15 +55,15 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
   Confidence.Level.1 <- My.Fuzzy.Join %>%
     dplyr::filter(z_experimental == z_theoretical,
                   column_experimental == column_theoretical) %>%
-    dplyr::mutate(mz_similarity_score = exp(-0.5 * (((mz_experimental - mz_theoretical) / mz.flexibility) ^ 2)),
-                  rt_similarity_score = exp(-0.5 * (((rt_sec_experimental - rt_sec_theoretical) / rt.flexibility) ^ 2))) %>%
+    dplyr::mutate(mz_similarity_score1 = exp(-0.5 * (((mz_experimental - mz_theoretical) / mz.flexibility) ^ 2)),
+                  rt_similarity_score1 = exp(-0.5 * (((rt_sec_experimental - rt_sec_theoretical) / rt.flexibility) ^ 2))) %>%
     dplyr::rowwise() %>%
     dplyr::mutate(ppm_mass_error = ((abs(mz_experimental - mz_theoretical)) / mz_theoretical) * 10^6,
-                  MS2_cosine_similarity = ifelse(is.na(MS2_experimental) | is.na(MS2_theoretical),
+                  MS2_cosine_similarity1 = ifelse(is.na(MS2_experimental) | is.na(MS2_theoretical),
                                                  NA, MS2CosineSimilarity(MakeScantable(MS2_experimental), MakeScantable(MS2_theoretical))),
-                  total_similarity_score = ifelse(is.na(MS2_cosine_similarity),
-                                                  ((mz_similarity_score + rt_similarity_score) / 2) * 100,
-                                                  ((MS2_cosine_similarity + mz_similarity_score + rt_similarity_score) / 3) * 100))
+                  total_similarity_score = ifelse(is.na(MS2_cosine_similarity1),
+                                                  ((mz_similarity_score1 + rt_similarity_score1) / 2) * 100,
+                                                  ((MS2_cosine_similarity1 + mz_similarity_score1 + rt_similarity_score1) / 3) * 100))
 
 
   # Sanity check -------------------------------------------------------------
@@ -92,7 +92,7 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
   Mission.Accomplished <- Confidence.Level.1 %>%
     dplyr::bind_rows(No.CL1.Match.df) %>%
     dplyr::bind_rows(No.Fuzzy.Match.df) %>%
-    dplyr::mutate(confidence_rank = ifelse(mz_similarity_score > 0.9 & rt_similarity_score > 0.75 & ppm_mass_error < 7, 1, NA),
+    dplyr::mutate(confidence_rank = ifelse(mz_similarity_score1 > 0.9 & rt_similarity_score1 > 0.75 & ppm_mass_error < 7, 1, NA),
                   confidence_source = ifelse(!is.na(confidence_rank), "Ingalls_Standards", NA)) %>%
     dplyr::mutate(mz_experimental = ifelse(is.na(mz_experimental) & !is.na(mz), mz, mz_experimental),
                   rt_sec_experimental = ifelse(is.na(rt_sec_experimental) & !is.na(rt), rt, rt_sec_experimental),

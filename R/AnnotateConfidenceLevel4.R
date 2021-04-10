@@ -18,7 +18,8 @@
 AnnotateConfidenceLevel4 <- function(Confidence.Level.3) {
 
   Confidence.Level.4 <- Confidence.Level.3 %>%
-    mutate(confidence_rank = ifelse(is.na(confidence_rank), 4, confidence_rank))
+    mutate(confidence_rank = ifelse(is.na(confidence_rank), 4, confidence_rank)) %>%
+    arrange(compound_experimental)
 
   return(Confidence.Level.4)
 }
