@@ -23,7 +23,7 @@ AnnotateMoNAConfidenceLevel3 <- function(Confidence.Level.2, mz.flexibility) {
   Confidence.Level.2 <- Confidence.Level.2
 
   Experimental.Values <- Confidence.Level.2 %>%
-    select(compound_experimental:KRH_identification, mz_experimental, z_experimental, confidence_rank, confidence_source) %>%
+    select(MassFeature:compound_theoretical, mz_experimental, z_experimental, confidence_rank, confidence_source) %>%
     unique() %>%
     group_by(compound_experimental) %>%
     add_tally() %>%
@@ -32,11 +32,9 @@ AnnotateMoNAConfidenceLevel3 <- function(Confidence.Level.2, mz.flexibility) {
     rename(MH_mass = mz_experimental) %>%
     select(-n, -temp)
 
-
-
-  MoNA.Spectra.NEG <- read.csv("data_extra/MoNA_RelationalSpreadsheets/NEG_Spectra.csv") %>%
+  MoNA.Spectra.NEG <- read.csv("data/MoNA_RelationalSpreadsheets/NEG_Spectra.csv") %>%
     mutate(z_MoNA = -1)
-  MoNA.Spectra.Pos <- read.csv("data_extra/MoNA_RelationalSpreadsheets/NEG_Spectra.csv") %>%
+  MoNA.Spectra.Pos <- read.csv("data/MoNA_RelationalSpreadsheets/NEG_Spectra.csv") %>%
     mutate(z_MoNA = 1)
 
   MoNA.Spectra <- MoNA.Spectra.NEG %>%
@@ -46,18 +44,16 @@ AnnotateMoNAConfidenceLevel3 <- function(Confidence.Level.2, mz.flexibility) {
     mutate_all(., list(~na_if(.,""))) %>%
     drop_na()
 
-
   My.Fuzzy.Join <- MoNA.Spectra %>%
     difference_left_join(Experimental.Values, by = c("MH_mass"), max_dist = 0.02) %>%
-    filter(is.na(confidence_source),
+    filter(#is.na(confidence_source),
            z_MoNA == z_experimental) %>%
     rename(MH_mass_MoNA = MH_mass.x,
            MH_mass_experimental = MH_mass.y) %>%
-    mutate(mz_similarity_score = exp(-0.5 * (((MH_mass_experimental - MH_mass_MoNA) / mz.flexibility) ^ 2))) %>%
-    select(compound_experimental, KRH_identification, ID, Names, MH_mass_experimental, MH_mass_MoNA,
-           z_experimental, z_MoNA, mz_similarity_score) %>% #, confidence_rank, confidence_source) %>%
+    mutate(mz_similarity_score3 = exp(-0.5 * (((MH_mass_experimental - MH_mass_MoNA) / mz.flexibility) ^ 2))) %>%
+    select(compound_experimental, ID, Names, MH_mass_experimental, MH_mass_MoNA,
+           z_experimental, z_MoNA, mz_similarity_score3, confidence_rank, confidence_source) %>%
     arrange(compound_experimental)
-
 
   No.Fuzzy.Match <- setdiff(1:nrow(Experimental.Values),
                             sort(unique(My.Fuzzy.Join$compound_experimental)))
@@ -75,16 +71,19 @@ AnnotateMoNAConfidenceLevel3 <- function(Confidence.Level.2, mz.flexibility) {
 
   final <- My.Fuzzy.Join %>%
     bind_rows(No.Fuzzy.Match.df) %>%
-    mutate(confidence_rank3 = ifelse(mz_similarity_score > 0.9, 3, NA),
-           confidence_source = ifelse(is.na(confidence_rank3), confidence_source, "MoNA"),
-           confidence_rank = ifelse(is.na(confidence_rank) & !is.na(confidence_rank3), confidence_rank3, confidence_rank)) %>%
-    select(compound_experimental, "MoNA_ID" = ID, "MoNA_Names" = Names, KRH_identification, MH_mass_MoNA, MH_mass_experimental,
-           z_MoNA, z_experimental, "mz_similarity_score_MoNa" = mz_similarity_score, confidence_rank, confidence_source)
+    mutate(confidence_rank3 = ifelse(mz_similarity_score3 > 0.9, 3, NA)) %>%
+    mutate(confidence_rank = ifelse(!is.na(confidence_rank) & !is.na(confidence_rank3), paste(confidence_rank, "3", sep = "; "),
+                                    ifelse(!is.na(confidence_rank3), confidence_rank3, confidence_rank)))  %>%
+    mutate(confidence_source = ifelse(str_detect(confidence_rank, "3"),
+                                      apply(cbind(confidence_source, "MoNA"), 1, function(x) paste(x[!is.na(x)], collapse = "; ")),
+                                      confidence_source)) %>%
+    select(compound_experimental, "MoNA_ID" = ID, "MoNA_Names" = Names, MH_mass_experimental, MH_mass_MoNA,
+           z_experimental, z_MoNA, mz_similarity_score3, confidence_rank, confidence_source)
 
   Confidence.Level.3 <- final %>%
     left_join(Confidence.Level.2) %>%
     unique() %>%
-    select(compound_experimental, KRH_identification, compound_theoretical, ID, MoNA_ID, MoNA_Names, massbank_match, everything()) %>%
+    select(compound_experimental, compound_theoretical, MoNA_ID, MoNA_Names, massbank_match, everything()) %>%
     arrange(compound_experimental)
 
   return(Confidence.Level.3)

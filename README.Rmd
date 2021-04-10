@@ -111,7 +111,7 @@ Confidence.Level.1 <- AnnotateConfidenceLevel1(experimental.values = experimenta
 
 ```{r Display CL1, echo=FALSE}
 CL1 <- Confidence.Level.1 %>%
-  select(compound_experimental:compound_theoretical, mz_similarity_score:confidence_source) %>%
+  select(compound_experimental:compound_theoretical, mz_similarity_score1:confidence_source) %>%
   unique()
 knitr::kable(CL1[c(1:3, 11, 19), ], caption = "Confidence Level 1")
 ```
@@ -140,7 +140,7 @@ Confidence.Level.2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confiden
 ```{r Display CL2, echo=FALSE}
 CL2 <- Confidence.Level.2 %>%
   arrange(compound_experimental) %>%
-  select(compound_experimental:massbank_match, massbank_ppm, massbank_cosine_similarity, confidence_rank, confidence_source) %>%
+  select(MassFeature, compound_experimental:massbank_match, massbank_ppm, massbank_cosine_similarity, confidence_rank, confidence_source) %>%
   unique()
 knitr::kable(CL2[c(1, 2, 10, 18, 26, 27, 54, 62), ], caption = "Confidence Level 2")
 ```
@@ -162,9 +162,32 @@ Confidence.Level.2 <- read.csv("data/Example_ConfidenceLevel2.csv")
 Confidence.Level.3 <- AnnotateMoNAConfidenceLevel3(Confidence.Level.2 = Confidence.Level.2, mz.flexibility = 0.02)
 ```
 
+```{r Display CL3, echo=FALSE}
+CL3 <- Confidence.Level.3 %>%
+  arrange(compound_experimental) %>%
+  select(MassFeature, compound_experimental:MoNA_Names, MH_mass_experimental, MH_mass_MoNA, mz_similarity_score_MoNa:confidence_source) %>%
+  unique()
+knitr::kable(CL3[c(1, 2, 10, 18, 26, 27, 54, 62), ], caption = "Confidence Level 3")
+```
 
 ---
 ### Confidence Level 4
 
-Confidence level 4 is everything else! It should be filtered for possible contaminants and made sure that the potential mass feature is quality.
+Confidence level 4 is everything else! **TODO: It should be filtered for possible contaminants and made sure that the potential mass feature is quality.**
+
+```{r load CL3 data, echo=FALSE}
+Confidence.Level.3 <- read.csv("data/Example_ConfidenceLevel3.csv")
+```
+
+```{r Confidence Level 4}
+Confidence.Level.4 <- AnnotateConfidenceLevel4(Confidence.Level.3 = Confidence.Level.3)
+```
+
+```{r Display CL4, echo=FALSE}
+CL4 <- Confidence.Level.4 %>%
+  arrange(compound_experimental) %>%
+  select(MassFeature, compound_experimental:MoNA_Names, MH_mass_experimental, MH_mass_MoNA, mz_similarity_score_MoNa:confidence_source) %>%
+  unique()
+knitr::kable(CL4, caption = "Confidence Level 4")
+```
 
