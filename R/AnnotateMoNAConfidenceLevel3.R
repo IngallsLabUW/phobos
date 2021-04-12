@@ -45,7 +45,7 @@ AnnotateMoNAConfidenceLevel3 <- function(Confidence.Level.2, mz.flexibility) {
     drop_na()
 
   My.Fuzzy.Join <- MoNA.Spectra %>%
-    difference_left_join(Experimental.Values, by = c("MH_mass"), max_dist = 0.02) %>%
+    fuzzyjoin::difference_left_join(Experimental.Values, by = c("MH_mass"), max_dist = 0.02) %>%
     filter(#is.na(confidence_source),
            z_MoNA == z_experimental) %>%
     rename(MH_mass_MoNA = MH_mass.x,
