@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-phobos is a package of custom functions that accompany the Ingalls Lab MARS Project.
+phobos is an R package of custom functions that accompany the Ingalls Lab MARS Project.
 
 The MARS project is an easy way to identify and rank unknown mass features (MFs) in your data. It consists of three major sections: 
 
@@ -40,7 +40,7 @@ devtools::install_github("IngallsLabUW/phobos")
 Once installed, phobos should load like any other package:
 
 ``` r
-install.packages("phobos")
+library("phobos")
 ```
 
 ## Description
@@ -102,11 +102,11 @@ knitr::kable(theoretical.values[c(1, 9, 18, 25), ], caption = "Theoretical Data"
 ```
 
 
-To annotate the experimental data for confidence level 1, use the AnnotateConfidenceLevel1() function.
+To annotate the experimental data for confidence level 1, use the AnnotateConfidenceLevel1() function. The values for mz.flexibility and
+rt.flexibility are in Daltons and seconds, respectively.
 
 ```{r Confidence Level 1}
-Confidence.Level.1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values,
-                                             mz.flexibility = 0.02, rt.flexibility = 30)
+Confidence.Level.1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values, mz.flexibility = 0.02, rt.flexibility = 30)
 ```
 
 
