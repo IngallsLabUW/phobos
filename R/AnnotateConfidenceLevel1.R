@@ -37,7 +37,7 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
   if(class(experimental.values)!="data.frame"){
     stop("Looks like experimental.values is in the wrong format")
   }
-  if(names(experimental.values)!=c("compound", "mz", "rt", "column", "z", "MS2")){
+  if(!all(names(experimental.values)%in%c("MassFeature", "mz", "rt", "column", "z", "MS2"))){
     stop("Looks like experimental.values is in the wrong format")
   }
   # Etc.
@@ -45,9 +45,8 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
   # Variable names as a whole could use some innovation - what is the content of "My.Fuzzy.Join"?
   My.Fuzzy.Join <- theoretical.values %>%
     fuzzyjoin::difference_left_join(experimental.values, by = c("mz"), max_dist = mz.flexibility) %>%
-    dplyr::rename_with(theoretical.values, ~gsub("\\.y", "_experimental", .x)) %>%
-    dplyr::rename_with(theoretical.values, ~gsub("\\.x", "_theoretical", .x)) %>%
-    # What *doesn't* this select? Would be clearer to drop columns explicitly since we're keeping so many
+    dplyr::rename_with(~gsub("\\.y", "_experimental", .x)) %>%
+    dplyr::rename_with(~gsub("\\.x", "_theoretical", .x)) %>% names()
     dplyr::select(MassFeature, compound_experimental, compound_theoretical, mz_experimental, mz_theoretical, rt_sec_experimental, rt_sec_theoretical,
                   column_experimental, column_theoretical, z_experimental, z_theoretical, MS2_experimental, MS2_theoretical)  %>%
     dplyr::arrange(compound_experimental)
