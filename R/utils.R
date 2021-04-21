@@ -6,7 +6,7 @@
 #' @return final.candidates: dataframe of experimental data, matched with information from MoNA.
 IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidates) {
   potential.candidates <- potential.candidates %>%
-    dplyr::filter(MH_mass > MoNA.Mass - 0.020,
+    dplyr::filter(MH_mass > MoNA.Mass - 0.020, # These should not be hard-coded!
            MH_mass < MoNA.Mass + 0.020) %>%
     fuzzyjoin::difference_inner_join(experimental.df, by = "MH_mass", max_dist = 0.02) %>%
     dplyr::filter(z_massbank == z_experimental) %>%
@@ -69,13 +69,12 @@ MakeMS2CosineDataframe <- function(df) {
 #' Intensity is scaled to 100 and filtered to drop all intensity values below 0.5.
 #'
 MakeScantable <- function(scan) {
-  # Variable names here could also be improved - this converts an MS2 string to an MS2 data frame, right? "Scan" is not super informative
+  # Variable names here could also be improved - this converts an MS2 string to an MS2 data frame, right?
+  # "Scan" and "Scantable" are ambiguous terms
+  # Not sure I love the whole read.table/regex here - something like
+  # strsplit(strsplit(scan, "; ")[[1]], ", ") %>% as.data.frame() %>% t()
+  # seems clearer
   requireNamespace("dplyr", quietly = TRUE)
-  # Not sure I love this method of converting string to df - something like
-  # scan %>% data.frame() %>%
-  # separate_rows(scan, sep = "; ") %>%
-  # separate(v, into = c("mz", "int"), sep = ", ")
-  # is a little more elegant and easier to read
   scantable <- read.table(text = as.character(scan),
                           col.names = c("mz", "intensity"), fill = TRUE) %>%
     dplyr::mutate(mz = as.numeric(mz %>% stringr::str_replace(",", "")),
