@@ -69,11 +69,18 @@ MakeMS2CosineDataframe <- function(df) {
 #' Intensity is scaled to 100 and filtered to drop all intensity values below 0.5.
 #'
 MakeScantable <- function(scan) {
+  # Variable names here could also be improved - this converts an MS2 string to an MS2 data frame, right? "Scan" is not super informative
   requireNamespace("dplyr", quietly = TRUE)
+  # Not sure I love this method of converting string to df - something like
+  # scan %>% data.frame() %>%
+  # separate_rows(scan, sep = "; ") %>%
+  # separate(v, into = c("mz", "int"), sep = ", ")
+  # is a little more elegant and easier to read
   scantable <- read.table(text = as.character(scan),
                           col.names = c("mz", "intensity"), fill = TRUE) %>%
     dplyr::mutate(mz = as.numeric(mz %>% stringr::str_replace(",", "")),
                   intensity = as.numeric(intensity %>% stringr::str_replace(";", "")),
+                  # Isn't intensity already scaled? Doesn't need to be rescaled here
                   intensity = round(intensity / max(intensity) * 100, digits = 1)) %>%
     dplyr::filter(intensity > 0.5) %>%
     dplyr::arrange(desc(intensity))
@@ -89,7 +96,7 @@ MakeScantable <- function(scan) {
 #' @return cosine.similarity: A weighted similarity score between 0 and 1, indicating the cosine relationship of the two vectors.
 #'
 MS2CosineSimilarity <- function(scan1, scan2) {
-  mz.tolerance <- 0.02
+  mz.tolerance <- 0.02 # This should not be hard-coded
 
   weight1 <- (scan1[, 1] ^ 2) * sqrt(scan1[, 2])
   weight2 <- (scan2[, 1] ^ 2) * sqrt(scan2[, 2])
@@ -108,5 +115,6 @@ MS2CosineSimilarity <- function(scan1, scan2) {
 #'
 #' @return
 ReplaceNA <- function(column) {
+  # This is a very dangerous function - there's a difference between NA, "NA", and <NA> - which is this meant to handle?
   gsub("NA; ", "", column)
 }
