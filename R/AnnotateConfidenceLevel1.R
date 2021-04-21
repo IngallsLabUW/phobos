@@ -60,12 +60,12 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
     dplyr::mutate(mz_similarity_score1 = exp(-0.5 * (((mz_experimental - mz_theoretical) / mz.flexibility) ^ 2)), # This should be a function (calcSimScore?)
                   rt_similarity_score1 = exp(-0.5 * (((rt_experimental - rt_theoretical) / rt.flexibility) ^ 2))) %>% # This is not how I expected the mz. and rt.flexibility to be used - needs more documentation
     dplyr::rowwise() %>%
-    dplyr::mutate(ppm_mass_error = ((abs(mz_experimental - mz_theoretical)) / mz_theoretical) * 10^6) %>%
-    dplyr::mutate(MS2_cosine_similarity1 = ifelse(is.na(MS2_experimental) | is.na(MS2_theoretical),
-                                                 NA, MS2CosineSimilarity(MakeScantable(MS2_experimental), MakeScantable(MS2_theoretical)))) %>%
+    dplyr::mutate(ppm_mass_error = ((abs(mz_experimental - mz_theoretical)) / mz_theoretical) * 10^6,
+                  MS2_cosine_similarity1 = ifelse(is.na(MS2_experimental) | is.na(MS2_theoretical),
+                                                 NA, MS2CosineSimilarity(MakeScantable(MS2_experimental), MakeScantable(MS2_theoretical))),
     # It might make sense to wrap MakeScanTable into MS2CosineSimilarity - the intuitive
     # representation of the code here is MS2CosineSimilarity(MS2_expected, MS2_observed)
-    dplyr::mutate(total_similarity_score = ifelse(is.na(MS2_cosine_similarity1),
+                  total_similarity_score = ifelse(is.na(MS2_cosine_similarity1),
                                                   mean(c(mz_similarity_score1, rt_similarity_score1)), # Use "mean" to be intuitive
                                                   mean(c(MS2_cosine_similarity1, mz_similarity_score1, rt_similarity_score1)))*100)
 
