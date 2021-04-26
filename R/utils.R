@@ -1,3 +1,27 @@
+#' Calculate value similarity score.
+#'
+#' The equation for calculating similarity scores is as follows:
+#' \deqn{exp(0.5 x (experimental.value - theoretical.value / flexibility)^2)}
+#'
+#' Similarity scores between experimental and theoretical values are calculated using the above function.
+#' The background hypothesis of the equations for accurate mass and retention time similarity is
+#' that the differences between experimental and theoretical values follow a Gaussian distribution.
+#' For more information, please refer to "MS-DIAL: Data Independing MS/MS Deconvolution for Comprehensive
+#' Metabolome Analysis" Nat. Methods. 2015 June. doi: 10.1038/nmeth.3393.
+#'
+#'
+#' @param experimental.value The experimental value to be compared to theoretical.
+#' @param theoretical.value The theoretical value for comparison.
+#' @param flexibility User-defined search tolerance, also used as the standard deviation value.
+#'
+#' @return
+CalculateSimilarityScore <- function(experimental.value, theoretical.value, flexibility) {
+  similarity.score = exp(-0.5 * (((experimental.value - theoretical.value) / flexibility) ^ 2))
+
+  return(similarity.score)
+}
+
+
 #' Compare experimental mass features to scraped MoNA data, based on MS1 and MS2 information.
 #'
 #' @param MoNA.Mass Single MoNA mass, isolated from scraped MoNA df.
@@ -90,6 +114,9 @@ MakeScantable <- function(scan) {
 #'
 MS2CosineSimilarity <- function(scan1, scan2) {
   mz.tolerance <- 0.02
+
+  scan1 <- MakeScantable(scan1)
+  scan2 <- MakeScantable(scan2)
 
   weight1 <- (scan1[, 1] ^ 2) * sqrt(scan1[, 2])
   weight2 <- (scan2[, 1] ^ 2) * sqrt(scan2[, 2])

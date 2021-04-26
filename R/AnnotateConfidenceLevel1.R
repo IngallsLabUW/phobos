@@ -41,7 +41,7 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
 
   # Expand and fix these tests
   if (all(colnames(experimental.values) == c("MassFeature", "mz", "rt", "column", "z", "MS2"))) {
-    print("Columns correctly named and ordered.")
+    print("Columns are correctly named and ordered.")
   } else {
     stop("Please check your column names and order and try again!")
   }
@@ -58,39 +58,27 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
     fuzzyjoin::difference_left_join(experimental.values, by = c("mz"), max_dist = mz.flexibility) %>%
     dplyr::rename_with(., ~gsub("\\.y", "_experimental", .x)) %>%
     dplyr::rename_with(., ~gsub("\\.x", "_theoretical", .x)) %>%
-    # dplyr::rename(compound_theoretical = compound,
-    #               mz_theoretical = mz.x,
-    #               rt_sec_theoretical = rt.x,
-    #               column_theoretical = column.x,
-    #               z_theoretical = z.x,
-    #               MS2_theoretical = MS2.x,
-    #               mz_experimental = mz.y,
-    #               rt_sec_experimental = rt.y,
-    #               column_experimental = column.y,
-    #               z_experimental = z.y,
-    #               MS2_experimental = MS2.y) %>%
     dplyr::select(MassFeature, primary_key, "compound_theoretical" = compound, mz_experimental, mz_theoretical,
                   "rt_sec_experimental" = rt_experimental, "rt_sec_theoretical" = rt_theoretical,
                   column_experimental, column_theoretical, z_experimental, z_theoretical, MS2_experimental, MS2_theoretical)  %>%
     dplyr::arrange(primary_key)
 
-  # # Confidence Level 1 ----------------------------------------
-  # Confidence.Level.1 <- Fuzzy.Join %>%
-  #   dplyr::filter(z_experimental == z_theoretical,
-  #                 column_experimental == column_theoretical) %>%
-  #   dplyr::mutate(mz_similarity_score1 = exp(-0.5 * (((mz_experimental - mz_theoretical) / mz.flexibility) ^ 2)),
-  #                 rt_similarity_score1 = exp(-0.5 * (((rt_sec_experimental - rt_sec_theoretical) / rt.flexibility) ^ 2))) %>%
-  #   dplyr::rowwise() %>%
-  #   dplyr::mutate(ppm_mass_error = ((abs(mz_experimental - mz_theoretical)) / mz_theoretical) * 10^6,
-  #                 MS2_cosine_similarity1 = ifelse(is.na(MS2_experimental) | is.na(MS2_theoretical),
-  #                                                NA, MS2CosineSimilarity(MakeScantable(MS2_experimental), MakeScantable(MS2_theoretical))),
-  #                 total_similarity_score = ifelse(is.na(MS2_cosine_similarity1),
-  #                                                 ((mz_similarity_score1 + rt_similarity_score1) / 2) * 100,
-  #                                                 ((MS2_cosine_similarity1 + mz_similarity_score1 + rt_similarity_score1) / 3) * 100))
-  #
-  #
-  # # Sanity check -------------------------------------------------------------
-  # # No fuzzy match (no mz within 0.02 daltons)
+  # Confidence Level 1 ----------------------------------------
+  Confidence.Level.1 <- Fuzzy.Join %>%
+    dplyr::filter(z_experimental == z_theoretical,
+                  column_experimental == column_theoretical) %>%
+    dplyr::mutate(mz_similarity_score1 = CalculateSimilarityScore(mz_experimental, mz_theoretical, mz.flexibility),
+                  rt_similarity_score1 = CalculateSimilarityScore(rt_sec_experimental, rt_sec_theoretical, rt.flexibility)) %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(ppm_mass_error = ((abs(mz_experimental - mz_theoretical)) / mz_theoretical) * 10^6,
+                  MS2_cosine_similarity1 = ifelse(is.na(MS2_experimental) | is.na(MS2_theoretical),
+                                                  NA, MS2CosineSimilarity(MS2_experimental, MS2_theoretical)),
+                  total_similarity_score = ifelse(is.na(MS2_cosine_similarity1),
+                                                  mean(c(mz_similarity_score1, rt_similarity_score1)),
+                                                  mean(c(MS2_cosine_similarity1, mz_similarity_score1, rt_similarity_score1) * 100)))
+
+  # Sanity check -------------------------------------------------------------
+  # No fuzzy match (no mz within 0.02 daltons)
   # No.Fuzzy.Match <- experimental.values %>%
   #   dplyr::select(primary_key) %>%
   #   dplyr::filter(primary_key %in% setdiff(1:nrow(.), Fuzzy.Join$primary_key)) %>%
@@ -126,5 +114,5 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
   #   dplyr::arrange(primary_key)
   #
   # return(Mission.Accomplished)
-  return(Fuzzy.Join)
+  return(Confidence.Level.1)
 }
