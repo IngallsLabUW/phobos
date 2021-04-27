@@ -29,6 +29,7 @@ CalculateSimilarityScore <- function(experimental.value, theoretical.value, flex
 #'
 #' @return final.candidates: dataframe of experimental data, matched with information from MoNA.
 IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidates) {
+  requireNamespace("dplyr", quietly = TRUE)
   potential.candidates <- potential.candidates %>%
     dplyr::filter(MH_mass > MoNA.Mass - 0.020,
            MH_mass < MoNA.Mass + 0.020) %>%
@@ -87,14 +88,14 @@ MakeMS2CosineDataframe <- function(df) {
 
 #' Create a filtered mini dataframe from a concatenated scanlist of MS2s.
 #'
-#' @param scan Single observation from a dataframe containing MS2 m/z and intensity spectra, separated by semicolons.
+#' @param concatenated.scan Single observation from a dataframe containing MS2 m/z and intensity spectra, separated by semicolons.
 #'
 #' @return scantable: A tiny dataframe, containing columns of mz and intensity.
 #' Intensity is scaled to 100 and filtered to drop all intensity values below 0.5.
 #'
-MakeScantable <- function(scan) {
+MakeScantable <- function(concatenated.scan) {
   requireNamespace("dplyr", quietly = TRUE)
-  scantable <- read.table(text = as.character(scan),
+  scantable <- read.table(text = as.character(concatenated.scan),
                           col.names = c("mz", "intensity"), fill = TRUE) %>%
     dplyr::mutate(mz = as.numeric(mz %>% stringr::str_replace(",", "")),
                   intensity = as.numeric(intensity %>% stringr::str_replace(";", "")),
@@ -109,11 +110,12 @@ MakeScantable <- function(scan) {
 #'
 #' @param scan1 Tiny dataframe of MS2, from first set of values to be compared. Column 1 is mz, column 2 is intensity. Dataframe is the output of the MakeScantable() function.
 #' @param scan2 Tiny dataframe of MS2, from second set of values to be compared. Column 1 is mz, column 2 is intensity. Dataframe is the output of the MakeScantable() function.
+#' @param mz.flexibility User-defined search tolerance for mz matching. This value should be consistent throughout the analysis.
 #'
 #' @return cosine.similarity: A weighted similarity score between 0 and 1, indicating the cosine relationship of the two vectors.
 #'
-MS2CosineSimilarity <- function(scan1, scan2) {
-  mz.tolerance <- 0.02
+MS2CosineSimilarity <- function(scan1, scan2, mz.flexibility) {
+  # mz.tolerance <- 0.02
 
   scan1 <- MakeScantable(scan1)
   scan2 <- MakeScantable(scan2)
@@ -122,7 +124,7 @@ MS2CosineSimilarity <- function(scan1, scan2) {
   weight2 <- (scan2[, 1] ^ 2) * sqrt(scan2[, 2])
 
   diff.matrix <- sapply(scan1[, 1], function(x) scan2[, 1] - x)
-  same.index <- which(abs(diff.matrix) < mz.tolerance, arr.ind = TRUE)
+  same.index <- which(abs(diff.matrix) < mz.flexibility, arr.ind = TRUE)
   cosine.similarity <- sum(weight1[same.index[, 2]] * weight2[same.index[, 1]]) /
     (sqrt(sum(weight2 ^ 2)) * sqrt(sum(weight1 ^ 2)))
 
@@ -131,7 +133,7 @@ MS2CosineSimilarity <- function(scan1, scan2) {
 
 #' Remove character values of "NA;" found in MARS outputs.
 #'
-#' @param column Character column that contains one or more "NA;" values.
+#' @param column Character column that contains one or more "NA; " values.
 #'
 #' @return
 ReplaceNA <- function(column) {

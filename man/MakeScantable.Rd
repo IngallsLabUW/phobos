@@ -4,10 +4,10 @@
 \alias{MakeScantable}
 \title{Create a filtered mini dataframe from a concatenated scanlist of MS2s.}
 \usage{
-MakeScantable(scan)
+MakeScantable(concatenated.scan)
 }
 \arguments{
-\item{scan}{Single observation from a dataframe containing MS2 m/z and intensity spectra, separated by semicolons.}
+\item{concatenated.scan}{Single observation from a dataframe containing MS2 m/z and intensity spectra, separated by semicolons.}
 }
 \value{
 scantable: A tiny dataframe, containing columns of mz and intensity.

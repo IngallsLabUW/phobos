@@ -72,47 +72,48 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
     dplyr::rowwise() %>%
     dplyr::mutate(ppm_mass_error = ((abs(mz_experimental - mz_theoretical)) / mz_theoretical) * 10^6,
                   MS2_cosine_similarity1 = ifelse(is.na(MS2_experimental) | is.na(MS2_theoretical),
-                                                  NA, MS2CosineSimilarity(MS2_experimental, MS2_theoretical)),
+                                                  NA, MS2CosineSimilarity(MS2_experimental, MS2_theoretical, mz.flexibility)),
                   total_similarity_score = ifelse(is.na(MS2_cosine_similarity1),
                                                   mean(c(mz_similarity_score1, rt_similarity_score1)),
                                                   mean(c(MS2_cosine_similarity1, mz_similarity_score1, rt_similarity_score1) * 100)))
 
   # Sanity check -------------------------------------------------------------
   # No fuzzy match (no mz within 0.02 daltons)
-  # No.Fuzzy.Match <- experimental.values %>%
-  #   dplyr::select(primary_key) %>%
-  #   dplyr::filter(primary_key %in% setdiff(1:nrow(.), Fuzzy.Join$primary_key)) %>%
-  #   dplyr::pull()
-  #
-  # # Fuzzy match, but wrong z/column
-  # No.CL1.Match <- setdiff(1:nrow(experimental.values),
-  #                         sort(c(unique(Confidence.Level.1$primary_key),
-  #                                No.Fuzzy.Match)))
-  #
-  # # Have any compounds been lost? Check for a TRUE output
-  # all.experimentals <- sort(c(No.Fuzzy.Match, No.CL1.Match, unique(Confidence.Level.1$primary_key)))
-  # length(all.experimentals) == length(experimental.values$primary_key)
-  #
-  # # Make "no match" dataframes for comparison
-  # No.CL1.Match.df <- experimental.values %>%
-  #   dplyr::filter(primary_key %in% No.CL1.Match)
-  # No.Fuzzy.Match.df <- experimental.values %>%
-  #   dplyr::filter(primary_key %in% No.Fuzzy.Match)
-  #
-  # # Let's land on MARS ------------------------------------------------------
-  # Mission.Accomplished <- Confidence.Level.1 %>%
-  #   dplyr::bind_rows(No.CL1.Match.df) %>%
-  #   dplyr::bind_rows(No.Fuzzy.Match.df) %>%
-  #   dplyr::mutate(confidence_rank = ifelse(mz_similarity_score1 > 0.9 & rt_similarity_score1 > 0.75 & ppm_mass_error < 7, 1, NA),
-  #                 confidence_source = ifelse(!is.na(confidence_rank), "Ingalls_Standards", NA)) %>%
-  #   dplyr::mutate(mz_experimental = ifelse(is.na(mz_experimental) & !is.na(mz), mz, mz_experimental),
-  #                 rt_sec_experimental = ifelse(is.na(rt_sec_experimental) & !is.na(rt), rt, rt_sec_experimental),
-  #          column_experimental = ifelse(is.na(column_experimental) & !is.na(column), column, column_experimental),
-  #          z_experimental = ifelse(is.na(z_experimental) & !is.na(z), z, z_experimental),
-  #          MS2_experimental = ifelse(is.na(MS2_experimental) & !is.na(MS2), MS2, MS2_experimental)) %>%
-  #   dplyr::select(MassFeature, everything(), -c("mz", "rt", "column", "z", "MS2"), ) %>%
-  #   dplyr::arrange(primary_key)
-  #
-  # return(Mission.Accomplished)
-  return(Confidence.Level.1)
+  No.Fuzzy.Match <- experimental.values %>%
+    dplyr::select(primary_key) %>%
+    dplyr::filter(primary_key %in% setdiff(1:nrow(.), Fuzzy.Join$primary_key)) %>%
+    dplyr::pull()
+
+  # Fuzzy match, but wrong z/column
+  No.CL1.Match <- setdiff(1:nrow(experimental.values),
+                          sort(c(unique(Confidence.Level.1$primary_key),
+                                 No.Fuzzy.Match)))
+
+  # Have any compounds been lost?
+  all.experimentals <- sort(c(No.Fuzzy.Match, No.CL1.Match, unique(Confidence.Level.1$primary_key)))
+  if(!length(all.experimentals) == length(experimental.values$primary_key)){
+    stop("Looks like compounds have been lost! Please go back and check your original dataframe for spelling mistakes and variable class.")
+  }
+
+  # Make "no match" dataframes for comparison
+  No.CL1.Match.df <- experimental.values %>%
+    dplyr::anti_join(Confidence.Level.1)
+  No.Fuzzy.Match.df <- experimental.values %>%
+    dplyr::anti_join(Fuzzy.Join)
+
+  # Let's land on MARS ------------------------------------------------------
+  Mission.Accomplished <- Confidence.Level.1 %>%
+    dplyr::bind_rows(No.CL1.Match.df) %>%
+    dplyr::bind_rows(No.Fuzzy.Match.df) %>%
+    dplyr::mutate(confidence_rank = ifelse(mz_similarity_score1 > 0.9 & rt_similarity_score1 > 0.75 & ppm_mass_error < 7, 1, NA),
+                  confidence_source = ifelse(!is.na(confidence_rank), "Ingalls_Standards", NA)) %>%
+    dplyr::mutate(mz_experimental = ifelse(is.na(mz_experimental) & !is.na(mz), mz, mz_experimental),
+                  rt_sec_experimental = ifelse(is.na(rt_sec_experimental) & !is.na(rt), rt, rt_sec_experimental),
+           column_experimental = ifelse(is.na(column_experimental) & !is.na(column), column, column_experimental),
+           z_experimental = ifelse(is.na(z_experimental) & !is.na(z), z, z_experimental),
+           MS2_experimental = ifelse(is.na(MS2_experimental) & !is.na(MS2), MS2, MS2_experimental)) %>%
+    dplyr::select(MassFeature, everything(), -c("mz", "rt", "column", "z", "MS2"), ) %>%
+    dplyr::arrange(primary_key)
+
+  return(Mission.Accomplished)
 }
