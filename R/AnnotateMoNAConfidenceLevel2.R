@@ -28,7 +28,8 @@
 #' example_confidenceL2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, z = z,
 #' mz.flexibility = 0.02, rt.flexibility = 30)
 AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassBank.Pos, mz.flexibility, rt.flexibility) {
-  # Subtract hydrogen for reference database: this will be changed
+
+  # Subtract hydrogen for reference database
   MoNA.Spectra.Neg <- MassBank.Neg %>%
     dplyr::mutate(MH_mass = M_mass - 1.0072766,
                   z_massbank = -1)
@@ -46,13 +47,13 @@ AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassB
   # Experimental Spectra ----------------------------------------------------
   Experimental.Spectra <- Confidence.Level.1 %>%
     dplyr::filter(!is.na(MS2_experimental)) %>%
-    dplyr::select(compound_experimental, z_experimental, MH_mass = "mz_experimental", MS2_experimental) %>%
+    dplyr::select(primary_key, z_experimental, MH_mass = "mz_experimental", MS2_experimental) %>%
     unique()
 
   # Reassign variables from Experimental.Spectra
   mz <- as.numeric(unlist(Experimental.Spectra["MH_mass"]))
   MS2 <- as.character(Experimental.Spectra["MS2_experimental"])
-  Mass.Feature <- as.data.frame(Experimental.Spectra["compound_experimental"])
+  Mass.Feature <- as.data.frame(Experimental.Spectra["primary_key"])
 
   # Assign variables for paralellized comparison
   experimental.df <- Experimental.Spectra
@@ -66,11 +67,11 @@ AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassB
                                      mc.cores = numCores) %>%
     dplyr::bind_rows() %>%
     dplyr::full_join(Confidence.Level.1) %>%
-    dplyr::select(MassFeature, compound_experimental, compound_theoretical, massbank_match, massbank_ID, mz_experimental, mz_theoretical, mz_massbank,
+    dplyr::select(MassFeature, primary_key, compound_theoretical, massbank_match, massbank_ID, mz_experimental, mz_theoretical, mz_massbank,
                   rt_sec_experimental, rt_sec_theoretical, column_experimental, column_theoretical, z_experimental, z_theoretical, z_massbank,
                   MS2_experimental, MS2_theoretical, MS2_massbank, ppm_mass_error, massbank_ppm, mz_similarity_score1, rt_similarity_score1,
                   MS2_cosine_similarity1, massbank_cosine_similarity, total_similarity_score, confidence_rank, confidence_source) %>%
-    dplyr::arrange(compound_experimental)
+    dplyr::arrange(primary_key)
 
   # Combine Confidence Level 2 with Confidence Level 1 ----------------------
   Confidence.Level.2 <- MoNA.Matched %>%
