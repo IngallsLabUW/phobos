@@ -1,12 +1,19 @@
 #' Annotate Confidence Level 2: MoNA
 #'
+#' This function takes a dataframe of experimental values, already annotated for Confidence Level 1, and compares it to theoretical values
+#' from MassBank of North America. Those compounds that have a good match (see TODO PLACE HERE for specifics on what defines a "good match")
+#' to MoNA MS1 & MS2 receive a Confidence Level 2 ranking.
+#' In order to run this code, external data from MoNA is required.
+#' TODO The code to produce or update the scraped spectra from MassBank is contained in the TODOFUNCTION as part of the phobos package.
+#'
 #' @param Confidence.Level.1 A dataframe of experimental values, already annotated for Confidence Level 1.
 #' Please refer to the AnnotateConfidenceLevel1 function for details!
 #' @param mz.flexibility Flexibility for m/z matching between experimental and theoretical values. Usually defined as 0.02.
+#' @param MassBank.Neg Spectra in negative ion mode from MassBank of North America, scraped and downloaded. This csv is available on the Ingalls Shared Drive in the MARS_Project folder, titled NEG_Spectra.csv
+#' @param MassBank.Pos Spectra in positive ion mode from MassBank of North America, scraped and downloaded. This csv is available on the Ingalls Shared Drive in the MARS_Project folder, titled POS_Spectra.csv
 #' @param rt.flexibility Flexibility for retention time matching between experimental and theoretical values. Usually defined as ~ 15-30 seconds.
-#' @param z Choose positive or negative charge for appropriate value comparison. The options are 1 for positive mode and -1 for negative.
 #'
-#' @return A complete dataframe, annotated for Confidence Level 1.
+#' @return A dataframe annotated for Confidence Level 2, in addition to the Confidence Level 1 annotation from the previous step.
 #' @export
 #'
 #' @examples
@@ -20,12 +27,12 @@
 #' z <- 1
 #' example_confidenceL2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, z = z,
 #' mz.flexibility = 0.02, rt.flexibility = 30)
-AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, mz.flexibility, rt.flexibility) {
+AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassBank.Pos, mz.flexibility, rt.flexibility) {
   # Subtract hydrogen for reference database: this will be changed
-  MoNA.Spectra.Neg <- read.csv("data/MoNA_RelationalSpreadsheets/NEG_Spectra.csv") %>%
+  MoNA.Spectra.Neg <- MassBank.Neg %>%
     dplyr::mutate(MH_mass = M_mass - 1.0072766,
                   z_massbank = -1)
-  MoNA.Spectra.Pos <- read.csv("data/MoNA_RelationalSpreadsheets/POS_Spectra.csv") %>%
+  MoNA.Spectra.Pos <- MassBank.Pos %>%
     dplyr::mutate(MH_mass = M_mass + 1.0072766,
                   z_massbank = 1)
 

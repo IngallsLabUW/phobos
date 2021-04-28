@@ -6,6 +6,8 @@
 \usage{
 AnnotateMoNAConfidenceLevel2(
   Confidence.Level.1,
+  MassBank.Neg,
+  MassBank.Pos,
   mz.flexibility,
   rt.flexibility
 )
@@ -14,17 +16,23 @@ AnnotateMoNAConfidenceLevel2(
 \item{Confidence.Level.1}{A dataframe of experimental values, already annotated for Confidence Level 1.
 Please refer to the AnnotateConfidenceLevel1 function for details!}
 
+\item{MassBank.Neg}{Spectra in negative ion mode from MassBank of North America, scraped and downloaded. This csv is available on the Ingalls Shared Drive in the MARS_Project folder, titled NEG_Spectra.csv}
+
+\item{MassBank.Pos}{Spectra in positive ion mode from MassBank of North America, scraped and downloaded. This csv is available on the Ingalls Shared Drive in the MARS_Project folder, titled POS_Spectra.csv}
+
 \item{mz.flexibility}{Flexibility for m/z matching between experimental and theoretical values. Usually defined as 0.02.}
 
 \item{rt.flexibility}{Flexibility for retention time matching between experimental and theoretical values. Usually defined as ~ 15-30 seconds.}
-
-\item{z}{Choose positive or negative charge for appropriate value comparison. The options are 1 for positive mode and -1 for negative.}
 }
 \value{
-A complete dataframe, annotated for Confidence Level 1.
+A dataframe annotated for Confidence Level 2, in addition to the Confidence Level 1 annotation from the previous step.
 }
 \description{
-Annotate Confidence Level 2: MoNA
+This function takes a dataframe of experimental values, already annotated for Confidence Level 1, and compares it to theoretical values
+from MassBank of North America. Those compounds that have a good match (see TODO PLACE HERE for specifics on what defines a "good match")
+to MoNA MS1 & MS2 receive a Confidence Level 2 ranking.
+In order to run this code, external data from MoNA is required.
+TODO The code to produce or update the scraped spectra from MassBank is contained in the TODOFUNCTION as part of the phobos package.
 }
 \examples{
 library(phobos)

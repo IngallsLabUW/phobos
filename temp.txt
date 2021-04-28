@@ -1,0 +1,6 @@
+Confidence.Level.1 <- read.csv("example_data/Example_ConfidenceLevel1.csv")
+MassBank.Neg <- read.csv("~/Downloads/NEG_Spectra.csv")
+MassBank.Pos <- read.csv("~/Downloads/POS_Spectra.csv")
+mz.flexibility <- 0.02
+rt.flexibility <- 30
+t <-AnnotateMoNAConfidenceLevel2(Confidence.Level.1, mz.flexibility, rt.flexibility)
