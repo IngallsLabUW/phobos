@@ -53,6 +53,11 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
   experimental.values <- experimental.values %>%
     dplyr::mutate(primary_key = 1:nrow(.))
 
+  theoretical.values <- theoretical.values %>%
+    dplyr::mutate(voltage_theoretical = sub(".*\\_", "", file_name),
+                  voltage_theoretical = substr(voltage_theoretical, 1, nchar(voltage_theoretical) - 4)) %>%
+    dplyr::select(-file_name)
+
   # Use a fuzzyjoin to combine experimental and theoretical values.
   Fuzzy.Join <- theoretical.values %>%
     fuzzyjoin::difference_left_join(experimental.values, by = c("mz"), max_dist = mz.flexibility) %>%
@@ -60,7 +65,8 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
     dplyr::rename_with(., ~gsub("\\.x", "_theoretical", .x)) %>%
     dplyr::select(MassFeature, primary_key, "compound_theoretical" = compound, mz_experimental, mz_theoretical,
                   "rt_sec_experimental" = rt_experimental, "rt_sec_theoretical" = rt_theoretical,
-                  column_experimental, column_theoretical, z_experimental, z_theoretical, MS2_experimental, MS2_theoretical)  %>%
+                  column_experimental, column_theoretical, z_experimental, z_theoretical,
+                  MS2_experimental, MS2_theoretical, voltage_theoretical)  %>%
     dplyr::arrange(primary_key)
 
   # Confidence Level 1 ----------------------------------------
