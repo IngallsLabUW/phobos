@@ -98,8 +98,12 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
   # Make "no match" dataframes for comparison
   No.CL1.Match.df <- experimental.values %>%
     dplyr::anti_join(Confidence.Level.1)
+  colnames(No.CL1.Match.df)[2:6] <- paste(colnames(No.CL1.Match.df)[2:6], "experimental", sep = "_")
+
   No.Fuzzy.Match.df <- experimental.values %>%
     dplyr::anti_join(Fuzzy.Join)
+  colnames(No.Fuzzy.Match.df)[2:6] <- paste(colnames(No.Fuzzy.Match.df)[2:6], "experimental", sep = "_")
+
 
   # Let's land on MARS ------------------------------------------------------
   Mission.Accomplished <- Confidence.Level.1 %>%
@@ -107,12 +111,6 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
     dplyr::bind_rows(No.Fuzzy.Match.df) %>%
     dplyr::mutate(confidence_rank = ifelse(mz_similarity_score1 > 0.9 & rt_similarity_score1 > 0.75 & ppm_mass_error < 7, 1, NA),
                   confidence_source = ifelse(!is.na(confidence_rank), "Ingalls_Standards", NA)) %>%
-    dplyr::mutate(mz_experimental = ifelse(is.na(mz_experimental) & !is.na(mz), mz, mz_experimental),
-                  rt_sec_experimental = ifelse(is.na(rt_sec_experimental) & !is.na(rt), rt, rt_sec_experimental),
-           column_experimental = ifelse(is.na(column_experimental) & !is.na(column), column, column_experimental),
-           z_experimental = ifelse(is.na(z_experimental) & !is.na(z), z, z_experimental),
-           MS2_experimental = ifelse(is.na(MS2_experimental) & !is.na(MS2), MS2, MS2_experimental)) %>%
-    dplyr::select(MassFeature, everything(), -c("mz", "rt", "column", "z", "MS2"), ) %>%
     dplyr::arrange(primary_key)
 
   return(Mission.Accomplished)
