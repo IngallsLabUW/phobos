@@ -4,7 +4,7 @@
 \alias{MS2CosineSimilarity}
 \title{Finds the weighted cosine similarity between two sets of MS2 spectra.}
 \usage{
-MS2CosineSimilarity(scan1, scan2)
+MS2CosineSimilarity(scan1, scan2, mz.flexibility)
 }
 \arguments{
 \item{scan1}{Tiny dataframe of MS2, from first set of values to be compared. Column 1 is mz, column 2 is intensity. Dataframe is the output of the MakeScantable() function.}

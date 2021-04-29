@@ -20,7 +20,7 @@ Please refer to the AnnotateConfidenceLevel1 function for details!}
 
 \item{MassBank.Pos}{Spectra in positive ion mode from MassBank of North America, scraped and downloaded. This csv is available on the Ingalls Shared Drive in the MARS_Project folder, titled POS_Spectra.csv}
 
-\item{mz.flexibility}{Flexibility for m/z matching between experimental and theoretical values. Usually defined as 0.02.}
+\item{mz.flexibility}{Flexibility in Daltons for m/z matching between experimental and theoretical values. Usually defined as 0.02.}
 
 \item{rt.flexibility}{Flexibility for retention time matching between experimental and theoretical values. Usually defined as ~ 15-30 seconds.}
 }
@@ -29,7 +29,7 @@ A dataframe annotated for Confidence Level 2, in addition to the Confidence Leve
 }
 \description{
 This function takes a dataframe of experimental values, already annotated for Confidence Level 1, and compares it to theoretical values
-from MassBank of North America. Those compounds that have a good match (see TODO PLACE HERE for specifics on what defines a "good match")
+from MassBank of North America (MoNA). Those compounds that have a good match (see TODO PLACE HERE for specifics on what defines a "good match")
 to MoNA MS1 & MS2 receive a Confidence Level 2 ranking.
 In order to run this code, external data from MoNA is required.
 TODO The code to produce or update the scraped spectra from MassBank is contained in the TODOFUNCTION as part of the phobos package.
@@ -39,10 +39,9 @@ library(phobos)
 # Load experimental data that has already been annotated for Confidence Level 1 using the AnnotateConfidenceLevel1 function.
 # Remember that dataframe format is important: please refer to README or the documentation for AnnotateConfidenceLevel1() for details.
 
-example_dir <- system.file("example_data", package = "phobos")
-example_data <- list.files(example_dir, full.names = TRUE)
-Confidence.Level.1 <- read.csv(grep("Example_ConfidenceLevel1", example_data, value = TRUE))
-z <- 1
-example_confidenceL2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, z = z,
-mz.flexibility = 0.02, rt.flexibility = 30)
+Confidence.Level.1 <- read.csv("example_data/Example_ConfidenceLevel1.csv")
+MassBank.Neg <- read.csv("your/file/path/here/NEG_Spectra.csv")
+MassBank.Pos <- read.csv("your/file/path/here/POS_Spectra.csv")
+Example_ConfidenceLevel2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, MassBank.Neg = MassBank.Neg,
+MassBank.Pos = MassBank.Pos, mz.flexibility = 0.02, rt.flexibility = 30)
 }

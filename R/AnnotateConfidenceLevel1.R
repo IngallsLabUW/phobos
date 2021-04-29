@@ -30,10 +30,8 @@
 #' # - "z": The polarity, numeric.
 #' # - "MS2": MS2 data for those compounds that have it, character, in concatenated format.
 #'
-#' example_dir <- system.file("example_data", package = "phobos") ## This folder does not currently ship with the package, so these examples are broken
-#' example_data <- list.files(example_dir, full.names = TRUE)
-#' experimental.values <- read.csv(dir(example.dir, full.names = TRUE, pattern = "Example_Experimental"))
-#' theoretical.values <- read.csv(dir(example.dir, full.names = TRUE, pattern = "Theoretical_Data"))
+#' experimental.values <- read.csv("example_data/Example_Experimental_Data.csv")
+#' theoretical.values <- read.csv("example_data/Theoretical_Data.csv")
 #' example.confidence.1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values,
 #' mz.flexibility = 0.02, rt.flexibility = 30)
 #'
@@ -76,10 +74,10 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
     dplyr::mutate(mz_similarity_score1 = CalculateSimilarityScore(mz_experimental, mz_theoretical, mz.flexibility),
                   rt_similarity_score1 = CalculateSimilarityScore(rt_sec_experimental, rt_sec_theoretical, rt.flexibility)) %>%
     dplyr::rowwise() %>%
-    dplyr::mutate(ppm_mass_error = ((abs(mz_experimental - mz_theoretical)) / mz_theoretical) * 10^6,
+    dplyr::mutate(ppm_mass_error1 = ((abs(mz_experimental - mz_theoretical)) / mz_theoretical) * 10^6,
                   MS2_cosine_similarity1 = ifelse(is.na(MS2_experimental) | is.na(MS2_theoretical),
                                                   NA, MS2CosineSimilarity(MS2_experimental, MS2_theoretical, mz.flexibility)),
-                  total_similarity_score = ifelse(is.na(MS2_cosine_similarity1),
+                  total_similarity_score1 = ifelse(is.na(MS2_cosine_similarity1),
                                                   mean(c(mz_similarity_score1, rt_similarity_score1)),
                                                   mean(c(MS2_cosine_similarity1, mz_similarity_score1, rt_similarity_score1) * 100)))
 
@@ -103,21 +101,25 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
 
   # Make "no match" dataframes for comparison
   No.CL1.Match.df <- experimental.values %>%
-    dplyr::anti_join(Confidence.Level.1)
-  colnames(No.CL1.Match.df)[2:6] <- paste(colnames(No.CL1.Match.df)[2:6], "experimental", sep = "_")
+    dplyr::anti_join(Confidence.Level.1) %>%
+    dplyr::rename("rt_sec_experimental" = rt)
+  colnames(No.CL1.Match.df)[c(2, 4:6)] <- paste(colnames(No.CL1.Match.df)[c(2, 4:6)], "experimental", sep = "_")
+
 
   No.Fuzzy.Match.df <- experimental.values %>%
-    dplyr::anti_join(Fuzzy.Join)
-  colnames(No.Fuzzy.Match.df)[2:6] <- paste(colnames(No.Fuzzy.Match.df)[2:6], "experimental", sep = "_")
+    dplyr::anti_join(Fuzzy.Join) %>%
+    dplyr::rename("rt_sec_experimental" = rt)
+  colnames(No.Fuzzy.Match.df)[c(2, 4:6)]  <- paste(colnames(No.Fuzzy.Match.df)[c(2, 4:6)], "experimental", sep = "_")
 
 
   # Let's land on MARS ------------------------------------------------------
   Mission.Accomplished <- Confidence.Level.1 %>%
     dplyr::bind_rows(No.CL1.Match.df) %>%
     dplyr::bind_rows(No.Fuzzy.Match.df) %>%
-    dplyr::mutate(confidence_rank = ifelse(mz_similarity_score1 > 0.9 & rt_similarity_score1 > 0.75 & ppm_mass_error < 7, 1, NA),
+    dplyr::mutate(confidence_rank = ifelse(mz_similarity_score1 > 0.9 & rt_similarity_score1 > 0.75 & ppm_mass_error1 < 7, 1, NA),
                   confidence_source = ifelse(!is.na(confidence_rank), "Ingalls_Standards", NA)) %>%
-    dplyr::arrange(primary_key)
+    dplyr::arrange(primary_key) %>%
+    unique()
 
   return(Mission.Accomplished)
 }
