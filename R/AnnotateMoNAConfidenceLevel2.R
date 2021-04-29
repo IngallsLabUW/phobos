@@ -78,7 +78,7 @@ AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassB
     dplyr::mutate(confidence_rank = ifelse(!is.na(massbank_match),
                                            paste(confidence_rank, "2", sep = "; "), confidence_rank),
                   confidence_source = ifelse(!is.na(massbank_match),
-                                             paste(confidence_source, "MoNA", sep = "; "), confidence_source)) %>%
+                                             paste(confidence_source, "MassBank", sep = "; "), confidence_source)) %>%
     dplyr::mutate(across(starts_with("confidence"), ~ReplaceNA(.x)))
 
   return(Confidence.Level.2)

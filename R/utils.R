@@ -81,9 +81,18 @@ MakeMS2CosineDataframe <- function(df) {
 
   mz.tolerance <- 0.02
 
-  similarity <- MS2CosineSimilarity(scan1 = scan1, scan2 = scan2)
+  weight1 <- (scan1[, 1] ^ 2) * sqrt(scan1[, 2])
+  weight2 <- (scan2[, 1] ^ 2) * sqrt(scan2[, 2])
 
-  return(similarity)
+  diff.matrix <- sapply(scan1[, 1], function(x) scan2[, 1] - x)
+  same.index <- which(abs(diff.matrix) < 0.02, arr.ind = TRUE)
+  cosine.similarity <- sum(weight1[same.index[, 2]] * weight2[same.index[, 1]]) /
+    (sqrt(sum(weight2 ^ 2)) * sqrt(sum(weight1 ^ 2)))
+
+  return(cosine.similarity)
+  #similarity <- MS2CosineSimilarity(scan1 = scan1, scan2 = scan2)
+
+  #return(similarity)
 }
 
 #' Create a filtered mini dataframe from a concatenated scanlist of MS2s.
@@ -95,6 +104,14 @@ MakeMS2CosineDataframe <- function(df) {
 #'
 MakeScantable <- function(concatenated.scan) {
   requireNamespace("dplyr", quietly = TRUE)
+
+  # scantable <- concatenated.scan %>%
+  #   # data.frame() %>%
+  #   # tidyr::separate_rows(., sep = "; ") %>%
+  #   # tidyr::separate(1, into = c("mz", "intensity"), sep = ", ") %>%
+  #   # dplyr::mutate(mz = as.numeric(mz),
+  #   #        intensity = as.numeric(intensity))
+
   scantable <- read.table(text = as.character(concatenated.scan),
                           col.names = c("mz", "intensity"), fill = TRUE) %>%
     dplyr::mutate(mz = as.numeric(mz %>% stringr::str_replace(",", "")),
@@ -114,17 +131,25 @@ MakeScantable <- function(concatenated.scan) {
 #'
 #' @return cosine.similarity: A weighted similarity score between 0 and 1, indicating the cosine relationship of the two vectors.
 #'
-MS2CosineSimilarity <- function(scan1, scan2, mz.flexibility) {
-  # mz.tolerance <- 0.02
+MS2CosineSimilarity <- function(scan1, scan2) {
 
-  scan1 <- MakeScantable(scan1)
-  scan2 <- MakeScantable(scan2)
+  # scan1 <- MakeScantable(scan1)
+  # scan2 <- MakeScantable(scan2)
+
+  print(class(scan1$mz))
+  print(class(scan1$intensity))
+  print(class(scan2$mz))
+  print(class(scan2$intensity))
 
   weight1 <- (scan1[, 1] ^ 2) * sqrt(scan1[, 2])
   weight2 <- (scan2[, 1] ^ 2) * sqrt(scan2[, 2])
+  print("weights made")
 
   diff.matrix <- sapply(scan1[, 1], function(x) scan2[, 1] - x)
-  same.index <- which(abs(diff.matrix) < mz.flexibility, arr.ind = TRUE)
+  print("diff.matrix made")
+  print(diff.matrix)
+  print(class(diff.matrix))
+  same.index <- which(abs(diff.matrix) < 0.02, arr.ind = TRUE)
   cosine.similarity <- sum(weight1[same.index[, 2]] * weight2[same.index[, 1]]) /
     (sqrt(sum(weight2 ^ 2)) * sqrt(sum(weight1 ^ 2)))
 
