@@ -45,10 +45,8 @@ library(phobos)
 # - "z": The polarity, numeric.
 # - "MS2": MS2 data for those compounds that have it, character, in concatenated format.
 
-example_dir <- system.file("example_data", package = "phobos") ## This folder does not currently ship with the package, so these examples are broken
-example_data <- list.files(example_dir, full.names = TRUE)
-experimental.values <- read.csv(dir(example.dir, full.names = TRUE, pattern = "Example_Experimental"))
-theoretical.values <- read.csv(dir(example.dir, full.names = TRUE, pattern = "Theoretical_Data"))
+experimental.values <- read.csv("example_data/Example_Experimental_Data.csv")
+theoretical.values <- read.csv("example_data/Theoretical_Data.csv")
 example.confidence.1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values,
 mz.flexibility = 0.02, rt.flexibility = 30)
 

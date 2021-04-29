@@ -1,14 +1,15 @@
 #' Annotate Confidence Level 2: MoNA
 #'
 #' This function takes a dataframe of experimental values, already annotated for Confidence Level 1, and compares it to theoretical values
-#' from MassBank of North America. Those compounds that have a good match (see TODO PLACE HERE for specifics on what defines a "good match")
+#' from MassBank of North America (MoNA). Those compounds that have a good match (see TODO PLACE HERE for specifics on what defines a "good match")
 #' to MoNA MS1 & MS2 receive a Confidence Level 2 ranking.
 #' In order to run this code, external data from MoNA is required.
 #' TODO The code to produce or update the scraped spectra from MassBank is contained in the TODOFUNCTION as part of the phobos package.
+#' @importFrom magrittr "%>%"
 #'
 #' @param Confidence.Level.1 A dataframe of experimental values, already annotated for Confidence Level 1.
 #' Please refer to the AnnotateConfidenceLevel1 function for details!
-#' @param mz.flexibility Flexibility for m/z matching between experimental and theoretical values. Usually defined as 0.02.
+#' @param mz.flexibility Flexibility in Daltons for m/z matching between experimental and theoretical values. Usually defined as 0.02.
 #' @param MassBank.Neg Spectra in negative ion mode from MassBank of North America, scraped and downloaded. This csv is available on the Ingalls Shared Drive in the MARS_Project folder, titled NEG_Spectra.csv
 #' @param MassBank.Pos Spectra in positive ion mode from MassBank of North America, scraped and downloaded. This csv is available on the Ingalls Shared Drive in the MARS_Project folder, titled POS_Spectra.csv
 #' @param rt.flexibility Flexibility for retention time matching between experimental and theoretical values. Usually defined as ~ 15-30 seconds.
@@ -21,12 +22,11 @@
 #' # Load experimental data that has already been annotated for Confidence Level 1 using the AnnotateConfidenceLevel1 function.
 #' # Remember that dataframe format is important: please refer to README or the documentation for AnnotateConfidenceLevel1() for details.
 #'
-#' example_dir <- system.file("example_data", package = "phobos")
-#' example_data <- list.files(example_dir, full.names = TRUE)
-#' Confidence.Level.1 <- read.csv(grep("Example_ConfidenceLevel1", example_data, value = TRUE))
-#' z <- 1
-#' example_confidenceL2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, z = z,
-#' mz.flexibility = 0.02, rt.flexibility = 30)
+#' Confidence.Level.1 <- read.csv("example_data/Example_ConfidenceLevel1.csv")
+#' MassBank.Neg <- read.csv("your/file/path/here/NEG_Spectra.csv")
+#' MassBank.Pos <- read.csv("your/file/path/here/POS_Spectra.csv")
+#' Example_ConfidenceLevel2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, MassBank.Neg = MassBank.Neg,
+#' MassBank.Pos = MassBank.Pos, mz.flexibility = 0.02, rt.flexibility = 30)
 AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassBank.Pos, mz.flexibility, rt.flexibility) {
 
   # Subtract hydrogen for reference database
@@ -69,8 +69,8 @@ AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassB
     dplyr::full_join(Confidence.Level.1) %>%
     dplyr::select(MassFeature, primary_key, compound_theoretical, massbank_match, massbank_ID, mz_experimental, mz_theoretical, mz_massbank,
                   rt_sec_experimental, rt_sec_theoretical, column_experimental, column_theoretical, z_experimental, z_theoretical, z_massbank,
-                  MS2_experimental, MS2_theoretical, MS2_massbank, ppm_mass_error, massbank_ppm, mz_similarity_score1, rt_similarity_score1,
-                  MS2_cosine_similarity1, massbank_cosine_similarity, total_similarity_score, confidence_rank, confidence_source) %>%
+                  MS2_experimental, MS2_theoretical, MS2_massbank, ppm_mass_error1, massbank_ppm, mz_similarity_score1, rt_similarity_score1,
+                  MS2_cosine_similarity1, massbank_cosine_similarity, total_similarity_score1, confidence_rank, confidence_source) %>%
     dplyr::arrange(primary_key)
 
   # Combine Confidence Level 2 with Confidence Level 1 ----------------------
