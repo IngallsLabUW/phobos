@@ -79,13 +79,12 @@ MakeMS2CosineDataframe <- function(df) {
   scan1 <- MakeScantable(df["scan1"])
   scan2 <- MakeScantable(df["scan2"])
 
-  mz.flexibility <- mz.flexibility
-
   weight1 <- (scan1[, 1] ^ 2) * sqrt(scan1[, 2])
   weight2 <- (scan2[, 1] ^ 2) * sqrt(scan2[, 2])
 
   diff.matrix <- sapply(scan1[, 1], function(x) scan2[, 1] - x)
-  same.index <- which(abs(diff.matrix) < mz.flexibility, arr.ind = TRUE)
+  diff.matrix <- as.matrix(diff.matrix)
+  same.index <- which(abs(diff.matrix) < 0.02, arr.ind = TRUE)
   cosine.similarity <- sum(weight1[same.index[, 2]] * weight2[same.index[, 1]]) /
     (sqrt(sum(weight2 ^ 2)) * sqrt(sum(weight1 ^ 2)))
 
