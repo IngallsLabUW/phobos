@@ -12,7 +12,47 @@ This is a build notes page. It is included on the .Rbuildignore and is therefore
 - Need to add an error message in CL1 about stopping if lengths of dataframes aren't correct.
 - Need to combine MS2 from standards list.
 - Add MoNA scrape code to pacakge.
-- Add KEGG functions
+- Add KEGG functions. Figure out how to properly create KEGG homesheet.
 - Add Metlin functions.
+- Documentation for interpreting output. Column description and clarity.
+- CL2 class level check, maybe for the rest of the CLs as well.
+- Check collision energy stuff.
+
+
+
+### MARS Project Log
+
+- Fragment matching: % of library sample found in fragments. 
+    Example, experimental spectra has *110.97466, 100;* 110.03485, 39.1; *58.02862, 33.5;* 68.01299, 26.6; 111.01888, 20.6.
+    Library spectra has               *110.97466, 100;* 109.00000, 40.1; *58.02862, 33.5;* 70.33989, 26.6; 121.04950, 15.0.
+    If the above two lines were identical, the fragment match would be 100%. In this situation, the fragment match would be 40% or 0.4.
+- The "replacing" of the theoretical values to cut down on columns should be a hidden function.
+- For retention time, use the standard runs that are in the same batches to calibrate retention time. This would be BEFORE entering 
+MARS. MARS will not facilitate this step most likely. 
+
+----    
+
+Potential layout for in-house database:
+Post-QC?
+
+**ID.col | mz       | rt        | Column | z  | ms2 if possible | other.metadata**
+MetCo1   | 102.0549 | 735.36592 | HILIC  | -1 | 
+
+
+---
+
+This is an ongoing log: a place for build notes and questions.
+*This is not to be confused with the Design Doc on the Shared Google Drive; that is for overall design direction and team suggestions. It is also not a README, which will be written closer to project completion.*
+
+#### Notes
+
+- Combine MoNA names so it's a little easier to manage the dataset.
+- Make Metlin hard to reach. Don't overload. Scrape what we don't know, like KRH's unknowns.
+- Need to replace old compound names with new ones!
+- For DDA high resolution, the mass spec sees a high signal. When it see that, it takes above and below that signal and isolates it in the collision chamber. In the ms2 df, the first column is the exact mass with an intensity of 100 (maximum), then second mass and intensity, etc. 
+
+
+- READO THE README! IT'S OUT OF DATE.
+
 
 Reconsider application to sources, not confidence ranks??
