@@ -8,6 +8,11 @@ This is a build notes page. It is included on the .Rbuildignore and is therefore
   Timestamp function (ch 6) should be kept local.
 - Styler package. style_pkg(), style_dir(), etc. Keep it tidy. Commit before application of style changes. See Ch 7.3 for deets.
 
+- Adjust the CL2 to have "2" suffixes on relevant columns. Combine ID and Names for CL2 to one column. Order everything.
 - Need to add an error message in CL1 about stopping if lengths of dataframes aren't correct.
 - Need to combine MS2 from standards list.
 - Add MoNA scrape code to pacakge.
+- Add KEGG functions
+- Add Metlin functions.
+
+Reconsider application to sources, not confidence ranks??
