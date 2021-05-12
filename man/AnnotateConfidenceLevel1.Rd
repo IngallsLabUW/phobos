@@ -14,7 +14,7 @@ AnnotateConfidenceLevel1(
 \arguments{
 \item{experimental.values}{A dataframe of unknown experimental values, created by the user.
 It is important to note that it must be in the following format, including capitalization and class:
-mz (numeric), rt (numeric, in seconds), column (numeric), z (numeric), MS2 (in concatenated format, character).}
+MassFeature (character), mz (numeric), rt (numeric, in seconds), column (numeric), z (numeric), MS2 (in concatenated format, character).}
 
 \item{theoretical.values}{TODO A dataframe of known, theoretical values, i.e, the Ingalls Standards list.
 Like its partner the experimental.values dataframe, the theoretical.values dataframe columns need to be in
@@ -26,7 +26,7 @@ column (all caps, character), z (numeric), OPTIONAL filename (character), and MS
 \item{rt.flexibility}{Flexibility for retention time matching between experimental and theoretical values. Usually defined as ~ 15-30 seconds.}
 }
 \value{
-A complete dataframe, annotated for Confidence Level 1.
+A dataframe annotated for Confidence Level 1, including mz/rt/total similarity scores, as well as rank and rank source.
 }
 \description{
 Compare a dataframe of experimental values with a dataframe of all theoretical values from the Ingalls
@@ -39,13 +39,15 @@ library(phobos)
 # - "mz": The mz value, numeric.
 # - "rt": The retention time, in seconds, numeric.
 # - "column": Column the mass feature was run on, character.
-# - "z": The ion mode, numeric.
+#      There are two options for this variable: "HILIC" or "RP" (short for Reverse Phase).
+#      In the Ingalls lab, cyano compounds are only ever run in positive mode, therefore the combination of an "RP" column observation
+#      and a "1" z observation will results in the correct analysis.
+# - "z": The polarity, numeric.
 # - "MS2": MS2 data for those compounds that have it, character, in concatenated format.
 
-example_dir <- system.file("example_data", package = "phobos")
-example_data <- list.files(example_dir, full.names = TRUE)
-experimental.values <- read.csv(grep("Example_Experimental", example_data, value = TRUE))
-theoretical.values <- read.csv(grep("Theoretical_Data", example_data, value = TRUE))
-example_confidenceL1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values,
+experimental.values <- read.csv("example_data/Example_Experimental_Data.csv")
+theoretical.values <- read.csv("example_data/Theoretical_Data.csv")
+example.confidence.1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values,
 mz.flexibility = 0.02, rt.flexibility = 30)
+
 }

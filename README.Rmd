@@ -55,12 +55,12 @@ The phobos package, designed as part of the Ingalls MARS (Metabolite Annotation,
 
 **TODO: Put visual description here or somewhere else in the usage/description? An overview of some kind needs to be here**
 
-phobos simplifies the identification process by transforming the each individual MSI standard into a step for annotation. Each step corresponds to a custom phobos function. Users begin with experimental (unknown) values, and systematically compare those to theoretical (known) values. 
+phobos simplifies the identification process by transforming each individual MSI standard into a step for annotation. Each step corresponds to a custom phobos function. Users begin with experimental (unknown) values, and systematically compare those to theoretical (known) values. 
 
 ```{r load data, include=FALSE}
 library(tidyverse)
 options(digits = 2)
-experimental.values <- read.csv("data/Example_Experimental_Data.csv") 
+experimental.values <- read.csv("example_data/Example_Experimental_Data.csv") 
 experimental.values$MS2 <- sub("^([^;]+;[^;]+).*", "\\1", experimental.values$MS2)
 
 
@@ -76,12 +76,14 @@ Below is a list of the columns required to use MARS. The dataframe must contain 
 - "MassFeature": Any identifier for a unique mass feature, character. 
 - "mz": The mz value, numeric. 
 - "rt": The retention time, in seconds, numeric. 
-- "column": Column the mass feature was run on, character. 
-- "z": The ion mode, numeric. 
+- "column": Column the mass feature was run on, character. There are two options for this variable: "HILIC" or "RP" (short for Reverse Phase). In the Ingalls lab, cyano compounds are only ever run in positive mode, therefore the combination of an "RP" column observation and a "1" z observation will results in the correct analysis.
+- "z": The polarity, numeric. 
 - "MS2": MS2 data for those compounds that have it, character. 
   - **Important**: The MS2 data must be in the filtered, scaled and concatenated format of "mz, intensity;", as below. For example purposes, the MS2 column below has been cut off at two instances of "mz, intensity;" but real data should have many more entries. For more information on how to get your MS2 data into the correct format, **TODO PUT INFORMATION HERE**.
   
-For clarity, phobos also adds an additional primary column to the dataframe titled "compound_experimental": a simple keys column consisting of 1-n rows.
+For clarity, phobos also adds an additional primary column to the dataframe titled "primary_key": a simple keys column consisting of 1-n rows.
+Throughout the project, the search parameter column names in the dataframes (mz, rt, z, column, MS2) will be modified according to their source.
+For example, all "theoretical" mz values, aka values that are derived from a standards sheet, are identified as "mz_theoretical", where as experimental values are identified as "mz_experimental", MoNA values are identified as "mz_massbank", etc.
 
 Below is an example of an experimental dataframe in the correct format.
 ```{r example experimental, echo=FALSE}

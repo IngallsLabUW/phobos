@@ -7,7 +7,7 @@
 ReplaceNA(column)
 }
 \arguments{
-\item{column}{Character column that contains one or more "NA;" values.}
+\item{column}{Character column that contains one or more "NA; " values.}
 }
 \value{
 
