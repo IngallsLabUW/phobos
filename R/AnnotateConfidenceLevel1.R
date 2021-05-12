@@ -36,7 +36,6 @@
 #' mz.flexibility = 0.02, rt.flexibility = 30)
 #'
 AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz.flexibility, rt.flexibility) {
-
   # Expand and fix these tests
   if (all(colnames(experimental.values) == c("MassFeature", "mz", "rt", "column", "z", "MS2"))) {
     print("Columns are correctly named and ordered.")
@@ -67,6 +66,7 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
                   MS2_experimental, MS2_theoretical, voltage_theoretical)  %>%
     dplyr::arrange(primary_key)
 
+
   # Confidence Level 1 ----------------------------------------
   Confidence.Level.1 <- Fuzzy.Join %>%
     dplyr::filter(z_experimental == z_theoretical,
@@ -89,6 +89,9 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
     dplyr::pull()
 
   # Fuzzy match, but wrong z/column
+  # I have no idea what the below code does but I suspect it's not doing
+  # what we want it to. Again, this is probably because MassFeature isn't
+  # a numeric but instead a string (e.g. I137.0459R6.2)
   No.CL1.Match <- setdiff(1:nrow(experimental.values),
                           sort(c(unique(Confidence.Level.1$primary_key),
                                  No.Fuzzy.Match)))
@@ -100,6 +103,7 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
   }
 
   # Make "no match" dataframes for comparison
+  # These data frames should be more intuitively created by anti_join
   No.CL1.Match.df <- experimental.values %>%
     dplyr::anti_join(Confidence.Level.1) %>%
     dplyr::rename("rt_sec_experimental" = rt)
@@ -120,6 +124,5 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
                   confidence_source = ifelse(!is.na(confidence_rank), "Ingalls_Standards", NA)) %>%
     dplyr::arrange(primary_key) %>%
     unique()
-
   return(Mission.Accomplished)
 }

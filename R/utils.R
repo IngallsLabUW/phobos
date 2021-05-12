@@ -31,7 +31,7 @@ CalculateSimilarityScore <- function(experimental.value, theoretical.value, flex
 IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidates) {
   requireNamespace("dplyr", quietly = TRUE)
   potential.candidates <- potential.candidates %>%
-    dplyr::filter(MH_mass > MoNA.Mass - 0.020,
+    dplyr::filter(MH_mass > MoNA.Mass - 0.020, # These should not be hard-coded!
            MH_mass < MoNA.Mass + 0.020) %>%
     fuzzyjoin::difference_inner_join(experimental.df, by = "MH_mass", max_dist = 0.02) %>%
     dplyr::filter(z_massbank == z_experimental) %>%
@@ -112,6 +112,7 @@ MakeScantable <- function(concatenated.scan) {
                           col.names = c("mz", "intensity"), fill = TRUE) %>%
     dplyr::mutate(mz = as.numeric(mz %>% stringr::str_replace(",", "")),
                   intensity = as.numeric(intensity %>% stringr::str_replace(";", "")),
+                  # Isn't intensity already scaled? Doesn't need to be rescaled here
                   intensity = round(intensity / max(intensity) * 100, digits = 1)) %>%
     dplyr::filter(intensity > 0.5) %>%
     dplyr::arrange(desc(intensity))
@@ -150,5 +151,6 @@ MS2CosineSimilarity <- function(scan1, scan2, mz.flexibility) {
 #'
 #' @return
 ReplaceNA <- function(column) {
+  # This is a very dangerous function - there's a difference between NA, "NA", and <NA> - which is this meant to handle?
   gsub("NA; ", "", column)
 }

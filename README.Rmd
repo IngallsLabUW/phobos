@@ -63,6 +63,7 @@ options(digits = 2)
 experimental.values <- read.csv("example_data/Example_Experimental_Data.csv") 
 experimental.values$MS2 <- sub("^([^;]+;[^;]+).*", "\\1", experimental.values$MS2)
 
+
 theoretical.values <- read.csv("data/Theoretical_Data.csv") %>%
   select(-file_name)
 theoretical.values$MS2 <- sub("^([^;]+;[^;]+).*", "\\1", theoretical.values$MS2)
@@ -108,8 +109,7 @@ To annotate the experimental data for confidence level 1, use the AnnotateConfid
 rt.flexibility are in Daltons and seconds, respectively.
 
 ```{r Confidence Level 1}
-Confidence.Level.1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values,
-                                             mz.flexibility = 0.02, rt.flexibility = 30)
+Confidence.Level.1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values, mz.flexibility = 0.02, rt.flexibility = 30)
 ```
 
 
