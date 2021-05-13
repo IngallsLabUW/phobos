@@ -20,5 +20,9 @@ Imports:
     fuzzyjoin,
     parallel,
     stringr,
+<<<<<<< HEAD
     tidyr,
     magrittr
+=======
+    tidyr
+>>>>>>> 75618086fa5185a5486ee08d488d99d6d3ce7af2

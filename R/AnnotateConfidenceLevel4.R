@@ -18,8 +18,13 @@
 AnnotateConfidenceLevel4 <- function(Confidence.Level.3) {
 
   Confidence.Level.4 <- Confidence.Level.3 %>%
+<<<<<<< HEAD
     dplyr::mutate(confidence_rank = ifelse(is.na(confidence_rank), 4, confidence_rank)) %>%
     dplyr::arrange(primary_key)
+=======
+    mutate(confidence_rank = ifelse(is.na(confidence_rank), 4, confidence_rank)) %>%
+    arrange(compound_experimental)
+>>>>>>> 75618086fa5185a5486ee08d488d99d6d3ce7af2
 
   return(Confidence.Level.4)
 }

@@ -36,6 +36,7 @@ AnnotateMoNAConfidenceLevel3 <- function(Confidence.Level.2, MassBank.Neg, MassB
     dplyr::select(-n, -temp)
 
   MoNA.Spectra.NEG <- MassBank.Neg %>%
+<<<<<<< HEAD
     dplyr::mutate(z_massbank3 = -1)
   MoNA.Spectra.Pos <- MassBank.Pos %>%
     dplyr::mutate(z_massbank3 = 1)
@@ -83,6 +84,63 @@ AnnotateMoNAConfidenceLevel3 <- function(Confidence.Level.2, MassBank.Neg, MassB
     dplyr::select(primary_key, MassFeature, compound_theoretical, massbank_match, massbank_match3,
                   mz_experimental:mz_massbank, MH_mass_experimental, MH_mass_MoNA,
                   everything(), -confidence_rank3, -mz_similarity_score3) %>%
+=======
+    dplyr::mutate(z_MoNA = -1)
+  MoNA.Spectra.Pos <- MassBank.Pos %>%
+    dplyr::mutate(z_MoNA = 1)
+
+  MoNA.Spectra <- MoNA.Spectra.NEG %>%
+    rbind(MoNA.Spectra.Pos) %>%
+    dplyr::mutate(MH_mass = M_mass - 1.0072766) %>%
+    dplyr::select(ID, Names, MH_mass, z_MoNA) %>%
+    dplyr::mutate_all(., list(~dplyr::na_if(.,""))) %>%
+    tidyr::drop_na()
+
+  My.Fuzzy.Join <- MoNA.Spectra %>%
+    fuzzyjoin::difference_left_join(Experimental.Values, by = c("MH_mass"), max_dist = 0.02) %>%
+    dplyr::filter(#is.na(confidence_source),
+      z_MoNA == z_experimental) %>%
+    dplyr::rename(MH_mass_MoNA = MH_mass.x,
+                  MH_mass_experimental = MH_mass.y) %>%
+    dplyr::mutate(mz_similarity_score3 = exp(-0.5 * (((MH_mass_experimental - MH_mass_MoNA) / mz.flexibility) ^ 2))) %>%
+    dplyr::select(primary_key, ID, Names, MH_mass_experimental, MH_mass_MoNA,
+                  z_experimental, z_MoNA, mz_similarity_score3, confidence_rank, confidence_source) %>%
+    dplyr::arrange(primary_key)
+
+  No.Fuzzy.Match <- setdiff(1:nrow(Experimental.Values),
+                            sort(unique(My.Fuzzy.Join$primary_key)))
+  CL3.Match <- as.integer(unique(My.Fuzzy.Join$primary_key))
+
+  # Have any compounds been lost? Check for a TRUE output
+  all.experimentals <- sort(c(No.Fuzzy.Match, CL3.Match))
+  length(all.experimentals) == length(Experimental.Values$primary_key)
+
+  # Make "no match" dataframes for comparison
+  # No.Fuzzy.Match.df <- Experimental.Values %>%
+  #   filter(primary_key %in% No.Fuzzy.Match) %>%
+  #   dplyr::rename(MH_mass_experimental = MH_mass)
+
+  No.CL3.Match.df <- experimental.values %>%
+    dplyr::anti_join(Confidence.Level.1) %>%
+    dplyr::rename("rt_sec_experimental" = rt)
+
+
+  final <- My.Fuzzy.Join %>%
+    bind_rows(No.Fuzzy.Match.df) %>%
+    dplyr::mutate(confidence_rank3 = ifelse(mz_similarity_score3 > 0.9, 3, NA)) %>%
+    dplyr::mutate(confidence_rank = ifelse(!is.na(confidence_rank) & !is.na(confidence_rank3), paste(confidence_rank, "3", sep = "; "),
+                                           ifelse(!is.na(confidence_rank3), confidence_rank3, confidence_rank)))  %>%
+    dplyr::mutate(confidence_source = ifelse(str_detect(confidence_rank, "3"),
+                                             apply(cbind(confidence_source, "MoNA"), 1, function(x) paste(x[!is.na(x)], collapse = "; ")),
+                                             confidence_source)) %>%
+    dplyr::select(primary_key, "MoNA_ID" = ID, "MoNA_Names" = Names, MH_mass_experimental, MH_mass_MoNA,
+                  z_experimental, z_MoNA, mz_similarity_score3, confidence_rank, confidence_source)
+
+  Confidence.Level.3 <- final %>%
+    dplyr::left_join(Confidence.Level.2) %>%
+    unique() %>%
+    dplyr::select(primary_key, compound_theoretical, MoNA_ID, MoNA_Names, massbank_match, everything()) %>%
+>>>>>>> 75618086fa5185a5486ee08d488d99d6d3ce7af2
     dplyr::arrange(primary_key)
 
   return(Confidence.Level.3)
