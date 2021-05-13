@@ -78,11 +78,7 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
                   MS2_cosine_similarity1 = ifelse(is.na(MS2_experimental) | is.na(MS2_theoretical),
                                                   NA, MS2CosineSimilarity(MS2_experimental, MS2_theoretical, mz.flexibility)),
                   total_similarity_score1 = ifelse(is.na(MS2_cosine_similarity1),
-<<<<<<< HEAD
                                                   mean(c(mz_similarity_score1, rt_similarity_score1) * 100),
-=======
-                                                  mean(c(mz_similarity_score1, rt_similarity_score1)),
->>>>>>> 75618086fa5185a5486ee08d488d99d6d3ce7af2
                                                   mean(c(MS2_cosine_similarity1, mz_similarity_score1, rt_similarity_score1) * 100)))
 
   # Sanity check -------------------------------------------------------------
