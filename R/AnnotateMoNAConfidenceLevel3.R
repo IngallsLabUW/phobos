@@ -42,6 +42,7 @@ AnnotateMoNAConfidenceLevel3 <- function(Confidence.Level.2, MassBank.Neg, MassB
 
   MoNA.Spectra <- MoNA.Spectra.NEG %>%
     rbind(MoNA.Spectra.Pos) %>%
+    dplyr::mutate(ID = paste("ID:", ID)) %>%
     tidyr::unite(massbank_match3, c(ID, Names), sep = "; ") %>%
     dplyr::mutate(MH_mass = M_mass - 1.0072766) %>%
     dplyr::select(massbank_match3, MH_mass, z_massbank3) %>%
@@ -80,9 +81,9 @@ AnnotateMoNAConfidenceLevel3 <- function(Confidence.Level.2, MassBank.Neg, MassB
 
   Confidence.Level.3 <- Full.Join %>%
     unique() %>%
-    dplyr::select(primary_key, MassFeature, compound_theoretical, massbank_match, massbank_match3,
-                  mz_experimental:mz_massbank, MH_mass_experimental, MH_mass_MoNA,
-                  everything(), -confidence_rank3, -mz_similarity_score3) %>%
+    dplyr::select(primary_key, MassFeature, compound_theoretical, massbank_match2, massbank_match3,
+                  mz_experimental:mz_massbank2, MH_mass_experimental, MH_mass_MoNA,
+                  z_experimental, z_theoretical, z_massbank2, z_massbank3, rt_sec_experimental:column_theoretical, everything()) %>%
     dplyr::arrange(primary_key)
 
   return(Confidence.Level.3)

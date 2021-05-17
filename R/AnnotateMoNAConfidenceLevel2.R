@@ -32,15 +32,16 @@ AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassB
   # Subtract hydrogen for reference database
   MoNA.Spectra.Neg <- MassBank.Neg %>%
     dplyr::mutate(MH_mass = M_mass - 1.0072766,
-                  z_massbank = -1)
+                  z_massbank2 = -1)
   MoNA.Spectra.Pos <- MassBank.Pos %>%
     dplyr::mutate(MH_mass = M_mass + 1.0072766,
-                  z_massbank = 1)
+                  z_massbank2 = 1)
 
   # Tidy theoretical spectra, dropping NA MS2s
   MoNA.Spectra <- MoNA.Spectra.Neg %>%
     rbind(MoNA.Spectra.Pos) %>%
-    dplyr::select("massbank_ID" = ID, Names, spectrum_KRHform_filtered, z_massbank, MH_mass) %>%
+    dplyr::mutate(ID = paste("ID:", ID)) %>%
+    dplyr::select("massbank_ID" = ID, Names, spectrum_KRHform_filtered, z_massbank2, MH_mass) %>%
     dplyr::mutate_all(., list(~dplyr::na_if(., ""))) %>%
     tidyr::drop_na()
 
@@ -67,19 +68,22 @@ AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassB
                                      mc.cores = numCores) %>%
     dplyr::bind_rows() %>%
     dplyr::full_join(Confidence.Level.1) %>%
-    dplyr::select(MassFeature, primary_key, compound_theoretical, massbank_match, massbank_ID, mz_experimental, mz_theoretical, mz_massbank,
-                  rt_sec_experimental, rt_sec_theoretical, column_experimental, column_theoretical, z_experimental, z_theoretical, z_massbank,
+    tidyr::unite(massbank_match2, c(massbank_ID, massbank_match), sep = "; ", na.rm = TRUE, remove = FALSE) %>%
+    dplyr::select(MassFeature, primary_key, compound_theoretical, massbank_match2, mz_experimental, mz_theoretical, mz_massbank2,
+                  rt_sec_experimental, rt_sec_theoretical, column_experimental, column_theoretical, z_experimental, z_theoretical, z_massbank2,
                   MS2_experimental, MS2_theoretical, MS2_massbank, ppm_mass_error1, massbank_ppm, mz_similarity_score1, rt_similarity_score1,
-                  MS2_cosine_similarity1, massbank_cosine_similarity, total_similarity_score1, confidence_rank, confidence_source) %>%
+                  MS2_cosine_similarity1, massbank_cosine_similarity2, total_similarity_score1, confidence_rank, confidence_source) %>%
     dplyr::arrange(primary_key)
 
   # Combine Confidence Level 2 with Confidence Level 1 ----------------------
   Confidence.Level.2 <- MoNA.Matched %>%
-    dplyr::mutate(confidence_rank = ifelse(!is.na(massbank_match),
+    dplyr::mutate(confidence_rank = ifelse(!is.na(massbank_match2),
                                            paste(confidence_rank, "2", sep = "; "), confidence_rank),
-                  confidence_source = ifelse(!is.na(massbank_match),
+                  confidence_source = ifelse(!is.na(massbank_match2),
                                              paste(confidence_source, "MassBank", sep = "; "), confidence_source)) %>%
-    dplyr::mutate(across(starts_with("confidence"), ~ReplaceNA(.x)))
+    dplyr::mutate(across(starts_with(c("confidence", "massbank")), ~ReplaceNA(.x))) %>%
+    unique()
+  Confidence.Level.2[Confidence.Level.2 == ""] <- NA
 
   return(Confidence.Level.2)
 }

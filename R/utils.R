@@ -34,7 +34,7 @@ IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidat
     dplyr::filter(MH_mass > MoNA.Mass - 0.020, # These should not be hard-coded!
            MH_mass < MoNA.Mass + 0.020) %>%
     fuzzyjoin::difference_inner_join(experimental.df, by = "MH_mass", max_dist = 0.02) %>%
-    dplyr::filter(z_massbank == z_experimental) %>%
+    dplyr::filter(z_massbank2 == z_experimental) %>%
     dplyr::rename(scan1 = spectrum_KRHform_filtered, # scan1 is MS2 from MoNA
                   scan2 = MS2_experimental,          # scan2 is MS2 from the experimental data
                   mass1 = MH_mass.x,                 # mass1 is the mass from MoNA
@@ -45,7 +45,7 @@ IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidat
     No.Match.Return <- Mass.Feature %>%
       dplyr::mutate(massbank_match = NA,
                     massbank_ppm = NA,
-                    massbank_cosine_similarity = NA)
+                    massbank_cosine_similarity2 = NA)
 
     return(No.Match.Return)
   }
@@ -53,19 +53,19 @@ IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidat
   # Add cosine similarity scores
   print("Making potential candidates")
 
-  potential.candidates$massbank_cosine_similarity <- apply(potential.candidates, 1, FUN = function(x) MakeMS2CosineDataframe(x))
+  potential.candidates$massbank_cosine_similarity2 <- apply(potential.candidates, 1, FUN = function(x) MakeMS2CosineDataframe(x))
 
   final.candidates <- potential.candidates %>%
     dplyr::mutate(massbank_match = paste(Names, massbank_ID, sep = " ID:"),
                   massbank_ppm = abs(mass2 - mass1) / mass1 * 10^6) %>%
     dplyr::rename(MS2_massbank = scan1,
-                  mz_massbank = mass1,
+                  mz_massbank2 = mass1,
                   MS2_experimental = scan2,
                   mz_experimental = mass2) %>%
     unique() %>%
     dplyr::filter(massbank_ppm < 5,
-                  massbank_cosine_similarity > 0.5) %>%
-    dplyr::arrange(desc(massbank_cosine_similarity))
+                  massbank_cosine_similarity2 > 0.5) %>%
+    dplyr::arrange(desc(massbank_cosine_similarity2))
 
   return(final.candidates)
 }
@@ -151,6 +151,5 @@ MS2CosineSimilarity <- function(scan1, scan2, mz.flexibility) {
 #'
 #' @return
 ReplaceNA <- function(column) {
-  # This is a very dangerous function - there's a difference between NA, "NA", and <NA> - which is this meant to handle?
   gsub("NA; ", "", column)
 }
