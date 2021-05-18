@@ -6,7 +6,7 @@
 #' @param MassBank.Pos Spectra in positive ion mode from MassBank of North America, scraped and downloaded. This csv is available on the Ingalls Shared Drive in the MARS_Project folder, titled POS_Spectra.csv
 #' @param mz.flexibility Flexibility for m/z matching between experimental and theoretical values. Usually defined as 0.02.
 #'
-#' @return A complete dataframe, annotated for Confidence Level 3 using MoNA.
+#' @return A dataframe annotated for Confidence Level 3 by referencing MassBank of North America.
 #' @export
 #'
 #' @examples
