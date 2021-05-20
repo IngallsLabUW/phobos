@@ -18,6 +18,7 @@ This is a build notes page. It is included on the .Rbuildignore and is therefore
 - Documentation for interpreting output. Column description and clarity.
 - CL2 class level check, maybe for the rest of the CLs as well.
 - Check collision energy stuff.
+- Check the MH mass and exact mass stuff: necesssary?
 
 
 
