@@ -75,11 +75,11 @@ AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassB
                   rt_similarity_score1, MS2_cosine_similarity1, MS2_cosine_similarity2, total_similarity_score1, confidence_rank, confidence_source) %>%
     dplyr::arrange(primary_key)
 
-  # Combine Confidence Level 2 with Confidence Level 1 ----------------------
+  # Combine Confidence Level 2 with Confidence Level 1 ---------------------------
   Confidence.Level.2 <- MoNA.Matched %>%
-    dplyr::mutate(confidence_rank = ifelse(!is.na(massbank_match2),
+    dplyr::mutate(confidence_rank = ifelse(!is.na(mz_similarity_score2),
                                            paste(confidence_rank, "2", sep = "; "), confidence_rank),
-                  confidence_source = ifelse(!is.na(massbank_match2),
+                  confidence_source = ifelse(!is.na(mz_similarity_score2),
                                              paste(confidence_source, "MassBank", sep = "; "), confidence_source)) %>%
     dplyr::mutate(across(starts_with(c("confidence", "massbank")), ~ReplaceNA(.x))) %>%
     unique()
