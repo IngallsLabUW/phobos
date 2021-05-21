@@ -45,7 +45,7 @@ IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidat
     No.Match.Return <- Mass.Feature %>%
       dplyr::mutate(massbank_match = NA,
                     massbank_ppm = NA,
-                    massbank_cosine_similarity2 = NA)
+                    MS2_cosine_similarity2 = NA)
 
     return(No.Match.Return)
   }
@@ -53,7 +53,7 @@ IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidat
   # Add cosine similarity scores
   print("Making potential candidates")
 
-  potential.candidates$massbank_cosine_similarity2 <- apply(potential.candidates, 1, FUN = function(x) MakeMS2CosineDataframe(x))
+  potential.candidates$MS2_cosine_similarity2 <- apply(potential.candidates, 1, FUN = function(x) MakeMS2CosineDataframe(x))
 
   final.candidates <- potential.candidates %>%
     dplyr::mutate(massbank_match = paste(Names, massbank_ID, sep = " ID:"),
@@ -64,8 +64,8 @@ IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidat
                   mz_experimental = mass2) %>%
     unique() %>%
     dplyr::filter(massbank_ppm < 5,
-                  massbank_cosine_similarity2 > 0.5) %>%
-    dplyr::arrange(desc(massbank_cosine_similarity2))
+                  MS2_cosine_similarity2 > 0.5) %>%
+    dplyr::arrange(desc(MS2_cosine_similarity2))
 
   return(final.candidates)
 }

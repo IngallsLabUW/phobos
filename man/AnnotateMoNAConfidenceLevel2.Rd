@@ -8,8 +8,7 @@ AnnotateMoNAConfidenceLevel2(
   Confidence.Level.1,
   MassBank.Neg,
   MassBank.Pos,
-  mz.flexibility,
-  rt.flexibility
+  mz.flexibility
 )
 }
 \arguments{
@@ -21,8 +20,6 @@ Please refer to the AnnotateConfidenceLevel1 function for details!}
 \item{MassBank.Pos}{Spectra in positive ion mode from MassBank of North America, scraped and downloaded. This csv is available on the Ingalls Shared Drive in the MARS_Project folder, titled POS_Spectra.csv}
 
 \item{mz.flexibility}{Flexibility in Daltons for m/z matching between experimental and theoretical values. Usually defined as 0.02.}
-
-\item{rt.flexibility}{Flexibility for retention time matching between experimental and theoretical values. Usually defined as ~ 15-30 seconds.}
 }
 \value{
 A dataframe annotated for Confidence Level 2, in addition to the Confidence Level 1 annotation from the previous step.
@@ -43,5 +40,5 @@ Confidence.Level.1 <- read.csv("example_data/Example_ConfidenceLevel1.csv")
 MassBank.Neg <- read.csv("your/file/path/here/NEG_Spectra.csv")
 MassBank.Pos <- read.csv("your/file/path/here/POS_Spectra.csv")
 Example_ConfidenceLevel2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, MassBank.Neg = MassBank.Neg,
-MassBank.Pos = MassBank.Pos, mz.flexibility = 0.02, rt.flexibility = 30)
+MassBank.Pos = MassBank.Pos, mz.flexibility = 0.02)
 }

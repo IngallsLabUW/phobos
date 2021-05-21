@@ -85,8 +85,8 @@ AnnotateKEGGConfidenceLevel3 <- function(Confidence.Level.3.MoNA, KEGG.Data, mz.
     dplyr::select(primary_key, MassFeature, compound_theoretical, massbank_match2, massbank_match3, Compound_KEGG, KEGGMatchesNames,
                   mz_experimental:mz_massbank2, MH_mass_experimental, MH_mass_MoNA, mz_KEGG,
                   z_experimental, z_theoretical, z_massbank2, z_massbank3, z_KEGG, rt_sec_experimental:column_theoretical,
-                  MS2_experimental:MS2_massbank, ppm_mass_error1, massbank_ppm, KEGGppm, mz_similarity_score1, mz_similarity_score3, mz_similarity_scoreKEGG,
-                  rt_similarity_score1:total_similarity_score1, everything(), -confidence_rank3) %>%
+                  MS2_experimental:MS2_massbank, ppm_mass_error1, massbank_ppm, KEGGppm, mz_similarity_score1, mz_similarity_score2,
+                  mz_similarity_score3, mz_similarity_scoreKEGG, rt_similarity_score1:total_similarity_score1, everything(), -confidence_rank3) %>%
     unique()
 
   return(Confidence.Level.3)
