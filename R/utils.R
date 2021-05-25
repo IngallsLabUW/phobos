@@ -22,6 +22,41 @@ CalculateSimilarityScore <- function(experimental.value, theoretical.value, flex
 }
 
 
+#' Check known contaminants
+#'
+#' @param experimental.df Experimental dataframe, containing at least the columns primary_key (numeric), MassFeature (character),
+#' mz_experimental (numeric), and z_experimental (numeric).
+#' @param common.contaminants A dataframe listing known contaminants for comparison. This csv can be found on the Shared Ingalls Google Drive
+#' in the MARS_project folder.
+#' @param ppm.tolerance Acceptable level of parts per million (ppm). Default is 15.
+#'
+#' @return matchedKnownContaminants, a small dataframe containing potential contaminants. These can be matched to the
+#' annotated dataframe by the primary_key column.
+#' @export
+#'
+checkContaminants <- function(experimental.df, common.contaminants, ppm.tolerance) {
+  if(missing(ppm.tolerance)) {
+    ppm.tolerance <- 15
+  }
+  df.to.join <- experimental.df %>%
+    dplyr::select(primary_key, MassFeature, mz_experimental, column_experimental, z_experimental) %>%
+    dplyr::rename(mz = mz_experimental,
+                  z = z_experimental) %>%
+    unique()
+
+  knownContaminants <- common.contaminants
+
+  matchedKnownContaminants <- difference_inner_join(x = knownContaminants, y = df.to.join,
+                                                         by = "mz", max_dist = 0.02, distance_col = NULL) %>%
+    dplyr::rename_with(., ~gsub("\\.x", "_contam", .x)) %>%
+    dplyr::rename_with(., ~gsub("\\.y", "_experimental", .x)) %>%
+    dplyr::mutate(ppm = (abs(mz_contam-mz_experimental )/mz_contam *10^6)) %>%
+    dplyr::filter(ppm < ppm.tolerance, z_contam == z_experimental) %>%
+    dplyr::select(primary_key, MassFeature, Compound, Origin, Ion.Type, Formula, ppm)
+
+  return(matchedKnownContaminants)
+}
+
 #' Compare experimental mass features to scraped MoNA data, based on MS1 and MS2 information.
 #'
 #' @param MoNA.Mass Single MoNA mass, isolated from scraped MoNA df.
