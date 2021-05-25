@@ -7,8 +7,8 @@
 AnnotateConfidenceLevel4(Confidence.Level.3)
 }
 \arguments{
-\item{Confidence.Level.3}{A dataframe annotated for Confidence Levels 1, 2, & 3.
-Please refer to the README for details.}
+\item{Confidence.Level.3}{A dataframe annotated for Confidence Levels 1, 2, & 3. Level 3 must have
+received annotation from both MassBank and KEGG! Please refer to the README for details.}
 }
 \value{
 A fully annotated dataframe, annotated for Confidence Levels 1, 2, 3, & 4.

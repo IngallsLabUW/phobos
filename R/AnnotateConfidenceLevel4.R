@@ -1,7 +1,7 @@
 #' Annotate Confidence Level 4: Everything else!
 #'
-#' @param Confidence.Level.3 A dataframe annotated for Confidence Levels 1, 2, & 3.
-#' Please refer to the README for details.
+#' @param Confidence.Level.3 A dataframe annotated for Confidence Levels 1, 2, & 3. Level 3 must have
+#' received annotation from both MassBank and KEGG! Please refer to the README for details.
 #'
 #' @return A fully annotated dataframe, annotated for Confidence Levels 1, 2, 3, & 4.
 #' @export
