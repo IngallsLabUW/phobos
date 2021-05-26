@@ -77,11 +77,8 @@ AnnotateKEGGConfidenceLevel3 <- function(Confidence.Level.3.MoNA, KEGG.Data, mz.
     dplyr::arrange(primary_key) %>%
     unique() %>%
     dplyr::mutate(confidence_rank3 = ifelse(mz_similarity_scoreKEGG > 0.9, 3, NA)) %>%
-    dplyr::mutate(confidence_rank = ifelse(!is.na(confidence_rank) & !is.na(confidence_rank3), paste(confidence_rank, "3", sep = "; "),
-                                           ifelse(!is.na(confidence_rank3), confidence_rank3, confidence_rank)))  %>%
-    dplyr::mutate(confidence_source = ifelse(stringr::str_detect(confidence_rank, "3"),
-                                             apply(cbind(confidence_source, "KEGG"), 1, function(x) paste(x[!is.na(x)], collapse = "; ")),
-                                             confidence_source)) %>%
+    dplyr::mutate(confidence_rank = pasteWithoutNA(confidence_rank, confidence_rank3)) %>%
+    dplyr::mutate(confidence_source = ifelse(is.na(confidence_rank3), confidence_source, paste(confidence_source, "KEGG", sep = "; "))) %>%
     dplyr::select(primary_key, MassFeature, compound_theoretical, massbank_match2, massbank_match3, Compound_KEGG, KEGGMatchesNames,
                   mz_experimental:mz_massbank2, MH_mass_experimental, MH_mass_MoNA, mz_KEGG,
                   z_experimental, z_theoretical, z_massbank2, z_massbank3, z_KEGG, rt_sec_experimental:column_theoretical,

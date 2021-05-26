@@ -180,6 +180,25 @@ MS2CosineSimilarity <- function(scan1, scan2, mz.flexibility) {
   return(cosine.similarity)
 }
 
+#' Paste items together, ignoring NAs
+#'
+#' @param ... List of items to be pasted
+#' @param sep Defined separator of ";" to remain consistent with MARS concatenation protocols
+#'
+#' @return Pasted item, ignoring the character "NA"s produced by regular paste.
+#' @export
+#'
+pasteWithoutNA <- function(..., sep = "; ") {
+  my.list <- list(...)
+  my.list <- lapply(my.list, function(x) {x[is.na(x)] <- ""; x})
+  product <- gsub(paste0("(^", sep, "|", sep, "$)"), "",
+                  gsub(paste0(sep, sep), sep,
+                       do.call(paste, c(my.list, list(sep = sep)))))
+  is.na(product) <- product == ""
+  product
+}
+
+
 #' Remove character values of "NA;" found in MARS outputs.
 #'
 #' @param column Character column that contains one or more "NA; " values.
