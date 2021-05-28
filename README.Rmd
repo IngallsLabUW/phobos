@@ -46,15 +46,13 @@ library("phobos")
 
 A common problem in metabolomics is how to handle unknown but determinable mass features. The output of non-targeted metabolite runs produces an abundance of spectra that can be discretely separated and isolated, but often remain unidentified, or identified with non-standard confidence. 
 
-The phobos package, designed as part of the Ingalls MARS (Metabolite Annotation, Rank and Sort) Project **TODO: LINK TO FUTURE GITHUB WEBSITE HERE**, prioritizes simplicity, efficiency, and confidence in metabolite identification. To encourage confidence consistency, phobos adheres to the proposed minimum reporting standards for chemical analysis as laid out in the Metabolomics Standards Initiative (MSI) [2007 paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3772505/pdf/nihms504189.pdf). In addition to utilizing the [Ingalls Lab Standards](https://github.com/IngallsLabUW/Ingalls_Standards) for foremost confidence annotations (known as "Confidence Level 1"), phobos provides functionality for incorporating spectral comparison to third-party sources such as [MassBank of North America (MoNA)](https://mona.fiehnlab.ucdavis.edu/), [Metlin](https://metlin.scripps.edu/landing_page.php?pgcontent=mainPage), **TODO: METLIN TBD** and [KEGG](https://www.genome.jp/kegg/) **TODO: KEGG TBD**.
+The phobos package, designed as part of the Ingalls MARS (Metabolite Annotation, Rank and Sort) Project **TODO: LINK TO FUTURE GITHUB WEBSITE HERE**, prioritizes simplicity, efficiency, and confidence in metabolite identification. To encourage confidence consistency, phobos adheres to the proposed minimum reporting standards for chemical analysis as laid out in the Metabolomics Standards Initiative (MSI) [2007 paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3772505/pdf/nihms504189.pdf). In addition to utilizing the [Ingalls Lab Standards](https://github.com/IngallsLabUW/Ingalls_Standards) for foremost confidence annotations (known as "Confidence Level 1"), phobos provides functionality for incorporating spectral comparison to third-party sources such as [MassBank of North America (MoNA)](https://mona.fiehnlab.ucdavis.edu/),, [KEGG](https://www.genome.jp/kegg/), and [Metlin](https://metlin.scripps.edu/landing_page.php?pgcontent=mainPage), **TODO: METLIN TBD**.
 
-For a complete description of the MARS annotation process, as well as all references for the equations used in the phobos package, please refer to the **TODO link website or github page here**.
+For a complete description of the MARS annotation process, as well as all references for the equations used in the phobos package, please refer to the **TODO link website or github page here. This will also include the visual guide.**.
 
 ## Usage
 
-**TODO: Put visual description here or somewhere else in the usage/description? An overview of some kind needs to be here**
-
-phobos simplifies the identification process by transforming each individual MSI rank into a step for annotation. Each step corresponds to a custom phobos function. Users begin with experimental (unknown) values, and systematically compare those to theoretical (known) values. 
+phobos simplifies the identification process by transforming each individual MSI rank into a step for annotation. Users begin with experimental values, and systematically compare those to theoretical values. With each successive function, a new dataframe is created with an additional level of annotation.
 
 
 ```{r load data, include=FALSE}
@@ -67,7 +65,7 @@ theoretical.values <- read.csv("example_data/Theoretical_Data.csv")
 theoretical.values$MS2 <- sub("^([^;]+;[^;]+).*", "\\1", theoretical.values$MS2)
 ```
 
-The user begins with a dataframe of experimental data, transformed *by the user* into a standardized format. It is important to pay attention to both the column names and the class; the code will not run if they are not in the correct configuration!
+Before running the annotation functions, The experimental data is transformed *by the user* into a standardized format. It is important to pay attention to both the column names and the class; the code will not run if they are not in the correct configuration!
 
 Below is a list of the columns required to use MARS. The dataframe must contain only these columns, in this order.
 
@@ -137,7 +135,7 @@ Confidence.Level.2 <- read.csv("example_data/Example_ConfidenceLevel2.csv")
 ```{r Display CL2, echo=FALSE}
 CL2 <- Confidence.Level.2 %>%
   arrange(primary_key) %>%
-  select(MassFeature, primary_key:massbank_match, massbank_ppm, massbank_cosine_similarity, 
+  select(MassFeature, primary_key:massbank_match2, massbank_ppm, MS2_cosine_similarity2, 
          confidence_rank, confidence_source) %>%
   unique()
 knitr::kable(CL2[c(1, 2, 10, 18, 26, 27, 54, 62), ], caption = "Confidence Level 2")
@@ -149,16 +147,42 @@ The output of AnnotateMoNAConfidenceLevel2() produces a dataframe that includes 
 
 ### Confidence Level 3
 
-Compounds that receive a confidence level of 3 are also considered putatively annotated based on fewer restrictions. The MARS project defines a confidence level 3 as a good MS1 match from MoNA, Metlin or KEGG within the column and z specifications.
+Compounds that receive a confidence level of 3 are also considered putatively annotated based on fewer restrictions. The MARS project defines a confidence level 3 as a good MS1 match from MoNA, Metlin, or KEGG within the column and z specifications.
 
-Confidence level 3 uses the same external data as confidence level 2, so no additional downloading is required. 
+For each database used, there is a separate, ordered set of functions. For a full explanation of the order, please refer to **TODO: link again to the visual guide here.** Because databases are used, the user needs to ensure that they have all of the required information accessible. The data from MoNA is the same as in the previous step. The data from KEGG is located in the same place as the MoNA: the shared Ingalls Lab Google Drive under Collaborative_Projects --> MARS_Project --> KEGG_Spreadsheets. **TODO: When ready, add more info here about updating/creating the KEGG data.**
 
+MoNA:
+```{r Confidence Level 3: MoNA}
+Confidence.Level.3_MoNA <- read.csv("example_data/Example_ConfidenceLevel3_MoNA.csv")
+```
+
+```{r Display CL3: MoNA, echo=FALSE}
+CL3_MoNA <- Confidence.Level.3_MoNA %>%
+  arrange(primary_key) %>%
+  select(MassFeature, primary_key:massbank_match3, MH_mass_experimental, MH_mass_MoNA, 
+         mz_similarity_score3, confidence_rank, confidence_source) %>%
+  unique()
+knitr::kable(CL3[c(1, 2, 5, 6), ], caption = "Confidence Level 3: MoNA")
+```
+
+KEGG:
+```{r Confidence Level 3: KEGG}
+Confidence.Level.3_KEGG <- read.csv("example_data/Example_ConfidenceLevel3_KEGG.csv")
+```
+
+```{r Display CL3: KEGG, echo=FALSE}
+CL3_KEGG <- Confidence.Level.3_KEGG %>%
+  arrange(primary_key) %>%
+  select(MassFeature, primary_key:Compound_KEGG, mz_similarity_scoreKEGG, confidence_rank, confidence_source) %>%
+  unique()
+knitr::kable(CL3[c(1, 66, 314, 355), ], caption = "Confidence Level 3: KEGG")
+```
 
 ---
 
 ### Confidence Level 4
 
-Confidence level 4 is everything else! **TODO: It should be filtered for possible contaminants and made sure that the potential mass feature is quality.**
+Confidence level 4 is everything else! 
 
 **TODO: This is commented out while the join explosions are dealt with, to see if all the data can be kept in the package/github. Will be brought back in later.
 

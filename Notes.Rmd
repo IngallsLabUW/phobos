@@ -1,6 +1,14 @@
 
 This is a build notes page. It is included on the .Rbuildignore and is therefore hidden from the build process. It will be deleted when the package is complete.
 
+FOR WILL
+mz similarity score 3
+explosions
+
+
+
+
+
 *Notes*
 
 - Styler package. style_pkg(), style_dir(), etc. Keep it tidy. Commit before application of style changes. See Ch 7.3 for deets.
