@@ -20,14 +20,13 @@ knitr::opts_chunk$set(
 
 phobos is an R package of custom functions that accompany the Ingalls Lab MARS Project.
 
-The MARS project is an easy way to identify and rank unknown mass features (MFs) in your data. It consists of three major sections: 
+The MARS project helps identify and rank unknown mass features (MFs) in untargeted metabolomics data. It consists of three major sections: 
 
-- A central database containing compiled mass features detected by the Ingalls lab with mz (mass/charge), rt (retention time, seconds), column, charge and ms2 data
-- *phobos*: A package of functions for annotating, ranking, and scoring the unknown mass features, as well as other common data transformations.
+- A central "homebase" database containing compiled mass features detected by the Ingalls lab with mz (mass/charge), rt (retention time, seconds), column, charge and ms2 data. **TODO: This database is still being built.**
+- This package, *phobos*: A package of functions for annotating, ranking, and scoring the unknown mass features, as well as other common data transformations associated with the MARS project.
 - A central database containing annotated mass features from previous MARS missions. **TODO: This may end up being combined with the first database as one complete "homebase".**
 
-**Flexible, updatable, searchable, rankable, exportable.**
-
+**phobos aims to be: Flexible, updatable, searchable, rankable, exportable.**
 
 ## Installation
 
@@ -155,18 +154,6 @@ Compounds that receive a confidence level of 3 are also considered putatively an
 Confidence level 3 uses the same external data as confidence level 2, so no additional downloading is required. 
 
 
-<!-- # ```{r Confidence Level 3} -->
-<!-- # Confidence.Level.3 <- read.csv("example_data/Example_ConfidenceLevel3.csv") -->
-<!-- # ``` -->
-<!-- #  -->
-<!-- # ```{r Display CL3, echo=FALSE} -->
-<!-- # CL3 <- Confidence.Level.3 %>% -->
-<!-- #   arrange(primary_key) %>% -->
-<!-- #   select(MassFeature, massbank_match3, mz_experimental, MH_mass_MoNA, confidence_rank, confidence_source) %>% -->
-<!-- #   unique() -->
-<!-- # knitr::kable(CL3[c(1, 26, 66, 314), ], caption = "Confidence Level 3") -->
-<!-- # ``` -->
-
 ---
 
 ### Confidence Level 4
@@ -175,19 +162,4 @@ Confidence level 4 is everything else! **TODO: It should be filtered for possibl
 
 **TODO: This is commented out while the join explosions are dealt with, to see if all the data can be kept in the package/github. Will be brought back in later.
 
-<!-- # ```{r load CL3 data, echo=FALSE} -->
-<!-- # Confidence.Level.3 <- read.csv("example_data/Example_ConfidenceLevel3.csv") -->
-<!-- # ``` -->
-<!-- #  -->
-<!-- # ```{r Confidence Level 4} -->
-<!-- # Confidence.Level.4 <- AnnotateConfidenceLevel4(Confidence.Level.3 = Confidence.Level.3) -->
-<!-- # ``` -->
-<!-- #  -->
-<!-- # **TODO: Display Confidence Level 4 here, need to deal with some join explosions first. -->
-<!-- # ```{r Display CL4, echo=FALSE} -->
-<!-- # CL4 <- Confidence.Level.4 %>% -->
-<!-- #   arrange(primary_key) %>% -->
-<!-- #   select(MassFeature, compound_experimental:MoNA_Names, MH_mass_experimental, MH_mass_MoNA, mz_similarity_score3:confidence_source) %>% -->
-<!-- #   unique() -->
-<!-- # knitr::kable(CL4[c(1, 26, 73), ], caption = "Confidence Level 4") -->
-<!-- # ``` -->
+

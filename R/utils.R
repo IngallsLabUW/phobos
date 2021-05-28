@@ -136,18 +136,10 @@ MakeMS2CosineDataframe <- function(df) {
 MakeScantable <- function(concatenated.scan) {
   requireNamespace("dplyr", quietly = TRUE)
 
-  # scantable <- concatenated.scan %>%
-  #   # data.frame() %>%
-  #   # tidyr::separate_rows(., sep = "; ") %>%
-  #   # tidyr::separate(1, into = c("mz", "intensity"), sep = ", ") %>%
-  #   # dplyr::mutate(mz = as.numeric(mz),
-  #   #        intensity = as.numeric(intensity))
-
   scantable <- read.table(text = as.character(concatenated.scan),
                           col.names = c("mz", "intensity"), fill = TRUE) %>%
     dplyr::mutate(mz = as.numeric(mz %>% stringr::str_replace(",", "")),
                   intensity = as.numeric(intensity %>% stringr::str_replace(";", "")),
-                  # Isn't intensity already scaled? Doesn't need to be rescaled here
                   intensity = round(intensity / max(intensity) * 100, digits = 1)) %>%
     dplyr::filter(intensity > 0.5) %>%
     dplyr::arrange(desc(intensity))

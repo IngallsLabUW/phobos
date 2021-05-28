@@ -68,11 +68,18 @@ AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassB
     dplyr::bind_rows() %>%
     dplyr::full_join(Confidence.Level.1) %>%
     tidyr::unite(massbank_match2, c(massbank_ID, massbank_match), sep = "; ", na.rm = TRUE, remove = FALSE) %>%
-    mutate(mz_similarity_score2 = CalculateSimilarityScore(mz_experimental, mz_massbank2, mz.flexibility)) %>%
+    dplyr::mutate(mz_similarity_score2 = CalculateSimilarityScore(mz_experimental, mz_massbank2, mz.flexibility)) %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(MS2_cosine_similarity2 = ifelse(!is.na(MS2_experimental) & !is.na(MS2_massbank) & str_count(MS2_massbank, ",") > 2,
+                                                  MS2CosineSimilarity(MS2_experimental, MS2_massbank, mz.flexibility), NA)) %>%
+    dplyr::mutate(total_similarity_score2 = ifelse(is.na(MS2_cosine_similarity2), mz_similarity_score2,
+                                                   ((MS2_cosine_similarity2 * mz_similarity_score2) / 2) * 100)) %>%
+    ungroup() %>%
     dplyr::select(MassFeature, primary_key, compound_theoretical, massbank_match2, mz_experimental, mz_theoretical, mz_massbank2,
                   rt_sec_experimental, rt_sec_theoretical, column_experimental, column_theoretical, z_experimental, z_theoretical, z_massbank2,
                   MS2_experimental, MS2_theoretical, MS2_massbank, ppm_mass_error1, massbank_ppm, mz_similarity_score1, mz_similarity_score2,
-                  rt_similarity_score1, MS2_cosine_similarity1, MS2_cosine_similarity2, total_similarity_score1, confidence_rank, confidence_source) %>%
+                  rt_similarity_score1, MS2_cosine_similarity1, MS2_cosine_similarity2, total_similarity_score1, total_similarity_score2,
+                  confidence_rank, confidence_source) %>%
     dplyr::arrange(primary_key)
 
   # Combine Confidence Level 2 with Confidence Level 1 ---------------------------

@@ -3,9 +3,6 @@ This is a build notes page. It is included on the .Rbuildignore and is therefore
 
 *Notes*
 
-- Remember the available() app
-- Sys.time should be defined WITHIN the function, not as a package variable. See Chapter 6 for details.
-  Timestamp function (ch 6) should be kept local.
 - Styler package. style_pkg(), style_dir(), etc. Keep it tidy. Commit before application of style changes. See Ch 7.3 for deets.
 
 - Go through Veronica's conversation and make sure that documentation makes sense.
@@ -52,6 +49,9 @@ This is an ongoing log: a place for build notes and questions.
 - Make Metlin hard to reach. Don't overload. Scrape what we don't know, like KRH's unknowns.
 - Need to replace old compound names with new ones!
 - For DDA high resolution, the mass spec sees a high signal. When it see that, it takes above and below that signal and isolates it in the collision chamber. In the ms2 df, the first column is the exact mass with an intensity of 100 (maximum), then second mass and intensity, etc. 
+- Total Similarity score: Should it be applied to level 2 as well? Maybe level 3? Why have it at all?
+- KEGG and future dataframes: should those be 3.5, or a different kind of ranking? Sorting is a bit of a problem.
+
 
 
 - Check all TODO tags in the README.
