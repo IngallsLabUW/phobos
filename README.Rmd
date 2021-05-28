@@ -186,7 +186,6 @@ Confidence level 4 is everything else!
 
 Any mass feature that has not yet been assigned a confidence level in a previous step will receive a confidence level of 4. 
 
-
 ```{r Load CL4}
 Confidence.Level.4 <- AnnotateConfidenceLevel4(Confidence.Level.3_KEGG)
 ```
@@ -199,3 +198,10 @@ CL4 <- Confidence.Level.4 %>%
 knitr::kable(CL4[c(1, 26, 66, 202, 314, 354), ], caption = "Confidence Level 4")
 ```
 
+---
+
+### Common Contaminants
+
+In order to check against common contaminants, download the "Common_Contaminants.csv" data from the shared Ingalls Google Drive in the MARS_Project folder. 
+
+Run the checkContaminants() function using the final annotated data and the downloaded csv. 
