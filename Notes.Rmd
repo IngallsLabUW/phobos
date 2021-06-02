@@ -27,6 +27,8 @@ This is a build notes page. It is included on the .Rbuildignore and is therefore
 - Check all TODO tags in the README.
 - Make Metlin hard to reach. Don't overload. Scrape what we don't know, like KRH's unknowns.
 - KEGG and future dataframes: should those be 3.5, or a different kind of ranking? Sorting is a bit of a problem.
+- How to best update the "Theoretical Data" for CL1? Similar to the quarterly update/up-to-user update? 
+- I will move the theoretical data from the package to the standards area/shared drive to prevent confusion.
 
 ### Other comments
 
