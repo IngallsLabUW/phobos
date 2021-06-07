@@ -12,7 +12,6 @@
 #' @param mz.flexibility Flexibility in Daltons for m/z matching between experimental and theoretical values. Usually defined as 0.02.
 #' @param MassBank.Neg Spectra in negative ion mode from MassBank of North America, scraped and downloaded. This csv is available on the Ingalls Shared Drive in the MARS_Project folder, titled NEG_Spectra.csv
 #' @param MassBank.Pos Spectra in positive ion mode from MassBank of North America, scraped and downloaded. This csv is available on the Ingalls Shared Drive in the MARS_Project folder, titled POS_Spectra.csv
-#' @param rt.flexibility Flexibility for retention time matching between experimental and theoretical values. Usually defined as ~ 15-30 seconds.
 #'
 #' @return A dataframe annotated for Confidence Level 2, in addition to the Confidence Level 1 annotation from the previous step.
 #' @export
@@ -26,21 +25,22 @@
 #' MassBank.Neg <- read.csv("your/file/path/here/NEG_Spectra.csv")
 #' MassBank.Pos <- read.csv("your/file/path/here/POS_Spectra.csv")
 #' Example_ConfidenceLevel2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, MassBank.Neg = MassBank.Neg,
-#' MassBank.Pos = MassBank.Pos, mz.flexibility = 0.02, rt.flexibility = 30)
-AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassBank.Pos, mz.flexibility, rt.flexibility) {
+#' MassBank.Pos = MassBank.Pos, mz.flexibility = 0.02)
+AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassBank.Pos, mz.flexibility) {
 
   # Subtract hydrogen for reference database
   MoNA.Spectra.Neg <- MassBank.Neg %>%
     dplyr::mutate(MH_mass = M_mass - 1.0072766,
-                  z_massbank = -1)
+                  z_massbank2 = -1)
   MoNA.Spectra.Pos <- MassBank.Pos %>%
     dplyr::mutate(MH_mass = M_mass + 1.0072766,
-                  z_massbank = 1)
+                  z_massbank2 = 1)
 
   # Tidy theoretical spectra, dropping NA MS2s
   MoNA.Spectra <- MoNA.Spectra.Neg %>%
     rbind(MoNA.Spectra.Pos) %>%
-    dplyr::select("massbank_ID" = ID, Names, spectrum_KRHform_filtered, z_massbank, MH_mass) %>%
+    dplyr::mutate(ID = paste("ID:", ID)) %>%
+    dplyr::select("massbank_ID" = ID, Names, spectrum_KRHform_filtered, z_massbank2, MH_mass) %>%
     dplyr::mutate_all(., list(~dplyr::na_if(., ""))) %>%
     tidyr::drop_na()
 
@@ -67,19 +67,30 @@ AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassB
                                      mc.cores = numCores) %>%
     dplyr::bind_rows() %>%
     dplyr::full_join(Confidence.Level.1) %>%
-    dplyr::select(MassFeature, primary_key, compound_theoretical, massbank_match, massbank_ID, mz_experimental, mz_theoretical, mz_massbank,
-                  rt_sec_experimental, rt_sec_theoretical, column_experimental, column_theoretical, z_experimental, z_theoretical, z_massbank,
-                  MS2_experimental, MS2_theoretical, MS2_massbank, ppm_mass_error1, massbank_ppm, mz_similarity_score1, rt_similarity_score1,
-                  MS2_cosine_similarity1, massbank_cosine_similarity, total_similarity_score1, confidence_rank, confidence_source) %>%
+    tidyr::unite(massbank_match2, c(massbank_ID, massbank_match), sep = "; ", na.rm = TRUE, remove = FALSE) %>%
+    dplyr::mutate(mz_similarity_score2 = CalculateSimilarityScore(mz_experimental, mz_massbank2, mz.flexibility)) %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(MS2_cosine_similarity2 = ifelse(!is.na(MS2_experimental) & !is.na(MS2_massbank) & str_count(MS2_massbank, ",") > 2,
+                                                  MS2CosineSimilarity(MS2_experimental, MS2_massbank, mz.flexibility), NA)) %>%
+    dplyr::mutate(total_similarity_score2 = ifelse(is.na(MS2_cosine_similarity2), mz_similarity_score2,
+                                                   ((MS2_cosine_similarity2 * mz_similarity_score2) / 2) * 100)) %>%
+    ungroup() %>%
+    dplyr::select(MassFeature, primary_key, compound_theoretical, massbank_match2, mz_experimental, mz_theoretical, mz_massbank2,
+                  rt_sec_experimental, rt_sec_theoretical, column_experimental, column_theoretical, z_experimental, z_theoretical, z_massbank2,
+                  MS2_experimental, MS2_theoretical, MS2_massbank, ppm_mass_error1, massbank_ppm, mz_similarity_score1, mz_similarity_score2,
+                  rt_similarity_score1, MS2_cosine_similarity1, MS2_cosine_similarity2, total_similarity_score1, total_similarity_score2,
+                  confidence_rank, confidence_source) %>%
     dplyr::arrange(primary_key)
 
-  # Combine Confidence Level 2 with Confidence Level 1 ----------------------
+  # Combine Confidence Level 2 with Confidence Level 1 ---------------------------
   Confidence.Level.2 <- MoNA.Matched %>%
-    dplyr::mutate(confidence_rank = ifelse(!is.na(massbank_match),
+    dplyr::mutate(confidence_rank = ifelse(!is.na(mz_similarity_score2),
                                            paste(confidence_rank, "2", sep = "; "), confidence_rank),
-                  confidence_source = ifelse(!is.na(massbank_match),
+                  confidence_source = ifelse(!is.na(mz_similarity_score2),
                                              paste(confidence_source, "MassBank", sep = "; "), confidence_source)) %>%
-    dplyr::mutate(across(starts_with("confidence"), ~ReplaceNA(.x)))
+    dplyr::mutate(across(starts_with(c("confidence", "massbank")), ~ReplaceNA(.x))) %>%
+    unique()
+  Confidence.Level.2[Confidence.Level.2 == ""] <- NA
 
   return(Confidence.Level.2)
 }

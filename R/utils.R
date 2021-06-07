@@ -22,6 +22,41 @@ CalculateSimilarityScore <- function(experimental.value, theoretical.value, flex
 }
 
 
+#' Check known contaminants
+#'
+#' @param experimental.df Experimental dataframe, containing at least the columns primary_key (numeric), MassFeature (character),
+#' mz_experimental (numeric), and z_experimental (numeric).
+#' @param common.contaminants A dataframe listing known contaminants for comparison. This csv can be found on the Shared Ingalls Google Drive
+#' in the MARS_project folder.
+#' @param ppm.tolerance Acceptable level of parts per million (ppm). Default is 15.
+#'
+#' @return matchedKnownContaminants, a small dataframe containing potential contaminants. These can be matched to the
+#' annotated dataframe by the primary_key column.
+#' @export
+#'
+checkContaminants <- function(experimental.df, common.contaminants, ppm.tolerance) {
+  if(missing(ppm.tolerance)) {
+    ppm.tolerance <- 15
+  }
+  df.to.join <- experimental.df %>%
+    dplyr::select(primary_key, MassFeature, mz_experimental, column_experimental, z_experimental) %>%
+    dplyr::rename(mz = mz_experimental,
+                  z = z_experimental) %>%
+    unique()
+
+  knownContaminants <- common.contaminants
+
+  matchedKnownContaminants <- difference_inner_join(x = knownContaminants, y = df.to.join,
+                                                         by = "mz", max_dist = 0.02, distance_col = NULL) %>%
+    dplyr::rename_with(., ~gsub("\\.x", "_contam", .x)) %>%
+    dplyr::rename_with(., ~gsub("\\.y", "_experimental", .x)) %>%
+    dplyr::mutate(ppm = (abs(mz_contam-mz_experimental )/mz_contam *10^6)) %>%
+    dplyr::filter(ppm < ppm.tolerance, z_contam == z_experimental) %>%
+    dplyr::select(primary_key, MassFeature, Compound, Origin, Ion.Type, Formula, ppm)
+
+  return(matchedKnownContaminants)
+}
+
 #' Compare experimental mass features to scraped MoNA data, based on MS1 and MS2 information.
 #'
 #' @param MoNA.Mass Single MoNA mass, isolated from scraped MoNA df.
@@ -34,7 +69,7 @@ IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidat
     dplyr::filter(MH_mass > MoNA.Mass - 0.020, # These should not be hard-coded!
            MH_mass < MoNA.Mass + 0.020) %>%
     fuzzyjoin::difference_inner_join(experimental.df, by = "MH_mass", max_dist = 0.02) %>%
-    dplyr::filter(z_massbank == z_experimental) %>%
+    dplyr::filter(z_massbank2 == z_experimental) %>%
     dplyr::rename(scan1 = spectrum_KRHform_filtered, # scan1 is MS2 from MoNA
                   scan2 = MS2_experimental,          # scan2 is MS2 from the experimental data
                   mass1 = MH_mass.x,                 # mass1 is the mass from MoNA
@@ -45,7 +80,7 @@ IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidat
     No.Match.Return <- Mass.Feature %>%
       dplyr::mutate(massbank_match = NA,
                     massbank_ppm = NA,
-                    massbank_cosine_similarity = NA)
+                    MS2_cosine_similarity2 = NA)
 
     return(No.Match.Return)
   }
@@ -53,19 +88,19 @@ IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidat
   # Add cosine similarity scores
   print("Making potential candidates")
 
-  potential.candidates$massbank_cosine_similarity <- apply(potential.candidates, 1, FUN = function(x) MakeMS2CosineDataframe(x))
+  potential.candidates$MS2_cosine_similarity2 <- apply(potential.candidates, 1, FUN = function(x) MakeMS2CosineDataframe(x))
 
   final.candidates <- potential.candidates %>%
     dplyr::mutate(massbank_match = paste(Names, massbank_ID, sep = " ID:"),
                   massbank_ppm = abs(mass2 - mass1) / mass1 * 10^6) %>%
     dplyr::rename(MS2_massbank = scan1,
-                  mz_massbank = mass1,
+                  mz_massbank2 = mass1,
                   MS2_experimental = scan2,
                   mz_experimental = mass2) %>%
     unique() %>%
     dplyr::filter(massbank_ppm < 5,
-                  massbank_cosine_similarity > 0.5) %>%
-    dplyr::arrange(desc(massbank_cosine_similarity))
+                  MS2_cosine_similarity2 > 0.5) %>%
+    dplyr::arrange(desc(MS2_cosine_similarity2))
 
   return(final.candidates)
 }
@@ -101,18 +136,10 @@ MakeMS2CosineDataframe <- function(df) {
 MakeScantable <- function(concatenated.scan) {
   requireNamespace("dplyr", quietly = TRUE)
 
-  # scantable <- concatenated.scan %>%
-  #   # data.frame() %>%
-  #   # tidyr::separate_rows(., sep = "; ") %>%
-  #   # tidyr::separate(1, into = c("mz", "intensity"), sep = ", ") %>%
-  #   # dplyr::mutate(mz = as.numeric(mz),
-  #   #        intensity = as.numeric(intensity))
-
   scantable <- read.table(text = as.character(concatenated.scan),
                           col.names = c("mz", "intensity"), fill = TRUE) %>%
     dplyr::mutate(mz = as.numeric(mz %>% stringr::str_replace(",", "")),
                   intensity = as.numeric(intensity %>% stringr::str_replace(";", "")),
-                  # Isn't intensity already scaled? Doesn't need to be rescaled here
                   intensity = round(intensity / max(intensity) * 100, digits = 1)) %>%
     dplyr::filter(intensity > 0.5) %>%
     dplyr::arrange(desc(intensity))
@@ -145,12 +172,30 @@ MS2CosineSimilarity <- function(scan1, scan2, mz.flexibility) {
   return(cosine.similarity)
 }
 
+#' Paste items together, ignoring NAs
+#'
+#' @param ... List of items to be pasted
+#' @param sep Defined separator of ";" to remain consistent with MARS concatenation protocols
+#'
+#' @return Pasted item, ignoring the character "NA"s produced by regular paste.
+#' @export
+#'
+pasteWithoutNA <- function(..., sep = "; ") {
+  my.list <- list(...)
+  my.list <- lapply(my.list, function(x) {x[is.na(x)] <- ""; x})
+  product <- gsub(paste0("(^", sep, "|", sep, "$)"), "",
+                  gsub(paste0(sep, sep), sep,
+                       do.call(paste, c(my.list, list(sep = sep)))))
+  is.na(product) <- product == ""
+  product
+}
+
+
 #' Remove character values of "NA;" found in MARS outputs.
 #'
 #' @param column Character column that contains one or more "NA; " values.
 #'
 #' @return
 ReplaceNA <- function(column) {
-  # This is a very dangerous function - there's a difference between NA, "NA", and <NA> - which is this meant to handle?
   gsub("NA; ", "", column)
 }

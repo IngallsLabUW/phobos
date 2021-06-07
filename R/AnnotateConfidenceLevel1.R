@@ -78,7 +78,7 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
                   MS2_cosine_similarity1 = ifelse(is.na(MS2_experimental) | is.na(MS2_theoretical),
                                                   NA, MS2CosineSimilarity(MS2_experimental, MS2_theoretical, mz.flexibility)),
                   total_similarity_score1 = ifelse(is.na(MS2_cosine_similarity1),
-                                                  mean(c(mz_similarity_score1, rt_similarity_score1)),
+                                                  mean(c(mz_similarity_score1, rt_similarity_score1) * 100),
                                                   mean(c(MS2_cosine_similarity1, mz_similarity_score1, rt_similarity_score1) * 100)))
 
   # Sanity check -------------------------------------------------------------
@@ -89,9 +89,6 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
     dplyr::pull()
 
   # Fuzzy match, but wrong z/column
-  # I have no idea what the below code does but I suspect it's not doing
-  # what we want it to. Again, this is probably because MassFeature isn't
-  # a numeric but instead a string (e.g. I137.0459R6.2)
   No.CL1.Match <- setdiff(1:nrow(experimental.values),
                           sort(c(unique(Confidence.Level.1$primary_key),
                                  No.Fuzzy.Match)))
@@ -103,7 +100,6 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
   }
 
   # Make "no match" dataframes for comparison
-  # These data frames should be more intuitively created by anti_join
   No.CL1.Match.df <- experimental.values %>%
     dplyr::anti_join(Confidence.Level.1) %>%
     dplyr::rename("rt_sec_experimental" = rt)

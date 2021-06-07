@@ -20,4 +20,6 @@ Imports:
     fuzzyjoin,
     parallel,
     stringr,
-    tidyr
+    tidyr,
+    magrittr
+

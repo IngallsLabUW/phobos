@@ -22,7 +22,7 @@ Please refer to the README or documentation for the AnnotateConfidenceLevel1 and
 \item{mz.flexibility}{Flexibility for m/z matching between experimental and theoretical values. Usually defined as 0.02.}
 }
 \value{
-A complete dataframe, annotated for Confidence Level 3 using MoNA.
+A dataframe annotated for Confidence Level 3 by referencing MassBank of North America.
 }
 \description{
 Annotate Confidence Level 3: MoNA

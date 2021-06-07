@@ -7,8 +7,8 @@
 AnnotateConfidenceLevel4(Confidence.Level.3)
 }
 \arguments{
-\item{Confidence.Level.3}{A dataframe annotated for Confidence Levels 1, 2, & 3.
-Please refer to the README for details.}
+\item{Confidence.Level.3}{A dataframe annotated for Confidence Levels 1, 2, & 3. Level 3 must have
+received annotation from both MassBank and KEGG! Please refer to the README for details.}
 }
 \value{
 A fully annotated dataframe, annotated for Confidence Levels 1, 2, 3, & 4.
@@ -19,10 +19,7 @@ Annotate Confidence Level 4: Everything else!
 \examples{
 #' library(phobos)
 # Load experimental data that has already been annotated for Confidence Levels 1, 2, & 3.
+Confidence.Level.3_KEGG <- read.csv("example_data/Example_ConfidenceLevel3_KEGG.csv")
 
-example_dir <- system.file("example_data", package = "phobos")
-example_data <- list.files(example_dir, full.names = TRUE)
-Confidence.Level.3 <- read.csv(grep("Example_ConfidenceLevel3", example_data, value = TRUE))
-
-example_confidenceL4 <- AnnotateConfidenceLevel4(Confidence.Level.3 = Confidence.Level.3)
+example_confidenceL4 <- AnnotateConfidenceLevel4(Confidence.Level.3 = Confidence.Level.3_KEGG)
 }

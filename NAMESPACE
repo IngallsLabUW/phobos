@@ -2,6 +2,9 @@
 
 export(AnnotateConfidenceLevel1)
 export(AnnotateConfidenceLevel4)
+export(AnnotateKEGGConfidenceLevel3)
 export(AnnotateMoNAConfidenceLevel2)
 export(AnnotateMoNAConfidenceLevel3)
+export(checkContaminants)
+export(pasteWithoutNA)
 importFrom(magrittr,"%>%")

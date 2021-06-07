@@ -1,13 +1,48 @@
 
+WILL: READ THIS FIRST
+Biggest issue right now is explosions, mostly because of the lack of MS2 consensus and the KEGG IDs not being concatenated. Later I may work on trying to squash some stuff together but that is why the end dataframe is enormous.
+
+The "example_data" folder has some filtered dataframes for example purposes. But you can create the entire final product from that data.
+
+The stuff listed below is mostly "wishlist" items that I will prioritize after some other projects this summer, but some of it I am going to try and incorporate before June 10th. For now I want to make sure the entire thing just works from beginning to end. 
+
+------------------------------------------------
+
 This is a build notes page. It is included on the .Rbuildignore and is therefore hidden from the build process. It will be deleted when the package is complete.
+
 
 *Notes*
 
-- Remember the available() app
-- Sys.time should be defined WITHIN the function, not as a package variable. See Chapter 6 for details.
-  Timestamp function (ch 6) should be kept local.
 - Styler package. style_pkg(), style_dir(), etc. Keep it tidy. Commit before application of style changes. See Ch 7.3 for deets.
 
+- Go through Veronica's conversation and make sure that documentation makes sense.
 - Need to add an error message in CL1 about stopping if lengths of dataframes aren't correct.
 - Need to combine MS2 from standards list.
 - Add MoNA scrape code to pacakge.
+- Figure out how to properly create KEGG homesheet.
+- Documentation for interpreting output. Column description and clarity.
+- CL2 class level check, maybe for the rest of the CLs as well.
+- Check collision energy stuff.
+- Check the MH mass and exact mass stuff in MoNA level 3: necesssary?
+- Check all TODO tags in the README.
+- Make Metlin hard to reach. Don't overload. Scrape what we don't know, like KRH's unknowns.
+- KEGG and future dataframes: should those be 3.5, or a different kind of ranking? Sorting is a bit of a problem.
+- How to best update the "Theoretical Data" for CL1? Similar to the quarterly update/up-to-user update? 
+- I will move the theoretical data from the package to the standards area/shared drive to prevent confusion.
+- Is each step independent of the rest?
+- Column class for every dataframe. Midsection checks.
+- Documentation for CL4.
+- 1.5 confidence
+- Interpret output documentation
+
+### Other comments
+
+- Fragment matching: % of library sample found in fragments. 
+    Example, experimental spectra has *110.97466, 100;* 110.03485, 39.1; *58.02862, 33.5;* 68.01299, 26.6; 111.01888, 20.6.
+    Library spectra has               *110.97466, 100;* 109.00000, 40.1; *58.02862, 33.5;* 70.33989, 26.6; 121.04950, 15.0.
+    If the above two lines were identical, the fragment match would be 100%. In this situation, the fragment match would be 40% or 0.4.
+- The "replacing" of the theoretical values to cut down on columns should be a hidden function.
+- For retention time, use the standard runs that are in the same batches to calibrate retention time. This would be BEFORE entering MARS. MARS will not facilitate this step most likely. 
+
+- For DDA high resolution, the mass spec sees a high signal. When it see that, it takes above and below that signal and isolates it in the collision chamber. In the ms2 df, the first column is the exact mass with an intensity of 100 (maximum), then second mass and intensity, etc. 
+
