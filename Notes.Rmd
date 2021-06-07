@@ -29,6 +29,11 @@ This is a build notes page. It is included on the .Rbuildignore and is therefore
 - KEGG and future dataframes: should those be 3.5, or a different kind of ranking? Sorting is a bit of a problem.
 - How to best update the "Theoretical Data" for CL1? Similar to the quarterly update/up-to-user update? 
 - I will move the theoretical data from the package to the standards area/shared drive to prevent confusion.
+- Is each step independent of the rest?
+- Column class for every dataframe. Midsection checks.
+- Documentation for CL4.
+- 1.5 confidence
+- Interpret output documentation
 
 ### Other comments
 
