@@ -32,14 +32,14 @@ The MARS project helps identify and rank unknown mass features (MFs) in untarget
 
 You can install the development version of phobos from [Github](https://github.com/IngallsLabUW/phobos) with:
 
-``` r
+``` {r}
 devtools::install_github("IngallsLabUW/phobos")
 ```
 
 Once installed, phobos can be loaded like any other package:
 
-``` r
-library("phobos")
+``` {r}
+library(phobos)
 ```
 
 ## Description
@@ -116,6 +116,8 @@ knitr::kable(CL1[c(1:3, 11, 19), ], caption = "Confidence Level 1")
 ```
 
 In the above table, the results have been given an m/z, rt, MS2, and ppm scores, which are used to create a total similarity score. Depending on the results, a mass feature is given a confidence rank and source (for the first step, either NA or Ingalls_Standards). **TODO: add more specifics here about interpreting the output**
+
+(Yes, more specifics would be great - how should users interpret dual annotations? What are "good" scores? How should cutoffs and filtering be done?)
 
 ---
 
