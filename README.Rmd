@@ -22,7 +22,7 @@ phobos is an R package of custom functions that accompany the Ingalls Lab MARS P
 
 The MARS project helps identify and rank unknown mass features (MFs) in untargeted metabolomics data. It consists of two major sections: 
 
-- A central "homebase" database containing compiled mass features detected by the Ingalls lab with mz (mass/charge), rt (retention time, seconds), column, charge and ms2 data, as well as all previous MARS missions and metadata.
+- A central "HomeBase" database containing compiled mass features detected by the Ingalls lab with mz (mass/charge), rt (retention time, seconds), column, charge and ms2 data, as well as all previous MARS missions and metadata.
 - This package, *phobos*: A package of functions for annotating, ranking, and scoring the unknown mass features, as well as other common data transformations associated with the MARS project.
 
 
@@ -61,7 +61,7 @@ options(digits = 2)
 experimental.values <- read.csv("example_data/Example_Experimental_Data.csv") 
 experimental.values$MS2 <- sub("^([^;]+;[^;]+).*", "\\1", experimental.values$MS2)
 
-theoretical.values <- read.csv("example_data/Theoretical_Data.csv") 
+theoretical.values <- read.csv("example_data/Example_Theoretical_Data.csv") 
 theoretical.values$MS2 <- sub("^([^;]+;[^;]+).*", "\\1", theoretical.values$MS2)
 ```
 
@@ -95,7 +95,7 @@ knitr::kable(head(experimental.values, 5), caption = "Experimental Data")
 
 In order to receive a confidence level 1 annotation, a mass feature must be compared to an authentic chemical standard using two independent and orthogonal data. Within the MARS project, a mass feature must match to a chemical standard by column, charge, mz, retention time, and fall below a user-defined ppm. 
 
-The experimental data is compared to the theoretical data (the Ingalls Standards csv) for confidence level 1. A version of the theoretical data, modified for the phobos package, is included in the phobos example_data/ subdirectory and can be imported using the read.csv("example_data/Theoretical_Data.csv") command. The complete Ingalls Standards csv is located on the [Ingalls Standards Github](https://github.com/IngallsLabUW/Ingalls_Standards/blob/master/Ingalls_Lab_Standards_NEW.csv) and can be downloaded for a more updated version. Like the experimental data, the theoretical data must be in a specific format before comparison. **TODO: Right now the github standards doesn't include the MS2 data, it will once consensus is reached!**
+The experimental data is compared to the theoretical data (the Ingalls Standards csv) for confidence level 1. A version of the theoretical data, modified for the phobos package, is included in the phobos example_data/ subdirectory and can be imported using the read.csv("example_data/Example_Theoretical_Data.csv") command. The complete Ingalls Standards csv is located on the [Ingalls Standards Github](https://github.com/IngallsLabUW/Ingalls_Standards/blob/master/Ingalls_Lab_Standards_NEW.csv) and can be downloaded for a more updated version. Like the experimental data, the theoretical data must be in a specific format before comparison. **TODO: Right now the github standards doesn't include the MS2 data, it will once consensus is reached!**
 
 ```{r example theoretical, echo=FALSE}
 knitr::kable(theoretical.values[c(1, 9, 18, 25), -6], caption = "Theoretical Data")

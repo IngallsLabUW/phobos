@@ -16,10 +16,11 @@ AnnotateConfidenceLevel1(
 It is important to note that it must be in the following format, including capitalization and class:
 MassFeature (character), mz (numeric), rt (numeric, in seconds), column (numeric), z (numeric), MS2 (in concatenated format, character).}
 
-\item{theoretical.values}{TODO A dataframe of known, theoretical values, i.e, the Ingalls Standards list.
-Like its partner the experimental.values dataframe, the theoretical.values dataframe columns need to be in
+\item{theoretical.values}{A dataframe of known, theoretical values, i.e, the Ingalls Standards list.
+Like its partner the experimental.values dataframe, the theoretical.values dataframe columns needs to be in
 the following exact format: compound (character), mz (numeric), rt (numeric, in seconds),
-column (all caps, character), z (numeric), OPTIONAL filename (character), and MS2 (concatenated format, character).}
+column (all caps, character), z (numeric), OPTIONAL filename (character), and MS2 (concatenated format, character). This package includes
+a csv of theoretical values for example purposes, but for the latest version please head to the Ingalls Standards github: https://github.com/IngallsLabUW/Ingalls_Standards}
 
 \item{mz.flexibility}{Flexibility for m/z matching between experimental and theoretical values. Usually defined as 0.02.}
 

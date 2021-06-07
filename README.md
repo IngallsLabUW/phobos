@@ -10,18 +10,15 @@ phobos is an R package of custom functions that accompany the Ingalls
 Lab MARS Project.
 
 The MARS project helps identify and rank unknown mass features (MFs) in
-untargeted metabolomics data. It consists of three major sections:
+untargeted metabolomics data. It consists of two major sections:
 
 -   A central “homebase” database containing compiled mass features
     detected by the Ingalls lab with mz (mass/charge), rt (retention
-    time, seconds), column, charge and ms2 data. **TODO: This database
-    is still being built.**
+    time, seconds), column, charge and ms2 data, as well as all previous
+    MARS missions and metadata.
 -   This package, *phobos*: A package of functions for annotating,
     ranking, and scoring the unknown mass features, as well as other
     common data transformations associated with the MARS project.
--   A central database containing annotated mass features from previous
-    MARS missions. **TODO: This may end up being combined with the first
-    database as one complete “homebase”.**
 
 **phobos aims to be: Flexible, updatable, searchable, rankable,
 exportable.**
@@ -50,11 +47,11 @@ isolated, but often remain unidentified, or identified with non-standard
 confidence.
 
 The phobos package, designed as part of the Ingalls MARS (Metabolite
-Annotation, Rank and Sort) Project **TODO: LINK TO FUTURE GITHUB WEBSITE
-HERE**, prioritizes simplicity, efficiency, and confidence in metabolite
-identification. To encourage confidence consistency, phobos adheres to
-the proposed minimum reporting standards for chemical analysis as laid
-out in the Metabolomics Standards Initiative (MSI) [2007
+Annotation, Rank and Sort) Project, prioritizes simplicity, efficiency,
+and confidence in metabolite identification. To encourage confidence
+consistency, phobos adheres to the proposed minimum reporting standards
+for chemical analysis as laid out in the Metabolomics Standards
+Initiative (MSI) [2007
 paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3772505/pdf/nihms504189.pdf).
 In addition to utilizing the [Ingalls Lab
 Standards](https://github.com/IngallsLabUW/Ingalls_Standards) for
@@ -308,3 +305,14 @@ Confidence.Level.4 <- AnnotateConfidenceLevel4(Confidence.Level.3_KEGG)
 | 1726 | Gluconic Acid       |           21 | Gluconic Acid         | NA                                                                                                                                                                                                                                                                                   | ID: BML01737; 1,9-dimethyluric acid                                                                                                        | cpd:C16356; cpd:C16360                                                                                                                                                                         |                         1 | 1; 3; 3          | Ingalls\_Standards; MassBank; KEGG           |
 
 Confidence Level 4
+
+------------------------------------------------------------------------
+
+### Common Contaminants
+
+In order to check against common contaminants, download the
+“Common\_Contaminants.csv” data from the shared Ingalls Google Drive in
+the MARS\_Project folder.
+
+Run the checkContaminants() function using the final annotated data and
+the downloaded csv.

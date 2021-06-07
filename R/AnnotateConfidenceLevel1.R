@@ -7,10 +7,11 @@
 #' @param experimental.values A dataframe of unknown experimental values, created by the user.
 #' It is important to note that it must be in the following format, including capitalization and class:
 #' MassFeature (character), mz (numeric), rt (numeric, in seconds), column (numeric), z (numeric), MS2 (in concatenated format, character).
-#' @param theoretical.values TODO A dataframe of known, theoretical values, i.e, the Ingalls Standards list.
-#' Like its partner the experimental.values dataframe, the theoretical.values dataframe columns need to be in
+#' @param theoretical.values A dataframe of known, theoretical values, i.e, the Ingalls Standards list.
+#' Like its partner the experimental.values dataframe, the theoretical.values dataframe columns needs to be in
 #' the following exact format: compound (character), mz (numeric), rt (numeric, in seconds),
-#' column (all caps, character), z (numeric), OPTIONAL filename (character), and MS2 (concatenated format, character).
+#' column (all caps, character), z (numeric), OPTIONAL filename (character), and MS2 (concatenated format, character). This package includes
+#' a csv of theoretical values for example purposes, but for the latest version please head to the Ingalls Standards github: https://github.com/IngallsLabUW/Ingalls_Standards
 #' @param mz.flexibility Flexibility for m/z matching between experimental and theoretical values. Usually defined as 0.02.
 #' @param rt.flexibility Flexibility for retention time matching between experimental and theoretical values. Usually defined as ~ 15-30 seconds.
 #'
@@ -36,16 +37,15 @@
 #' mz.flexibility = 0.02, rt.flexibility = 30)
 #'
 AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz.flexibility, rt.flexibility) {
-  # Expand and fix these tests
+  # Check column names, order, class, etc
   if (all(colnames(experimental.values) == c("MassFeature", "mz", "rt", "column", "z", "MS2"))) {
     print("Columns are correctly named and ordered.")
   } else {
     stop("Please check your column names and order and try again!")
   }
 
-  # if (class(experimental.values$z) != "numeric") {
-  #   stop("Please check your column classes!")
-  # }
+  print("Below are your column classes. Please check them to make sure they are correct!")
+  print(lapply(experimental.values, class))
 
   experimental.values <- experimental.values %>%
     dplyr::mutate(primary_key = 1:nrow(.))

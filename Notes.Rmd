@@ -15,10 +15,9 @@ This is a build notes page. It is included on the .Rbuildignore and is therefore
 
 - Styler package. style_pkg(), style_dir(), etc. Keep it tidy. Commit before application of style changes. See Ch 7.3 for deets.
 
-- Go through Veronica's conversation and make sure that documentation makes sense.
-- Need to add an error message in CL1 about stopping if lengths of dataframes aren't correct.
+- Final full documentation check.
 - Need to combine MS2 from standards list.
-- Add MoNA scrape code to pacakge.
+- Add MoNA scrape code to package.
 - Figure out how to properly create KEGG homesheet.
 - Documentation for interpreting output. Column description and clarity.
 - CL2 class level check, maybe for the rest of the CLs as well.
@@ -28,7 +27,6 @@ This is a build notes page. It is included on the .Rbuildignore and is therefore
 - Make Metlin hard to reach. Don't overload. Scrape what we don't know, like KRH's unknowns.
 - KEGG and future dataframes: should those be 3.5, or a different kind of ranking? Sorting is a bit of a problem.
 - How to best update the "Theoretical Data" for CL1? Similar to the quarterly update/up-to-user update? 
-- I will move the theoretical data from the package to the standards area/shared drive to prevent confusion.
 - Is each step independent of the rest?
 - Column class for every dataframe. Midsection checks.
 - Documentation for CL4.
