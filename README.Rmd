@@ -22,7 +22,7 @@ phobos is an R package of custom functions that accompany the Ingalls Lab MARS P
 
 The MARS project helps identify and rank unknown mass features (MFs) in untargeted metabolomics data. It consists of two major sections: 
 
-- A central "homebase" database containing compiled mass features detected by the Ingalls lab with mz (mass/charge), rt (retention time, seconds), column, charge and ms2 data, as well as all previous MARS missions and metadata.
+- A central "homebase" database containing compiled mass features detected by the Ingalls lab with *m/z* (mass/charge), retention time (in seconds), chromatographic column, ion charge, and fragmentation data, as well as all previous MARS missions(?) and metadata (What metadata might be included?).
 - This package, *phobos*: A package of functions for annotating, ranking, and scoring the unknown mass features, as well as other common data transformations associated with the MARS project.
 
 
@@ -30,7 +30,7 @@ The MARS project helps identify and rank unknown mass features (MFs) in untarget
 
 ## Installation
 
-You can install the development version of phobos from [Github](https://github.com) with:
+You can install the development version of phobos from [Github](https://github.com/IngallsLabUW/phobos) with:
 
 ``` r
 devtools::install_github("IngallsLabUW/phobos")
@@ -77,7 +77,7 @@ Below is a list of the columns required to use MARS. The dataframe must contain 
 - "MS2": MS2 data for those compounds that have it, character. 
   - **Important**: The MS2 data must be in the filtered, scaled and concatenated format of "mz, intensity;", as below. For example purposes, the MS2 column below has been cut off at two instances of "mz, intensity;" but real data will likely have many more entries. For more information on how to get your MS2 data into the correct format, **TODO PUT INFORMATION HERE**.
   
-For clarity, phobos also adds an additional primary column to the dataframe titled "primary_key": a simple key column consisting of 1-n rows.
+For clarity, phobos also adds an additional primary column to the dataframe titled "primary_key": a simple key column consisting of 1-n rows. (What's 1-n here?)
 Throughout the project, the search parameter column names in the dataframes (mz, rt, z, column, MS2) will be modified according to their source.
 For example, all "theoretical" mz values, aka values that are derived from a standards sheet, are identified as "mz_theoretical", where as experimental values are identified as "mz_experimental", MoNA values are identified as "mz_massbank", etc. This also applies to confidence level rankings and similarity scores: A column titled mz_similarity_score1 refers to the similarity score calculated during the Confidence Level 1 annotation.
 
