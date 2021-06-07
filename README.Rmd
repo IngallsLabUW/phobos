@@ -57,7 +57,7 @@ phobos simplifies the identification process by transforming each individual MSI
 
 ```{r load data, include=FALSE}
 library(tidyverse)
-options(digits = 2)
+options(digits = 2) #hEY don't change my options! Maybe include this in startup script so users don't run it?
 experimental.values <- read.csv("example_data/Example_Experimental_Data.csv") 
 experimental.values$MS2 <- sub("^([^;]+;[^;]+).*", "\\1", experimental.values$MS2)
 
@@ -135,6 +135,10 @@ Confidence.Level.2 <- read.csv("example_data/Example_ConfidenceLevel2.csv")
 ```
 
 ```{r Display CL2, echo=FALSE}
+# Is there an actual demo of how CL2 should be used? Right now it just looks
+# like the data is created ~somewhere~ and read in here. How do I actually use
+# this function?
+
 CL2 <- Confidence.Level.2 %>%
   arrange(primary_key) %>%
   select(MassFeature, primary_key:massbank_match2, massbank_ppm, MS2_cosine_similarity2, 
