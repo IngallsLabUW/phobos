@@ -163,6 +163,9 @@ Confidence.Level.3_MoNA <- read.csv("example_data/Example_ConfidenceLevel3_MoNA.
 ```
 
 ```{r Display CL3: MoNA, echo=FALSE}
+# Same problem as above here - this should be an actual demo of the code, not
+# a premade file that gets read in and visualized
+# Right now I'm not even sure which function to call (can deduce, but would be nice to have confidence)
 CL3_MoNA <- Confidence.Level.3_MoNA %>%
   arrange(primary_key) %>%
   select(MassFeature, primary_key:massbank_match3, MH_mass_experimental, MH_mass_MoNA, 
