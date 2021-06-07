@@ -23,7 +23,7 @@
 #' MassBank.Neg = MassBank.Neg, MassBank.Pos = MassBank.Pos, mz.flexibility = 0.02)
 AnnotateMoNAConfidenceLevel3 <- function(Confidence.Level.2, MassBank.Neg, MassBank.Pos, mz.flexibility) {
 
-  Confidence.Level.2 <- Confidence.Level.2
+  Confidence.Level.2 <- Confidence.Level.2 # what. yes, yes it does equal that.
 
   Experimental.Values <- Confidence.Level.2 %>%
     dplyr::select(MassFeature:compound_theoretical, mz_experimental, z_experimental, confidence_rank, confidence_source) %>%
@@ -40,6 +40,8 @@ AnnotateMoNAConfidenceLevel3 <- function(Confidence.Level.2, MassBank.Neg, MassB
   MoNA.Spectra.Pos <- MassBank.Pos %>%
     dplyr::mutate(z_massbank3 = 1)
 
+  # This looks like the same code as CL2, implying we should change the way
+  # these sheets are produced to fit DRY
   MoNA.Spectra <- MoNA.Spectra.NEG %>%
     rbind(MoNA.Spectra.Pos) %>%
     dplyr::mutate(ID = paste("ID:", ID)) %>%
@@ -67,11 +69,16 @@ AnnotateMoNAConfidenceLevel3 <- function(Confidence.Level.2, MassBank.Neg, MassB
   # Have any compounds been lost? Check for a TRUE output
   all.experimentals <- sort(c(No.Fuzzy.Match, Fuzzy.Match))
   length(all.experimentals) == length(Experimental.Values$primary_key)
+  # This value should again be fed into a stop function or other message
+  # Currently returned internally and invisible to the user
+  # Previous comments also apply - what does it mean if a compound's been lost?
 
   Full.Join <- Fuzzy.Join %>%
-    dplyr::full_join(Confidence.Level.2) %>%
+    dplyr::full_join(Confidence.Level.2) %>% # Specify your joins!
     dplyr::arrange(primary_key) %>%
     unique() %>%
+    # The hard-coded cutoff should either be turned into a user parameter
+    # or made hyper-explicit in the code
     dplyr::mutate(confidence_rank3 = ifelse(mz_similarity_score3 > 0.9, 3, NA)) %>%
     dplyr::mutate(confidence_rank = ifelse(!is.na(confidence_rank) & !is.na(confidence_rank3), paste(confidence_rank, "3", sep = "; "),
                                            ifelse(!is.na(confidence_rank3), confidence_rank3, confidence_rank)))  %>%

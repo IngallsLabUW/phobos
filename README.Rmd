@@ -22,7 +22,7 @@ phobos is an R package of custom functions that accompany the Ingalls Lab MARS P
 
 The MARS project helps identify and rank unknown mass features (MFs) in untargeted metabolomics data. It consists of two major sections: 
 
-- A central "HomeBase" database containing compiled mass features detected by the Ingalls lab with mz (mass/charge), rt (retention time, seconds), column, charge and ms2 data, as well as all previous MARS missions and metadata.
+- A central "homebase" database containing compiled mass features detected by the Ingalls lab with *m/z* (mass/charge), retention time (in seconds), chromatographic column, ion charge, and fragmentation data, as well as all previous MARS missions(?) and metadata (What metadata might be included?).
 - This package, *phobos*: A package of functions for annotating, ranking, and scoring the unknown mass features, as well as other common data transformations associated with the MARS project.
 
 
@@ -30,16 +30,16 @@ The MARS project helps identify and rank unknown mass features (MFs) in untarget
 
 ## Installation
 
-You can install the development version of phobos from [Github](https://github.com) with:
+You can install the development version of phobos from [Github](https://github.com/IngallsLabUW/phobos) with:
 
-``` r
+``` {r}
 devtools::install_github("IngallsLabUW/phobos")
 ```
 
 Once installed, phobos can be loaded like any other package:
 
-``` r
-library("phobos")
+``` {r}
+library(phobos)
 ```
 
 ## Description
@@ -57,7 +57,7 @@ phobos simplifies the identification process by transforming each individual MSI
 
 ```{r load data, include=FALSE}
 library(tidyverse)
-options(digits = 2)
+options(digits = 2) #hEY don't change my options! Maybe include this in startup script so users don't run it?
 experimental.values <- read.csv("example_data/Example_Experimental_Data.csv") 
 experimental.values$MS2 <- sub("^([^;]+;[^;]+).*", "\\1", experimental.values$MS2)
 
@@ -77,7 +77,7 @@ Below is a list of the columns required to use MARS. The dataframe must contain 
 - "MS2": MS2 data for those compounds that have it, character. 
   - **Important**: The MS2 data must be in the filtered, scaled and concatenated format of "mz, intensity;", as below. For example purposes, the MS2 column below has been cut off at two instances of "mz, intensity;" but real data will likely have many more entries. For more information on how to get your MS2 data into the correct format, **TODO PUT INFORMATION HERE**.
   
-For clarity, phobos also adds an additional primary column to the dataframe titled "primary_key": a simple key column consisting of 1-n rows.
+For clarity, phobos also adds an additional primary column to the dataframe titled "primary_key": a simple key column consisting of 1-n rows. (What's 1-n here?)
 Throughout the project, the search parameter column names in the dataframes (mz, rt, z, column, MS2) will be modified according to their source.
 For example, all "theoretical" mz values, aka values that are derived from a standards sheet, are identified as "mz_theoretical", where as experimental values are identified as "mz_experimental", MoNA values are identified as "mz_massbank", etc. This also applies to confidence level rankings and similarity scores: A column titled mz_similarity_score1 refers to the similarity score calculated during the Confidence Level 1 annotation.
 
@@ -117,6 +117,8 @@ knitr::kable(CL1[c(1:3, 11, 19), ], caption = "Confidence Level 1")
 
 In the above table, the results have been given an m/z, rt, MS2, and ppm scores, which are used to create a total similarity score. Depending on the results, a mass feature is given a confidence rank and source (for the first step, either NA or Ingalls_Standards). **TODO: add more specifics here about interpreting the output**
 
+(Yes, more specifics would be great - how should users interpret dual annotations? What are "good" scores? How should cutoffs and filtering be done?)
+
 ---
 
 ### Confidence Level 2
@@ -133,6 +135,10 @@ Confidence.Level.2 <- read.csv("example_data/Example_ConfidenceLevel2.csv")
 ```
 
 ```{r Display CL2, echo=FALSE}
+# Is there an actual demo of how CL2 should be used? Right now it just looks
+# like the data is created ~somewhere~ and read in here. How do I actually use
+# this function?
+
 CL2 <- Confidence.Level.2 %>%
   arrange(primary_key) %>%
   select(MassFeature, primary_key:massbank_match2, massbank_ppm, MS2_cosine_similarity2, 
@@ -157,6 +163,9 @@ Confidence.Level.3_MoNA <- read.csv("example_data/Example_ConfidenceLevel3_MoNA.
 ```
 
 ```{r Display CL3: MoNA, echo=FALSE}
+# Same problem as above here - this should be an actual demo of the code, not
+# a premade file that gets read in and visualized
+# Right now I'm not even sure which function to call (can deduce, but would be nice to have confidence)
 CL3_MoNA <- Confidence.Level.3_MoNA %>%
   arrange(primary_key) %>%
   select(MassFeature, primary_key:massbank_match3, MH_mass_experimental, MH_mass_MoNA, 
@@ -187,6 +196,7 @@ Confidence level 4 is everything else!
 Any mass feature that has not yet been assigned a confidence level in a previous step will receive a confidence level of 4. 
 
 ```{r Load CL4}
+# Beautiful! Love to see the function used here, very clear
 Confidence.Level.4 <- AnnotateConfidenceLevel4(Confidence.Level.3_KEGG)
 ```
 
