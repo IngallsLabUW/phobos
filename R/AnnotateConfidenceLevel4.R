@@ -18,6 +18,8 @@ AnnotateConfidenceLevel4 <- function(Confidence.Level.3) {
   Confidence.Level.4 <- Confidence.Level.3 %>%
     dplyr::mutate(confidence_rank = ifelse(is.na(confidence_rank), 4, confidence_rank)) %>%
     dplyr::arrange(primary_key)
+  # We then immediately sort by primary key in the demo - this arrange() can
+  # probably be dropped.
 
   return(Confidence.Level.4)
 }
