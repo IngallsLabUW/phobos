@@ -28,7 +28,7 @@ The MARS project helps identify and rank unknown mass features (MFs) in untarget
 
 **phobos aims to be: Flexible, updatable, searchable, rankable, exportable.**
 
-![test](example_data/MARS_Workflow.png)
+![MARS](example_data/MARS_Workflow.png)
 
 ## Installation
 
@@ -59,7 +59,7 @@ phobos simplifies the identification process by transforming each individual MSI
 
 ```{r load data, include=FALSE}
 library(tidyverse)
-options(digits = 2) #hEY don't change my options! Maybe include this in startup script so users don't run it?
+options(digits = 2) 
 experimental.values <- read.csv("example_data/Example_Experimental_Data.csv") 
 experimental.values$MS2 <- sub("^([^;]+;[^;]+).*", "\\1", experimental.values$MS2)
 

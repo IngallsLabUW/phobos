@@ -1,4 +1,6 @@
 *Comments from latest Wkumler review*
+Why not change options?
+
 CL1
 - I was thinking I'd prioritize good feedback ("columns are correct", "classes are correct", etc.) so it's clear that the functions are running. Some of them take more time than others.
 - The rowwise is slow, but the entire run time of the function is still only <10 seconds. I could try an sapply solution to see if that speeds things up. What do you mean by NA handling inside the function?

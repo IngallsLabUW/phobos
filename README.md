@@ -13,9 +13,10 @@ The MARS project helps identify and rank unknown mass features (MFs) in
 untargeted metabolomics data. It consists of two major sections:
 
 -   A central “homebase” database containing compiled mass features
-    detected by the Ingalls lab with mz (mass/charge), rt (retention
-    time, seconds), column, charge and ms2 data, as well as all previous
-    MARS missions and metadata.
+    detected by the Ingalls lab with *m/z* (mass/charge), retention time
+    (in seconds), chromatographic column, ion charge, and fragmentation
+    data, as well as all previous MARS missions(?) and metadata (What
+    metadata might be included?).
 -   This package, *phobos*: A package of functions for annotating,
     ranking, and scoring the unknown mass features, as well as other
     common data transformations associated with the MARS project.
@@ -23,19 +24,31 @@ untargeted metabolomics data. It consists of two major sections:
 **phobos aims to be: Flexible, updatable, searchable, rankable,
 exportable.**
 
+![MARS](example_data/MARS_Workflow.png)
+
 ## Installation
 
 You can install the development version of phobos from
-[Github](https://github.com) with:
+[Github](https://github.com/IngallsLabUW/phobos) with:
 
 ``` r
 devtools::install_github("IngallsLabUW/phobos")
+#> Downloading GitHub repo IngallsLabUW/phobos@HEAD
+#> 
+#>      checking for file ‘/private/var/folders/7j/gxsnrqzs7qg_g_7hp143b8xr0000gn/T/RtmpvR4rXp/remotes5bee166a79f3/IngallsLabUW-phobos-0eb15cc/DESCRIPTION’ ...  ✓  checking for file ‘/private/var/folders/7j/gxsnrqzs7qg_g_7hp143b8xr0000gn/T/RtmpvR4rXp/remotes5bee166a79f3/IngallsLabUW-phobos-0eb15cc/DESCRIPTION’
+#>   ─  preparing ‘phobos’:
+#>      checking DESCRIPTION meta-information ...  ✓  checking DESCRIPTION meta-information
+#>   ─  checking for LF line-endings in source and make files and shell scripts
+#>   ─  checking for empty or unneeded directories
+#>   ─  building ‘phobos_0.1.0.tar.gz’
+#>      
+#> 
 ```
 
 Once installed, phobos can be loaded like any other package:
 
 ``` r
-library("phobos")
+library(phobos)
 ```
 
 ## Description
@@ -65,8 +78,7 @@ third-party sources such as [MassBank of North America
 
 For a complete description of the MARS annotation process, as well as
 all references for the equations used in the phobos package, please
-refer to the **TODO link website or github page here. This will also
-include the visual guide.**.
+refer to the MARS Design Doc.
 
 ## Usage
 
@@ -99,20 +111,24 @@ contain only these columns, in this order.
         concatenated format of “mz, intensity;”, as below. For example
         purposes, the MS2 column below has been cut off at two instances
         of “mz, intensity;” but real data will likely have many more
-        entries. For more information on how to get your MS2 data into
-        the correct format, **TODO PUT INFORMATION HERE**.
+        entries. There are several functions included in this package to
+        help modify the data to various forms: ConcatToScan() for
+        transforming concatenated data to scantable format,
+        ScanToConcat() for doing the opposite, and ScaleMS2() for
+        scaling the MS2 data to a maximum intensity of 100 and minimum
+        intensity of 0.5
 
 For clarity, phobos also adds an additional primary column to the
 dataframe titled “primary\_key”: a simple key column consisting of 1-n
-rows. Throughout the project, the search parameter column names in the
-dataframes (mz, rt, z, column, MS2) will be modified according to their
-source. For example, all “theoretical” mz values, aka values that are
-derived from a standards sheet, are identified as “mz\_theoretical”,
-where as experimental values are identified as “mz\_experimental”, MoNA
-values are identified as “mz\_massbank”, etc. This also applies to
-confidence level rankings and similarity scores: A column titled
-mz\_similarity\_score1 refers to the similarity score calculated during
-the Confidence Level 1 annotation.
+rows. (What’s 1-n here?) Throughout the project, the search parameter
+column names in the dataframes (mz, rt, z, column, MS2) will be modified
+according to their source. For example, all “theoretical” mz values, aka
+values that are derived from a standards sheet, are identified as
+“mz\_theoretical”, where as experimental values are identified as
+“mz\_experimental”, MoNA values are identified as “mz\_massbank”, etc.
+This also applies to confidence level rankings and similarity scores: A
+column titled mz\_similarity\_score1 refers to the similarity score
+calculated during the Confidence Level 1 annotation.
 
 Below is an example of an experimental dataframe in the correct format.
 
@@ -140,8 +156,8 @@ The experimental data is compared to the theoretical data (the Ingalls
 Standards csv) for confidence level 1. A version of the theoretical
 data, modified for the phobos package, is included in the phobos
 example\_data/ subdirectory and can be imported using the
-read.csv(“example\_data/Theoretical\_Data.csv”) command. The complete
-Ingalls Standards csv is located on the [Ingalls Standards
+read.csv(“example\_data/Example\_Theoretical\_Data.csv”) command. The
+complete Ingalls Standards csv is located on the [Ingalls Standards
 Github](https://github.com/IngallsLabUW/Ingalls_Standards/blob/master/Ingalls_Lab_Standards_NEW.csv)
 and can be downloaded for a more updated version. Like the experimental
 data, the theoretical data must be in a specific format before
@@ -164,6 +180,24 @@ rt.flexibility are in Daltons and seconds, respectively.
 ``` r
 Confidence.Level.1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values, mz.flexibility = 0.02, rt.flexibility = 30)
 #> [1] "Columns are correctly named and ordered."
+#> [1] "Below are your column classes. Please check them to make sure they are correct!"
+#> $MassFeature
+#> [1] "character"
+#> 
+#> $mz
+#> [1] "numeric"
+#> 
+#> $rt
+#> [1] "numeric"
+#> 
+#> $column
+#> [1] "character"
+#> 
+#> $z
+#> [1] "integer"
+#> 
+#> $MS2
+#> [1] "character"
 #> Joining, by = c("MassFeature", "primary_key")
 #> Joining, by = c("MassFeature", "primary_key")
 ```
@@ -181,8 +215,9 @@ Confidence Level 1
 In the above table, the results have been given an m/z, rt, MS2, and ppm
 scores, which are used to create a total similarity score. Depending on
 the results, a mass feature is given a confidence rank and source (for
-the first step, either NA or Ingalls\_Standards). **TODO: add more
-specifics here about interpreting the output**
+the first step, either NA or Ingalls\_Standards). For more information
+about interpreting the MARS output, please jump to the bottom of this
+README to the “Interpreting Output” section.
 
 ------------------------------------------------------------------------
 
@@ -215,12 +250,12 @@ FUNCTION**.
 Confidence.Level.2 <- read.csv("example_data/Example_ConfidenceLevel2.csv")
 ```
 
-|     | MassFeature     | primary\_key | compound\_theoretical | massbank\_match2 | massbank\_ppm | MS2\_cosine\_similarity2 | confidence\_rank | confidence\_source |
-|:----|:----------------|-------------:|:----------------------|:-----------------|--------------:|-------------------------:|:-----------------|:-------------------|
-| 1   | I102.0549R12.14 |            1 | NA                    | NA               |            NA |                       NA | NA               | NA                 |
-| 2   | Uracil          |            2 | Uracil                | NA               |            NA |                       NA | 1                | Ingalls\_Standards |
-| 88  | N-acetyltaurine |           12 | N-acetyltaurine       | NA               |            NA |                       NA | 1                | Ingalls\_Standards |
-| 126 | I194.9965R12.04 |           20 | NA                    | NA               |            NA |                       NA | NA               | NA                 |
+|     | MassFeature      | primary\_key | compound\_theoretical | massbank\_match2 | massbank\_ppm | MS2\_cosine\_similarity2 | confidence\_rank | confidence\_source |
+|:----|:-----------------|-------------:|:----------------------|:-----------------|--------------:|:-------------------------|:-----------------|:-------------------|
+| 1   | I102.0549R12.14  |            1 | NA                    | NA               |            NA | NA                       | NA               | NA                 |
+| 2   | Uracil           |            2 | Uracil                | NA               |            NA | NA                       | 1                | Ingalls\_Standards |
+| 95  | Sulfolactic Acid |           15 | Sulfolactic Acid      | NA               |            NA | NA                       | 1                | Ingalls\_Standards |
+| 119 | I217.93R10.87    |           24 | NA                    | NA               |            NA | NA                       | NA               | NA                 |
 
 Confidence Level 2
 
@@ -243,14 +278,14 @@ defines a confidence level 3 as a good MS1 match from MoNA, Metlin, or
 KEGG within the column and z specifications.
 
 For each database used, there is a separate, ordered set of functions.
-For a full explanation of the order, please refer to **TODO: link again
-to the visual guide here.** Because databases are used, the user needs
-to ensure that they have all of the required information accessible. The
-data from MoNA is the same as in the previous step. The data from KEGG
-is located in the same place as the MoNA: the shared Ingalls Lab Google
-Drive under Collaborative\_Projects –&gt; MARS\_Project –&gt;
-KEGG\_Spreadsheets. **TODO: When ready, add more info here about
-updating/creating the KEGG data.**
+For a full explanation of the order, please refer to the image at the
+top of this README. Because databases are used, the user needs to ensure
+that they have all of the required information accessible. The data from
+MoNA is the same as in the previous step. The data from KEGG is located
+in the same place as the MoNA: the shared Ingalls Lab Google Drive under
+Collaborative\_Projects –&gt; MARS\_Project –&gt; KEGG\_Spreadsheets.
+**TODO: When ready, add more info here about updating/creating the KEGG
+data.**
 
 MoNA:
 
@@ -258,12 +293,12 @@ MoNA:
 Confidence.Level.3_MoNA <- read.csv("example_data/Example_ConfidenceLevel3_MoNA.csv")
 ```
 
-|     | MassFeature     | primary\_key | compound\_theoretical | massbank\_match2 | massbank\_match3                                                                                                                           | MH\_mass\_experimental | MH\_mass\_MoNA | mz\_similarity\_score3 | confidence\_rank | confidence\_source |
-|:----|:----------------|-------------:|:----------------------|:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------|-----------------------:|---------------:|-----------------------:|:-----------------|:-------------------|
-| 1   | I102.0549R12.14 |            1 | NA                    | NA               | ID: KO000001; GABA; gamma-Aminobutyric acid; 4-Aminobutanoate; 4-Aminobutanoic acid; 4-Aminobutylate; 4-Aminobutyric acid; 4-Aminobutyrate |                    102 |            102 |                      1 | 3                | MassBank           |
-| 2   | I102.0549R12.14 |            1 | NA                    | NA               | ID: KO000002; GABA; gamma-Aminobutyric acid; 4-Aminobutanoate; 4-Aminobutanoic acid; 4-Aminobutylate; 4-Aminobutyric acid; 4-Aminobutyrate |                    102 |            102 |                      1 | 3                | MassBank           |
-| 5   | I102.0549R12.14 |            1 | NA                    | NA               | ID: KO000097; a-Aminoisobutyrate; 2-Amino-2-methylpropanoate; 2-Aminoisobutyric acid                                                       |                    102 |            102 |                      1 | 3                | MassBank           |
-| 6   | I102.0549R12.14 |            1 | NA                    | NA               | ID: KO000153; D-2-Aminobutyrate; (R)-2-Aminobutanoic acid; D-2-Aminobutanoic acid; D-2-Aminobutyric acid                                   |                    102 |            102 |                      1 | 3                | MassBank           |
+|     | MassFeature         | primary\_key | compound\_theoretical | massbank\_match2                                                                                                                                                                                                                                                                     | massbank\_match3                                                                                                                                                                                                                                                     | MH\_mass\_experimental | MH\_mass\_MoNA | mz\_similarity\_score3 | confidence\_rank | confidence\_source |
+|:----|:--------------------|-------------:|:----------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------:|---------------:|-----------------------:|:-----------------|:-------------------|
+| 1   | I102.0549R12.14     |            1 | NA                    | NA                                                                                                                                                                                                                                                                                   | NA                                                                                                                                                                                                                                                                   |                     NA |             NA |                     NA | NA               | NA                 |
+| 2   | Uracil              |            2 | Uracil                | NA                                                                                                                                                                                                                                                                                   | NA                                                                                                                                                                                                                                                                   |                     NA |             NA |                     NA | 1                | Ingalls\_Standards |
+| 26  | I126.904R4.8        |            5 | NA                    | NA                                                                                                                                                                                                                                                                                   | NA                                                                                                                                                                                                                                                                   |                     NA |             NA |                     NA | NA               | NA                 |
+| 27  | L-Pyroglutamic acid |            6 | Taurine, D4           | ID: PR100586; L-Pyroglutamic acid; pGlu; pyroGlu; Pyroglutamate; Pidolic acid; L-Glutimic acid; L-5-Oxoproline; (S)-(?)-2-Pyrrolidone-5-carboxylic acid; (S)-5-Oxo-2-pyrrolidinecarboxylic acid; L-a-Aminoglutaric Acid Lactam; L-5-Oxo-2-pyrrolidinecarboxylic acid ID:ID: PR100586 | ID: PR100586; L-Pyroglutamic acid; pGlu; pyroGlu; Pyroglutamate; Pidolic acid; L-Glutimic acid; L-5-Oxoproline; (S)-(?)-2-Pyrrolidone-5-carboxylic acid; (S)-5-Oxo-2-pyrrolidinecarboxylic acid; L-a-Aminoglutaric Acid Lactam; L-5-Oxo-2-pyrrolidinecarboxylic acid |                    128 |            128 |                      1 | 2; 3             | MassBank; MassBank |
 
 Confidence Level 3: MoNA
 
@@ -273,12 +308,12 @@ KEGG:
 Confidence.Level.3_KEGG <- read.csv("example_data/Example_ConfidenceLevel3_KEGG.csv")
 ```
 
-|      | MassFeature      | primary\_key | compound\_theoretical | massbank\_match2                                                                                                                                    | massbank\_match3                                                                                                                           | Compound\_KEGG                                                                                                                                                                                 | mz\_similarity\_scoreKEGG | confidence\_rank | confidence\_source                           |
-|:-----|:-----------------|-------------:|:----------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------:|:-----------------|:---------------------------------------------|
-| 1    | I102.0549R12.14  |            1 | NA                    | NA                                                                                                                                                  | ID: KO000001; GABA; gamma-Aminobutyric acid; 4-Aminobutanoate; 4-Aminobutanoic acid; 4-Aminobutylate; 4-Aminobutyric acid; 4-Aminobutyrate | cpd:C00155; cpd:C00334; cpd:C01026; cpd:C01205; cpd:C02261; cpd:C02356; cpd:C02721; cpd:C03284; cpd:C03665; cpd:C05145; cpd:C05330; cpd:C05689; cpd:C05698; cpd:C11109; cpd:C11735; cpd:C19514 |                         1 | 3; 3             | MassBank; KEGG                               |
-| 346  | Isethionic Acid  |            4 | Isethionic Acid       | ID: KO001232; Isethionate; 2-Hydroxyethanesulfonic acid; Isethionic acid; 2-Hydroxyethane-1-sulfonic acid; 2-Hydroxyethanesulfonate ID:ID: KO001232 | ID: KO001235; Isethionate; 2-Hydroxyethanesulfonic acid; Isethionic acid; 2-Hydroxyethane-1-sulfonic acid; 2-Hydroxyethanesulfonate        | cpd:C05123; cpd:C19177                                                                                                                                                                         |                         1 | 1; 2; 3; 3       | Ingalls\_Standards; MassBank; MassBank; KEGG |
-| 1476 | Sulfolactic Acid |           15 | Sulfolactic Acid      | NA                                                                                                                                                  | ID: KO000556; Dihydroxyacetone phosphate; Glycerone phosphate                                                                              | cpd:C02543; cpd:C02914; cpd:C11499; cpd:C11537; cpd:C16069; cpd:C17205                                                                                                                         |                         1 | 1; 3             | Ingalls\_Standards; KEGG                     |
-| 1734 | Gluconic Acid    |           21 | Gluconic Acid         | NA                                                                                                                                                  | ID: NP\_C1\_59\_p3\_G05\_NEG\_iTree\_03; Xanthone                                                                                          | cpd:C16356; cpd:C16360                                                                                                                                                                         |                         1 | 1; 3; 3          | Ingalls\_Standards; MassBank; KEGG           |
+|      | MassFeature     | primary\_key | compound\_theoretical | massbank\_match2 | massbank\_match3 | Compound\_KEGG                                                                                                                                                                                 | mz\_similarity\_scoreKEGG | confidence\_rank | confidence\_source |
+|:-----|:----------------|-------------:|:----------------------|:-----------------|:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------:|:-----------------|:-------------------|
+| 1    | I102.0549R12.14 |            1 | NA                    | NA               | NA               | cpd:C00155; cpd:C00334; cpd:C01026; cpd:C01205; cpd:C02261; cpd:C02356; cpd:C02721; cpd:C03284; cpd:C03665; cpd:C05145; cpd:C05330; cpd:C05689; cpd:C05698; cpd:C11109; cpd:C11735; cpd:C19514 |                         1 | 3                | NA; KEGG           |
+| NA   | NA              |           NA | NA                    | NA               | NA               | NA                                                                                                                                                                                             |                        NA | NA               | NA                 |
+| NA.1 | NA              |           NA | NA                    | NA               | NA               | NA                                                                                                                                                                                             |                        NA | NA               | NA                 |
+| NA.2 | NA              |           NA | NA                    | NA               | NA               | NA                                                                                                                                                                                             |                        NA | NA               | NA                 |
 
 Confidence Level 3: KEGG
 
@@ -292,17 +327,18 @@ Any mass feature that has not yet been assigned a confidence level in a
 previous step will receive a confidence level of 4.
 
 ``` r
+# Beautiful! Love to see the function used here, very clear
 Confidence.Level.4 <- AnnotateConfidenceLevel4(Confidence.Level.3_KEGG)
 ```
 
-|      | MassFeature         | primary\_key | compound\_theoretical | massbank\_match2                                                                                                                                                                                                                                                                     | massbank\_match3                                                                                                                           | Compound\_KEGG                                                                                                                                                                                 | mz\_similarity\_scoreKEGG | confidence\_rank | confidence\_source                           |
-|:-----|:--------------------|-------------:|:----------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------:|:-----------------|:---------------------------------------------|
-| 1    | I102.0549R12.14     |            1 | NA                    | NA                                                                                                                                                                                                                                                                                   | ID: KO000001; GABA; gamma-Aminobutyric acid; 4-Aminobutanoate; 4-Aminobutanoic acid; 4-Aminobutylate; 4-Aminobutyric acid; 4-Aminobutyrate | cpd:C00155; cpd:C00334; cpd:C01026; cpd:C01205; cpd:C02261; cpd:C02356; cpd:C02721; cpd:C03284; cpd:C03665; cpd:C05145; cpd:C05330; cpd:C05689; cpd:C05698; cpd:C11109; cpd:C11735; cpd:C19514 |                         1 | 3; 3             | MassBank; KEGG                               |
-| 26   | Uracil              |            2 | Uracil                | NA                                                                                                                                                                                                                                                                                   | ID: KO000769; 2-Furoate; 2-Furancarboxylic acid; 2-Furoic acid; Pyromucic acid                                                             | cpd:C00106; cpd:C16734; cpd:C18474                                                                                                                                                             |                         1 | 1; 3             | Ingalls\_Standards; KEGG                     |
-| 346  | Isethionic Acid     |            4 | Isethionic Acid       | ID: KO001232; Isethionate; 2-Hydroxyethanesulfonic acid; Isethionic acid; 2-Hydroxyethane-1-sulfonic acid; 2-Hydroxyethanesulfonate ID:ID: KO001232                                                                                                                                  | ID: KO001235; Isethionate; 2-Hydroxyethanesulfonic acid; Isethionic acid; 2-Hydroxyethane-1-sulfonic acid; 2-Hydroxyethanesulfonate        | cpd:C05123; cpd:C19177                                                                                                                                                                         |                         1 | 1; 2; 3; 3       | Ingalls\_Standards; MassBank; MassBank; KEGG |
-| 951  | L-Pyroglutamic acid |            6 | Taurine, D4           | ID: PR100586; L-Pyroglutamic acid; pGlu; pyroGlu; Pyroglutamate; Pidolic acid; L-Glutimic acid; L-5-Oxoproline; (S)-(?)-2-Pyrrolidone-5-carboxylic acid; (S)-5-Oxo-2-pyrrolidinecarboxylic acid; L-a-Aminoglutaric Acid Lactam; L-5-Oxo-2-pyrrolidinecarboxylic acid ID:ID: PR100586 | ID: CCMSLIB00000578175; 5-OXO-D-PROLINE                                                                                                    | cpd:C01877; cpd:C01879; cpd:C02237; cpd:C03541; cpd:C03801; cpd:C04281; cpd:C04282; cpd:C05723; cpd:C05929                                                                                     |                         1 | 2; 3; 3          | MassBank; MassBank; KEGG                     |
-| 1476 | Sulfolactic Acid    |           15 | Sulfolactic Acid      | NA                                                                                                                                                                                                                                                                                   | ID: KO000556; Dihydroxyacetone phosphate; Glycerone phosphate                                                                              | cpd:C02543; cpd:C02914; cpd:C11499; cpd:C11537; cpd:C16069; cpd:C17205                                                                                                                         |                         1 | 1; 3             | Ingalls\_Standards; KEGG                     |
-| 1726 | Gluconic Acid       |           21 | Gluconic Acid         | NA                                                                                                                                                                                                                                                                                   | ID: BML01737; 1,9-dimethyluric acid                                                                                                        | cpd:C16356; cpd:C16360                                                                                                                                                                         |                         1 | 1; 3; 3          | Ingalls\_Standards; MassBank; KEGG           |
+|      | MassFeature     | primary\_key | compound\_theoretical | massbank\_match2 | massbank\_match3 | Compound\_KEGG                                                                                                                                                                                 | mz\_similarity\_scoreKEGG | confidence\_rank | confidence\_source       |
+|:-----|:----------------|-------------:|:----------------------|:-----------------|:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------:|:-----------------|:-------------------------|
+| 1    | I102.0549R12.14 |            1 | NA                    | NA               | NA               | cpd:C00155; cpd:C00334; cpd:C01026; cpd:C01205; cpd:C02261; cpd:C02356; cpd:C02721; cpd:C03284; cpd:C03665; cpd:C05145; cpd:C05330; cpd:C05689; cpd:C05698; cpd:C11109; cpd:C11735; cpd:C19514 |                         1 | 3                | NA; KEGG                 |
+| 117  | Gluconic Acid   |           21 | Gluconic Acid         | NA               | NA               | cpd:C16356; cpd:C16360                                                                                                                                                                         |                         1 | 1; 3             | Ingalls\_Standards; KEGG |
+| NA   | NA              |           NA | NA                    | NA               | NA               | NA                                                                                                                                                                                             |                        NA | NA               | NA                       |
+| NA.1 | NA              |           NA | NA                    | NA               | NA               | NA                                                                                                                                                                                             |                        NA | NA               | NA                       |
+| NA.2 | NA              |           NA | NA                    | NA               | NA               | NA                                                                                                                                                                                             |                        NA | NA               | NA                       |
+| NA.3 | NA              |           NA | NA                    | NA               | NA               | NA                                                                                                                                                                                             |                        NA | NA               | NA                       |
 
 Confidence Level 4
 
@@ -315,4 +351,39 @@ In order to check against common contaminants, download the
 the MARS\_Project folder.
 
 Run the checkContaminants() function using the final annotated data and
-the downloaded csv.
+the downloaded Common Contaminants csv.
+
+------------------------------------------------------------------------
+
+### Interpreting Output
+
+Once the experimental data has been completely through the MARS project,
+the final output is a set of data frames with additional columns
+containing various matching parameters: matches, similarity scores,
+ranks, sources, etc.
+
+In general, if a column as a suffix of “1”, e.g. mz\_similarity\_score1,
+that column is associated with Confidence Level 1. The same logic
+applies to columns with suffixes of 2 or 3.
+
+When deciding between potential matches, start by prioritizing
+confidence level, and then sort within level by similarity scores. If a
+massfeature has received matches on confidence levels 1, 2 and 3, assume
+that the confidence level 1 output is the best one to choose, and then
+start comparing similarity scores within that confidence level to narrow
+down matches to the best option.
+
+When looking at similarity scores, there are several to choose from
+depending on the confidence level. mz\_similarity\_score,
+rt\_similarity\_score, ppm\_mass\_error, MS2\_similarity\_score, and
+total\_similarity\_score are all potential filtering options for the
+user to consider.
+
+“Good” similarity scores are the following: - mz\_similarity\_score1
+&gt; 0.9 - rt\_similarity\_score1 &gt; 0.75 - ppm\_mass\_error1 &lt; 7
+
+MS2 cosine similarity does not act as a filtering score in the code due
+to collision energies and NAs, and are instead included a column for
+user review. The same is true for the total similarity score, which
+includes all available similarity scores (see Design Doc for more
+information).
