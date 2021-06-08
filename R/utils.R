@@ -161,8 +161,8 @@ MS2CosineSimilarity <- function(scan1, scan2, mz.flexibility) {
   scan1 <- MakeScantable(scan1)
   scan2 <- MakeScantable(scan2)
 
-  weight1 <- (scan1[, 1] ^ 2) * sqrt(scan1[, 2])
-  weight2 <- (scan2[, 1] ^ 2) * sqrt(scan2[, 2])
+  weight1 <- (scan1[, "mz"] ^ 2) * sqrt(scan1[, "intensity"])
+  weight2 <- (scan2[, "mz"] ^ 2) * sqrt(scan2[, "intensity"])
 
   diff.matrix <- sapply(scan1[, 1], function(x) scan2[, 1] - x)
   same.index <- which(abs(diff.matrix) < 0.02, arr.ind = TRUE)

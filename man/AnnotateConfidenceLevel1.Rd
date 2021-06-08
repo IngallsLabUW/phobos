@@ -14,9 +14,10 @@ AnnotateConfidenceLevel1(
 \arguments{
 \item{experimental.values}{A dataframe of unknown experimental values, created by the user.
 It is important to note that it must be in the following format, including capitalization and class:
-MassFeature (character), mz (numeric), rt (numeric, in seconds), column (numeric), z (numeric), MS2 (in concatenated format, character).}
+MassFeature (character), mz (numeric), rt (numeric, in seconds), column (numeric), z (numeric), MS2 (in concatenated format, character).
+For more information on concatenated format, please refer to the README documentation.}
 
-\item{theoretical.values}{A dataframe of known, theoretical values, i.e, the Ingalls Standards list.
+\item{theoretical.values}{A dataframe of known, theoretical values; in the case of this package, the Ingalls Standards list.
 Like its partner the experimental.values dataframe, the theoretical.values dataframe columns needs to be in
 the following exact format: compound (character), mz (numeric), rt (numeric, in seconds),
 column (all caps, character), z (numeric), OPTIONAL filename (character), and MS2 (concatenated format, character). This package includes
@@ -27,7 +28,7 @@ a csv of theoretical values for example purposes, but for the latest version ple
 \item{rt.flexibility}{Flexibility for retention time matching between experimental and theoretical values. Usually defined as ~ 15-30 seconds.}
 }
 \value{
-A dataframe annotated for Confidence Level 1, including mz/rt/total similarity scores, as well as rank and rank source.
+A dataframe annotated for Confidence Level 1, including mz/rt/total similarity scores, as well as confidence rank and confidence source.
 }
 \description{
 Compare a dataframe of experimental values with a dataframe of all theoretical values from the Ingalls

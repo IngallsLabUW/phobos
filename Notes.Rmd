@@ -1,16 +1,25 @@
-
-WILL: READ THIS FIRST
-Biggest issue right now is explosions, mostly because of the lack of MS2 consensus and the KEGG IDs not being concatenated. Later I may work on trying to squash some stuff together but that is why the end dataframe is enormous.
-
-The "example_data" folder has some filtered dataframes for example purposes. But you can create the entire final product from that data.
-
-The stuff listed below is mostly "wishlist" items that I will prioritize after some other projects this summer, but some of it I am going to try and incorporate before June 10th. For now I want to make sure the entire thing just works from beginning to end. 
-
-------------------------------------------------
-
 This is a build notes page. It is included on the .Rbuildignore and is therefore hidden from the build process. It will be deleted when the package is complete.
 
+*Comments from latest Wkumler review*
+CL1
+- I was thinking I'd prioritize good feedback ("columns are correct", "classes are correct", etc.) so it's clear that the functions are running. Some of them take more time than others.
+- The rowwise is slow, but the entire run time of the function is still only <10 seconds. I could try an sapply solution to see if that speeds things up. What do you mean by NA handling inside the function?
+- Make a better stop() function for compound check
+- Be specific about the cutoffs, hard coded is nono or explain
 
+CL2
+- Maybe I could include shrunken versions of the scraped Massbank stuff, similar to the example data. I don't want to change 
+the overall format due to lost metadata but I can shrink things. And yeah. MBP is huge and slow. I wonder if it's because there is more data in each entry, are things better detected in positive mode? I think i've seen arguments for both sides.
+- Let's discuss adduct formation. The code that I have there (MH_mass +/-) is from KRH's original code and probably could use an update.
+- When things weren't parallelized, it was taking a lot longer (maybe 5 mins?). I adjusted the code to run a check for OS and then parallel/nonparallel depending on output.
+
+CL3
+- Same code to prepare the Mona sheets, left as was for a) trying to have the steps be potentially independent and b) to retain access to the Mona metadata.
+- Make a better stop() function for compound check
+- Be specific about the cutoffs, hard coded is nono or explain
+
+utils
+- no hard coding if possible
 *Notes*
 
 - Styler package. style_pkg(), style_dir(), etc. Keep it tidy. Commit before application of style changes. See Ch 7.3 for deets.
