@@ -15,9 +15,11 @@ AnnotateMoNAConfidenceLevel2(
 \item{Confidence.Level.1}{A dataframe of experimental values, already annotated for Confidence Level 1.
 Please refer to the AnnotateConfidenceLevel1() function for details!}
 
-\item{MassBank.Neg}{Spectra in negative ion mode from MassBank of North America, scraped and downloaded. This csv is available on the Ingalls Shared Drive in the MARS_Project folder, titled NEG_Spectra.csv}
+\item{MassBank.Neg}{Spectra in negative ion mode from MassBank of North America, scraped and downloaded. A modified example is included in this package,
+but the complete csv is available on the Ingalls Shared Drive in the MARS_Project folder, titled NEG_Spectra.csv}
 
-\item{MassBank.Pos}{Spectra in positive ion mode from MassBank of North America, scraped and downloaded. This csv is available on the Ingalls Shared Drive in the MARS_Project folder, titled POS_Spectra.csv}
+\item{MassBank.Pos}{Spectra in positive ion mode from MassBank of North America, scraped and downloaded. A modified example is included in this package,
+but the complete csv is available on the Ingalls Shared Drive in the MARS_Project folder, titled POS_Spectra.csv}
 
 \item{mz.flexibility}{Flexibility in Daltons for MS1 matching between experimental and theoretical values. Usually defined as 0.02.}
 }
@@ -37,8 +39,8 @@ library(phobos)
 # Remember that dataframe format is important: please refer to README or the documentation for AnnotateConfidenceLevel1() for details.
 
 Confidence.Level.1 <- read.csv("example_data/Example_ConfidenceLevel1.csv")
-MassBank.Neg <- read.csv("your/file/path/here/NEG_Spectra.csv")
-MassBank.Pos <- read.csv("your/file/path/here/POS_Spectra.csv")
+MassBank.Neg <- read.csv("example_data/NEG_Spectra.csv")
+MassBank.Pos <- read.csv("example_data/POS_Spectra.csv")
 Example_ConfidenceLevel2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, MassBank.Neg = MassBank.Neg,
 MassBank.Pos = MassBank.Pos, mz.flexibility = 0.02
 

@@ -77,7 +77,7 @@ IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidat
 
   if (length(potential.candidates$massbank_ID) == 0) {
     print("There are no potential candidates.")
-    No.Match.Return <- Mass.Feature %>%
+    No.Match.Return <- experimental.df %>%
       dplyr::mutate(massbank_match = NA,
                     massbank_ppm = NA,
                     MS2_cosine_similarity2 = NA)

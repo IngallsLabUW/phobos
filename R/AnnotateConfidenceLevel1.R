@@ -27,16 +27,15 @@
 #' # - "rt": The retention time, in seconds, numeric.
 #' # - "column": Column the mass feature was run on, character.
 #' #      There are two options for this variable: "HILIC" or "RP" (short for Reverse Phase).
-#' #      In the Ingalls lab, cyano compounds are only ever run in positive mode, therefore the combination of an "RP" column observation
-#' #      and a "1" z observation will results in the correct analysis.
+#' #      In the Ingalls lab, cyano compounds are only ever run in positive mode, therefore the combination of an "RP"
+#' #      column observation and a "1" z observation will results in the correct analysis.
 #' # - "z": The polarity, numeric.
 #' # - "MS2": MS2 data for those compounds that have it, character, in concatenated format.
 #'
 #' experimental.values <- read.csv("example_data/Example_Experimental_Data.csv")
-#' theoretical.values <- read.csv("example_data/Theoretical_Data.csv")
-#' example.confidence.1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values, theoretical.values = theoretical.values,
-#' mz.flexibility = 0.02, rt.flexibility = 30)
-#'
+#' theoretical.values <- read.csv("example_data/Example_Theoretical_Data.csv")
+#' example.confidence.1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values,
+#' theoretical.values = theoretical.values, mz.flexibility = 0.02, rt.flexibility = 30)
 AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz.flexibility, rt.flexibility) {
 
   # Some tests to check that the input data make sense

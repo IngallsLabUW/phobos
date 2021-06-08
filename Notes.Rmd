@@ -1,5 +1,3 @@
-This is a build notes page. It is included on the .Rbuildignore and is therefore hidden from the build process. It will be deleted when the package is complete.
-
 *Comments from latest Wkumler review*
 CL1
 - I was thinking I'd prioritize good feedback ("columns are correct", "classes are correct", etc.) so it's clear that the functions are running. Some of them take more time than others.

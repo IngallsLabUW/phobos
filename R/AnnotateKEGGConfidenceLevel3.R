@@ -15,10 +15,10 @@
 #' # using the AnnotateConfidenceLevel1, AnnotateMoNAConfidenceLevel2 and AnnotateMoNAConfidenceLevel3 functions.
 #'
 #' Confidence.Level.3.MoNA <- read.csv("example_data/Example_ConfidenceLevel3_MoNA.csv")
-#' KEGG.Data <- read.csv("your/file/path/here/KEGG_Data.csv")
+#' KEGG.Data <- read.csv("example_data/Example_KEGGData.csv")
 #'
 #' Example_KEGG_ConfidenceLevel3 <- AnnotateKEGGConfidenceLevel3(Confidence.Level.3.MoNA = Confidence.Level.3.MoNA,
-#' KEGG.Data <- KEGG_Data, mz.flexibility = 0.02, ppm.tolerance = 15)
+#' KEGG.Data <- KEGG.Data, mz.flexibility = 0.02, ppm.tolerance = 15)
 AnnotateKEGGConfidenceLevel3 <- function(Confidence.Level.3.MoNA, KEGG.Data, mz.flexibility, ppm.tolerance) {
 
   KEGG.Data <- KEGG.Data %>%
