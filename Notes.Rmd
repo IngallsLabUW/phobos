@@ -18,13 +18,13 @@ CL3
 
 utils
 - no hard coding if possible
+- Talk about "good" scores
 
 *Notes*
 
 - Styler package. style_pkg(), style_dir(), etc. Keep it tidy. Commit before application of style changes. See Ch 7.3 for deets.
 
 - Check collision energy stuff.
-- Check all TODO tags in the README.
 - How to best update the "Theoretical Data" for CL1? Similar to the quarterly update/up-to-user update? 
 
 

@@ -50,7 +50,7 @@ A common problem in metabolomics is how to handle unknown but determinable mass 
 
 The phobos package, designed as part of the Ingalls MARS (Metabolite Annotation, Rank and Sort) Project, prioritizes simplicity, efficiency, and confidence in metabolite identification. To encourage confidence consistency, phobos adheres to the proposed minimum reporting standards for chemical analysis as laid out in the Metabolomics Standards Initiative (MSI) [2007 paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3772505/pdf/nihms504189.pdf). In addition to utilizing the [Ingalls Lab Standards](https://github.com/IngallsLabUW/Ingalls_Standards) for foremost confidence annotations (known as "Confidence Level 1"), phobos provides functionality for incorporating spectral comparison to third-party sources such as [MassBank of North America (MoNA)](https://mona.fiehnlab.ucdavis.edu/),, [KEGG](https://www.genome.jp/kegg/), and [Metlin](https://metlin.scripps.edu/landing_page.php?pgcontent=mainPage), **TODO: METLIN TBD**.
 
-For a complete description of the MARS annotation process, as well as all references for the equations used in the phobos package, please refer to the **TODO link website or github page here. This will also include the visual guide.**.
+For a complete description of the MARS annotation process, as well as all references for the equations used in the phobos package, please refer to the MARS Design Doc.
 
 ## Usage
 
@@ -77,7 +77,7 @@ Below is a list of the columns required to use MARS. The dataframe must contain 
 - "column": The column the mass feature was run on, character. There are two options for this variable: "HILIC" or "RP" (short for Reverse Phase). In the Ingalls lab, cyano compounds are only run in positive mode, therefore the combination of an "RP" column observation and a "1" polarity observation will result in the correct analysis.
 - "z": The polarity, numeric. 
 - "MS2": MS2 data for those compounds that have it, character. 
-  - **Important**: The MS2 data must be in the filtered, scaled and concatenated format of "mz, intensity;", as below. For example purposes, the MS2 column below has been cut off at two instances of "mz, intensity;" but real data will likely have many more entries. For more information on how to get your MS2 data into the correct format, **TODO PUT INFORMATION HERE**.
+  - **Important**: The MS2 data must be in the filtered, scaled and concatenated format of "mz, intensity;", as below. For example purposes, the MS2 column below has been cut off at two instances of "mz, intensity;" but real data will likely have many more entries. There are several functions included in this package to help modify the data to various forms: ConcatToScan() for transforming concatenated data to scantable format, ScanToConcat() for doing the opposite, and ScaleMS2() for scaling the MS2 data to a maximum intensity of 100 and minimum intensity of 0.5
   
 For clarity, phobos also adds an additional primary column to the dataframe titled "primary_key": a simple key column consisting of 1-n rows. (What's 1-n here?)
 Throughout the project, the search parameter column names in the dataframes (mz, rt, z, column, MS2) will be modified according to their source.
@@ -117,9 +117,7 @@ CL1 <- Confidence.Level.1 %>%
 knitr::kable(CL1[c(1:3, 11, 19), ], caption = "Confidence Level 1")
 ```
 
-In the above table, the results have been given an m/z, rt, MS2, and ppm scores, which are used to create a total similarity score. Depending on the results, a mass feature is given a confidence rank and source (for the first step, either NA or Ingalls_Standards). **TODO: add more specifics here about interpreting the output**
-
-(Yes, more specifics would be great - how should users interpret dual annotations? What are "good" scores? How should cutoffs and filtering be done?)
+In the above table, the results have been given an m/z, rt, MS2, and ppm scores, which are used to create a total similarity score. Depending on the results, a mass feature is given a confidence rank and source (for the first step, either NA or Ingalls_Standards). For more information about interpreting the MARS output, please jump to the bottom of this README to the "Interpreting Output" section.
 
 ---
 
@@ -157,7 +155,7 @@ The output of AnnotateMoNAConfidenceLevel2() produces a dataframe that includes 
 
 Compounds that receive a confidence level of 3 are also considered putatively annotated based on fewer restrictions. The MARS project defines a confidence level 3 as a good MS1 match from MoNA, Metlin, or KEGG within the column and z specifications.
 
-For each database used, there is a separate, ordered set of functions. For a full explanation of the order, please refer to **TODO: link again to the visual guide here.** Because databases are used, the user needs to ensure that they have all of the required information accessible. The data from MoNA is the same as in the previous step. The data from KEGG is located in the same place as the MoNA: the shared Ingalls Lab Google Drive under Collaborative_Projects --> MARS_Project --> KEGG_Spreadsheets. **TODO: When ready, add more info here about updating/creating the KEGG data.**
+For each database used, there is a separate, ordered set of functions. For a full explanation of the order, please refer to the image at the top of this README. Because databases are used, the user needs to ensure that they have all of the required information accessible. The data from MoNA is the same as in the previous step. The data from KEGG is located in the same place as the MoNA: the shared Ingalls Lab Google Drive under Collaborative_Projects --> MARS_Project --> KEGG_Spreadsheets. **TODO: When ready, add more info here about updating/creating the KEGG data.**
 
 MoNA:
 ```{r Confidence Level 3: MoNA}
