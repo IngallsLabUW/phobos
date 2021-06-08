@@ -4,10 +4,10 @@ CL1
 - The rowwise is slow, but the entire run time of the function is still only <10 seconds. I could try an sapply solution to see if that speeds things up. What do you mean by NA handling inside the function?
 - Make a better stop() function for compound check
 - Be specific about the cutoffs, hard coded is nono or explain
+- Handle NAs inside the ms2 cosine similarity function instead of the ifelse statements.
 
 CL2
-- Maybe I could include shrunken versions of the scraped Massbank stuff, similar to the example data. I don't want to change 
-the overall format due to lost metadata but I can shrink things. And yeah. MBP is huge and slow. I wonder if it's because there is more data in each entry, are things better detected in positive mode? I think i've seen arguments for both sides.
+
 - Let's discuss adduct formation. The code that I have there (MH_mass +/-) is from KRH's original code and probably could use an update.
 - When things weren't parallelized, it was taking a lot longer (maybe 5 mins?). I adjusted the code to run a check for OS and then parallel/nonparallel depending on output.
 
@@ -18,27 +18,46 @@ CL3
 
 utils
 - no hard coding if possible
+
 *Notes*
 
 - Styler package. style_pkg(), style_dir(), etc. Keep it tidy. Commit before application of style changes. See Ch 7.3 for deets.
 
-- Final full documentation check.
-- Need to combine MS2 from standards list.
-- Add MoNA scrape code to package.
-- Figure out how to properly create KEGG homesheet.
-- Documentation for interpreting output. Column description and clarity.
-- CL2 class level check, maybe for the rest of the CLs as well.
 - Check collision energy stuff.
-- Check the MH mass and exact mass stuff in MoNA level 3: necesssary?
 - Check all TODO tags in the README.
-- Make Metlin hard to reach. Don't overload. Scrape what we don't know, like KRH's unknowns.
-- KEGG and future dataframes: should those be 3.5, or a different kind of ranking? Sorting is a bit of a problem.
 - How to best update the "Theoretical Data" for CL1? Similar to the quarterly update/up-to-user update? 
-- Is each step independent of the rest?
-- Column class for every dataframe. Midsection checks.
-- Documentation for CL4.
-- 1.5 confidence
-- Interpret output documentation
+
+
+Finalize KEGG creation code.
+
+Finalize MoNA creation code.
+
+Finalize Metlin query code and include it in the phobos package. It should be a non-parallelized small compound number search, aka hard to reach!
+
+Incorporate existing KRH code to easily update the standards MS2 data.
+
+
+Create functions to deal with the big, repetitive output csvs. Wrappers in the package should be able to handle various standard queries from the big database: Do we see this unknown feature anywhere in our data? Where has it been identified before? 
+
+Tweak the algorithm for MS2 cosine similarity. Include the reverse dot product.
+
+Clean up any import from public databases to de-replicate compounds we have standards for (we know that a peak isn't leucine because we know when leucine comes out).  
+
+A Shiny/RaMS app will be used to visualize or overview the data. 
+
+Include options for PubMed, HMDB.
+
+Host a small library of "representative" spectra from a bunch of organisms, and from our standards, for quick manual/visual inspection via Shiny, using code developed by WKumler. 
+
+A set of functions for looking at/extracting EICs/MS2s from a small subset of samples (pooled, DDA).
+
+Inclusion list: A list of masses that we tell the MS to get good MS2 data for. This already exists but needs to be incorporated into a systematic update system. Eventually we will generate it from the database (barring the 500 upper limit). 
+Right now it’s just compounds we have standards for.
+In the future: we could build a list with cmpds we see or suspect we see or ones we have good MS2s for.....some iteration of that.
+
+
+MSDial-ingestible: Connect ms2 data that we have to the standards list, search that programmatically and export it into an msdial readable database (this is lower priority).
+
 
 ### Other comments
 

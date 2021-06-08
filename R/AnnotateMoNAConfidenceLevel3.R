@@ -73,8 +73,6 @@ AnnotateMoNAConfidenceLevel3 <- function(Confidence.Level.2, MassBank.Neg, MassB
                      by = c("primary_key", "z_experimental", "confidence_rank", "confidence_source")) %>%
     dplyr::arrange(primary_key) %>%
     unique() %>%
-    # The hard-coded cutoff should either be turned into a user parameter
-    # or made hyper-explicit in the code
     dplyr::mutate(confidence_rank3 = ifelse(mz_similarity_score3 > 0.9, 3, NA)) %>%
     dplyr::mutate(confidence_rank = ifelse(!is.na(confidence_rank) & !is.na(confidence_rank3), paste(confidence_rank, "3", sep = "; "),
                                            ifelse(!is.na(confidence_rank3), confidence_rank3, confidence_rank)))  %>%

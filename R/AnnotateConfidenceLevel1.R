@@ -75,11 +75,7 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
                   column_experimental == column_theoretical) %>%
     dplyr::mutate(mz_similarity_score1 = CalculateSimilarityScore(mz_experimental, mz_theoretical, mz.flexibility),
                   rt_similarity_score1 = CalculateSimilarityScore(rt_sec_experimental, rt_sec_theoretical, rt.flexibility)) %>%
-    # Is rowwise() necessary here? It's probably the reason the code is slow
     dplyr::rowwise() %>%
-    # Why is this code slow? Feels like this will need to be optimized to work with larger data sets
-    # Basically can we vectorize MS2CosineSimilarity
-    # Also, it'd be nice if the NA handling was inside of the function
     dplyr::mutate(ppm_mass_error1 = ((abs(mz_experimental - mz_theoretical)) / mz_theoretical) * 10^6) %>%
     dplyr::mutate(MS2_cosine_similarity1 = ifelse(is.na(MS2_experimental) | is.na(MS2_theoretical),
                                                   NA, MS2CosineSimilarity(MS2_experimental, MS2_theoretical, mz.flexibility))) %>%

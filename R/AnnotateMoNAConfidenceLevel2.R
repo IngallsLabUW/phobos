@@ -109,7 +109,6 @@ AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassB
                   confidence_source = ifelse(!is.na(mz_similarity_score2),
                                              paste(confidence_source, "MassBank", sep = "; "), confidence_source)) %>%
     dplyr::mutate(across(starts_with(c("confidence", "massbank")), ~ReplaceNA(.x))) %>%
-    # Not sure the ReplaceNA is quite worth the saved space of making it into a utils function
     unique()
   Confidence.Level.2[Confidence.Level.2 == ""] <- NA
 

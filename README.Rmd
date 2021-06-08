@@ -28,6 +28,8 @@ The MARS project helps identify and rank unknown mass features (MFs) in untarget
 
 **phobos aims to be: Flexible, updatable, searchable, rankable, exportable.**
 
+![test](example_data/MARS_Workflow.png)
+
 ## Installation
 
 You can install the development version of phobos from [Github](https://github.com/IngallsLabUW/phobos) with:
@@ -214,4 +216,14 @@ knitr::kable(CL4[c(1, 26, 66, 202, 314, 354), ], caption = "Confidence Level 4")
 
 In order to check against common contaminants, download the "Common_Contaminants.csv" data from the shared Ingalls Google Drive in the MARS_Project folder. 
 
-Run the checkContaminants() function using the final annotated data and the downloaded csv. 
+Run the checkContaminants() function using the final annotated data and the downloaded Common Contaminants csv. 
+
+---
+
+### Interpreting Output
+
+Once the experimental data has been completely through the MARS project, the final output is a set of data frames with additional columns containing various matching parameters: matches, similarity scores, ranks, sources, etc. 
+
+In general, if a column as a suffix of "1", e.g. mz_similarity_score1, that column is associated with Confidence Level 1. The same logic applies to columns with suffixes of 2 or 3. 
+
+When deciding between potential matches, start by prioritizing confidence level, and then sort within level by similarity scores. If a massfeature has received matches on confidence levels 1, 2 and 3, assume that the confidence level 1 output is the best one to choose, and then start comparing similarity scores within that confidence level to narrow down matches to the best option.
