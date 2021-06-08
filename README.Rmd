@@ -225,3 +225,12 @@ Once the experimental data has been completely through the MARS project, the fin
 In general, if a column as a suffix of "1", e.g. mz_similarity_score1, that column is associated with Confidence Level 1. The same logic applies to columns with suffixes of 2 or 3. 
 
 When deciding between potential matches, start by prioritizing confidence level, and then sort within level by similarity scores. If a massfeature has received matches on confidence levels 1, 2 and 3, assume that the confidence level 1 output is the best one to choose, and then start comparing similarity scores within that confidence level to narrow down matches to the best option.
+
+When looking at similarity scores, there are several to choose from depending on the confidence level. mz_similarity_score, rt_similarity_score, ppm_mass_error, MS2_similarity_score, and total_similarity_score are all potential filtering options for the user to consider. 
+
+"Good" similarity scores are the following: 
+- mz_similarity_score1 > 0.9 
+- rt_similarity_score1 > 0.75 
+- ppm_mass_error1 < 7
+
+MS2 cosine similarity does not act as a filtering score in the code due to collision energies and NAs, and are instead included a column for user review. The same is true for the total similarity score, which includes all available similarity scores (see Design Doc for more information).
