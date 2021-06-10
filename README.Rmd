@@ -18,6 +18,15 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
+**Table of contents:** 
+- [Installation](https://github.com/IngallsLabUW/phobos#installation) 
+- [Confidence Level 1](https://github.com/IngallsLabUW/phobos#Confidence Level 1) 
+- [Confidence Level 2](https://github.com/IngallsLabUW/phobos#Confidence Level 2) 
+- [Confidence Level 3](https://github.com/IngallsLabUW/phobos#Confidence Level 3) 
+- [Confidence Level 4](https://github.com/IngallsLabUW/phobos#Confidence Level 4) 
+- [Common Contaminants](https://github.com/IngallsLabUWphobos#Common Contaminants) 
+- [Interpreting Output](https://github.com/IngallsLabUWphobos#Interpreting Output) 
+
 phobos is an R package of custom functions that accompany the Ingalls Lab MARS Project.
 
 The MARS project helps identify and rank unknown mass features (MFs) in untargeted metabolomics data. It consists of two major sections: 
@@ -48,7 +57,7 @@ library(phobos)
 
 A common problem in metabolomics is how to handle unknown but determinable mass features. The output of non-targeted metabolite runs produces an abundance of spectra that can be discretely separated and isolated, but often remain unidentified, or identified with non-standard confidence. 
 
-The phobos package, designed as part of the Ingalls MARS (Metabolite Annotation, Rank and Sort) Project, prioritizes simplicity, efficiency, and confidence in metabolite identification. To encourage confidence consistency, phobos adheres to the proposed minimum reporting standards for chemical analysis as laid out in the Metabolomics Standards Initiative (MSI) [2007 paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3772505/pdf/nihms504189.pdf). In addition to utilizing the [Ingalls Lab Standards](https://github.com/IngallsLabUW/Ingalls_Standards) for foremost confidence annotations (known as "Confidence Level 1"), phobos provides functionality for incorporating spectral comparison to third-party sources such as [MassBank of North America (MoNA)](https://mona.fiehnlab.ucdavis.edu/),, [KEGG](https://www.genome.jp/kegg/), and [Metlin](https://metlin.scripps.edu/landing_page.php?pgcontent=mainPage), **TODO: METLIN TBD**.
+The phobos package, designed as part of the Ingalls MARS (Metabolite Annotation, Rank and Sort) Project, prioritizes simplicity, efficiency, and confidence in metabolite identification. To encourage confidence consistency, phobos adheres to the proposed minimum reporting standards for chemical analysis as laid out in the Metabolomics Standards Initiative (MSI) [2007 paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3772505/pdf/nihms504189.pdf). In addition to utilizing the [Ingalls Lab Standards](https://github.com/IngallsLabUW/Ingalls_Standards) for foremost confidence annotations (known as "Confidence Level 1"), phobos provides functionality for incorporating spectral comparison to third-party sources such as [MassBank of North America (MoNA)](https://mona.fiehnlab.ucdavis.edu/), [KEGG](https://www.genome.jp/kegg/), and [Metlin](https://metlin.scripps.edu/landing_page.php?pgcontent=mainPage), **TODO: METLIN TBD**.
 
 For a complete description of the MARS annotation process, as well as all references for the equations used in the phobos package, please refer to the MARS Design Doc.
 

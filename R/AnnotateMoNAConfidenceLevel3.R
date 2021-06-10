@@ -73,7 +73,8 @@ AnnotateMoNAConfidenceLevel3 <- function(Confidence.Level.2, MassBank.Neg, MassB
                      by = c("primary_key", "z_experimental", "confidence_rank", "confidence_source")) %>%
     dplyr::arrange(primary_key) %>%
     unique() %>%
-    dplyr::mutate(confidence_rank3 = ifelse(mz_similarity_score3 > 0.9, 3, NA)) %>%
+    dplyr::mutate(ppm_mass_error3 = ((abs(MH_mass_experimental - MH_mass_MoNA)) / mz_theoretical) * 10^6) %>%
+    dplyr::mutate(confidence_rank3 = ifelse(mz_similarity_score3 > 0.9 & ppm_mass_error3 < 7, 3, NA)) %>%
     dplyr::mutate(confidence_rank = ifelse(!is.na(confidence_rank) & !is.na(confidence_rank3), paste(confidence_rank, "3", sep = "; "),
                                            ifelse(!is.na(confidence_rank3), confidence_rank3, confidence_rank)))  %>%
     dplyr::mutate(confidence_source = ifelse(stringr::str_detect(confidence_rank, "3"),
@@ -85,7 +86,7 @@ AnnotateMoNAConfidenceLevel3 <- function(Confidence.Level.2, MassBank.Neg, MassB
     dplyr::select(primary_key, MassFeature, compound_theoretical, massbank_match2, massbank_match3,
                   mz_experimental:mz_massbank2, MH_mass_experimental, MH_mass_MoNA,
                   z_experimental, z_theoretical, z_massbank2, z_massbank3, rt_sec_experimental:column_theoretical,
-                  MS2_experimental:MS2_massbank, ppm_mass_error1, massbank_ppm, mz_similarity_score1, mz_similarity_score2, mz_similarity_score3,
+                  MS2_experimental:MS2_massbank, ppm_mass_error1, ppm_mass_error3, massbank_ppm, mz_similarity_score1, mz_similarity_score2, mz_similarity_score3,
                   rt_similarity_score1:total_similarity_score2, everything(), -confidence_rank3) %>%
     dplyr::arrange(primary_key)
 

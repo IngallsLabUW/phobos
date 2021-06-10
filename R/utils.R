@@ -114,7 +114,7 @@ IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidat
                   MS2_experimental = scan2,
                   mz_experimental = mass2) %>%
     unique() %>%
-    dplyr::filter(massbank_ppm < 5,
+    dplyr::filter(massbank_ppm < 7,
                   MS2_cosine_similarity2 > 0.5) %>%
     dplyr::arrange(desc(MS2_cosine_similarity2))
 
@@ -180,7 +180,7 @@ MS2CosineSimilarity <- function(scan1, scan2, mz.flexibility) {
   weight1 <- (scan1[, "mz"] ^ 2) * sqrt(scan1[, "intensity"])
   weight2 <- (scan2[, "mz"] ^ 2) * sqrt(scan2[, "intensity"])
 
-  diff.matrix <- sapply(scan1[, 1], function(x) scan2[, 1] - x)
+  diff.matrix <- sapply(scan1[, "mz"], function(x) scan2[, "mz"] - x)
   same.index <- which(abs(diff.matrix) < 0.02, arr.ind = TRUE)
   cosine.similarity <- sum(weight1[same.index[, 2]] * weight2[same.index[, 1]]) /
     (sqrt(sum(weight2 ^ 2)) * sqrt(sum(weight1 ^ 2)))

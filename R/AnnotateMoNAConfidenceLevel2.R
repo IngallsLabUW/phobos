@@ -104,7 +104,7 @@ AnnotateMoNAConfidenceLevel2 <- function(Confidence.Level.1, MassBank.Neg, MassB
 
   # Combine Confidence Level 2 with Confidence Level 1 ---------------------------
   Confidence.Level.2 <- MoNA.Matched %>%
-    dplyr::mutate(confidence_rank = ifelse(!is.na(mz_similarity_score2),
+    dplyr::mutate(confidence_rank = ifelse(!is.na(mz_similarity_score2) & mz_similarity_score2 > 0.9,
                                            paste(confidence_rank, "2", sep = "; "), confidence_rank),
                   confidence_source = ifelse(!is.na(mz_similarity_score2),
                                              paste(confidence_source, "MassBank", sep = "; "), confidence_source)) %>%

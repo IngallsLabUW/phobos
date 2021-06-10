@@ -6,6 +6,22 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
+**Table of contents:** -
+[Overview](https://github.com/IngallsLabUW/phobos#overview) -
+[Installation](https://github.com/IngallsLabUW/phobos#installation) -
+[Confidence Level
+1](https://github.com/IngallsLabUW/phobos#Confidence%20Level%201) -
+[Confidence Level
+2](https://github.com/IngallsLabUW/phobos#Confidence%20Level%202) -
+[Confidence Level
+3](https://github.com/IngallsLabUW/phobos#Confidence%20Level%203) -
+[Confidence Level
+4](https://github.com/IngallsLabUW/phobos#Confidence%20Level%204) -
+[Common
+Contaminants](https://github.com/IngallsLabUWphobos#Common%20Contaminants)
+- [Interpreting
+Output](https://github.com/IngallsLabUWphobos#Interpreting%20Output)
+
 phobos is an R package of custom functions that accompany the Ingalls
 Lab MARS Project.
 
@@ -33,16 +49,8 @@ You can install the development version of phobos from
 
 ``` r
 devtools::install_github("IngallsLabUW/phobos")
-#> Downloading GitHub repo IngallsLabUW/phobos@HEAD
-#> 
-#>      checking for file ‘/private/var/folders/7j/gxsnrqzs7qg_g_7hp143b8xr0000gn/T/RtmpvR4rXp/remotes5bee166a79f3/IngallsLabUW-phobos-0eb15cc/DESCRIPTION’ ...  ✓  checking for file ‘/private/var/folders/7j/gxsnrqzs7qg_g_7hp143b8xr0000gn/T/RtmpvR4rXp/remotes5bee166a79f3/IngallsLabUW-phobos-0eb15cc/DESCRIPTION’
-#>   ─  preparing ‘phobos’:
-#>      checking DESCRIPTION meta-information ...  ✓  checking DESCRIPTION meta-information
-#>   ─  checking for LF line-endings in source and make files and shell scripts
-#>   ─  checking for empty or unneeded directories
-#>   ─  building ‘phobos_0.1.0.tar.gz’
-#>      
-#> 
+#> Skipping install of 'phobos' from a github remote, the SHA1 (a44a4824) has not changed since last install.
+#>   Use `force = TRUE` to force installation
 ```
 
 Once installed, phobos can be loaded like any other package:
@@ -71,7 +79,7 @@ Standards](https://github.com/IngallsLabUW/Ingalls_Standards) for
 foremost confidence annotations (known as “Confidence Level 1”), phobos
 provides functionality for incorporating spectral comparison to
 third-party sources such as [MassBank of North America
-(MoNA)](https://mona.fiehnlab.ucdavis.edu/),,
+(MoNA)](https://mona.fiehnlab.ucdavis.edu/),
 [KEGG](https://www.genome.jp/kegg/), and
 [Metlin](https://metlin.scripps.edu/landing_page.php?pgcontent=mainPage),
 **TODO: METLIN TBD**.
