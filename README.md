@@ -6,21 +6,21 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-**Table of contents:** -
-[Overview](https://github.com/IngallsLabUW/phobos#overview) -
-[Installation](https://github.com/IngallsLabUW/phobos#installation) -
-[Confidence Level
-1](https://github.com/IngallsLabUW/phobos#Confidence%20Level%201) -
-[Confidence Level
-2](https://github.com/IngallsLabUW/phobos#Confidence%20Level%202) -
-[Confidence Level
-3](https://github.com/IngallsLabUW/phobos#Confidence%20Level%203) -
-[Confidence Level
-4](https://github.com/IngallsLabUW/phobos#Confidence%20Level%204) -
-[Common
-Contaminants](https://github.com/IngallsLabUWphobos#Common%20Contaminants)
-- [Interpreting
-Output](https://github.com/IngallsLabUWphobos#Interpreting%20Output)
+**Table of contents:**
+
+-   [Installation](https://github.com/IngallsLabUW/phobos#installation)
+-   [Confidence Level
+    1](https://github.com/IngallsLabUW/phobos#Confidence%20Level%201)
+-   [Confidence Level
+    2](https://github.com/IngallsLabUW/phobos#Confidence%20Level%202)
+-   [Confidence Level
+    3](https://github.com/IngallsLabUW/phobos#Confidence%20Level%203)
+-   [Confidence Level
+    4](https://github.com/IngallsLabUW/phobos#Confidence%20Level%204)
+-   [Common
+    Contaminants](https://github.com/IngallsLabUWphobos#Common%20Contaminants)
+-   [Interpreting
+    Output](https://github.com/IngallsLabUWphobos#Interpreting%20Output)
 
 phobos is an R package of custom functions that accompany the Ingalls
 Lab MARS Project.
@@ -28,11 +28,11 @@ Lab MARS Project.
 The MARS project helps identify and rank unknown mass features (MFs) in
 untargeted metabolomics data. It consists of two major sections:
 
--   A central “homebase” database containing compiled mass features
+-   A central “HomeBase” database containing compiled mass features
     detected by the Ingalls lab with *m/z* (mass/charge), retention time
     (in seconds), chromatographic column, ion charge, and fragmentation
-    data, as well as all previous MARS missions(?) and metadata (What
-    metadata might be included?).
+    data, as well as all previous MARS missions(?) and metadata (ship
+    information, dates, depths, regions, etc.).
 -   This package, *phobos*: A package of functions for annotating,
     ranking, and scoring the unknown mass features, as well as other
     common data transformations associated with the MARS project.
@@ -49,7 +49,7 @@ You can install the development version of phobos from
 
 ``` r
 devtools::install_github("IngallsLabUW/phobos")
-#> Skipping install of 'phobos' from a github remote, the SHA1 (a44a4824) has not changed since last install.
+#> Skipping install of 'phobos' from a github remote, the SHA1 (6775f837) has not changed since last install.
 #>   Use `force = TRUE` to force installation
 ```
 
@@ -76,10 +76,9 @@ Initiative (MSI) [2007
 paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3772505/pdf/nihms504189.pdf).
 In addition to utilizing the [Ingalls Lab
 Standards](https://github.com/IngallsLabUW/Ingalls_Standards) for
-foremost confidence annotations (known as “Confidence Level 1”), phobos
-provides functionality for incorporating spectral comparison to
-third-party sources such as [MassBank of North America
-(MoNA)](https://mona.fiehnlab.ucdavis.edu/),
+foremost confidence annotations, phobos provides functionality for
+incorporating spectral comparison to third-party sources such as
+[MassBank of North America (MoNA)](https://mona.fiehnlab.ucdavis.edu/),
 [KEGG](https://www.genome.jp/kegg/), and
 [Metlin](https://metlin.scripps.edu/landing_page.php?pgcontent=mainPage),
 **TODO: METLIN TBD**.
@@ -116,27 +115,30 @@ contain only these columns, in this order.
 -   “z”: The polarity, numeric.
 -   “MS2”: MS2 data for those compounds that have it, character.
     -   **Important**: The MS2 data must be in the filtered, scaled and
-        concatenated format of “mz, intensity;”, as below. For example
-        purposes, the MS2 column below has been cut off at two instances
-        of “mz, intensity;” but real data will likely have many more
-        entries. There are several functions included in this package to
-        help modify the data to various forms: ConcatToScan() for
-        transforming concatenated data to scantable format,
-        ScanToConcat() for doing the opposite, and ScaleMS2() for
-        scaling the MS2 data to a maximum intensity of 100 and minimum
-        intensity of 0.5
+        concatenated format of “mz, intensity;”, as in the data frame
+        below. For example purposes, the MS2 column below has been cut
+        off at two instances of “mz, intensity;” but real data will
+        likely have many more entries. There are several functions
+        included in this package to help modify the data to various
+        forms: ConcatToScan() for transforming concatenated data to
+        scantable format, ScanToConcat() for doing the opposite, and
+        ScaleMS2() for scaling the MS2 data to a maximum intensity of
+        100 and minimum intensity of 0.5
 
-For clarity, phobos also adds an additional primary column to the
-dataframe titled “primary\_key”: a simple key column consisting of 1-n
-rows. (What’s 1-n here?) Throughout the project, the search parameter
-column names in the dataframes (mz, rt, z, column, MS2) will be modified
-according to their source. For example, all “theoretical” mz values, aka
-values that are derived from a standards sheet, are identified as
-“mz\_theoretical”, where as experimental values are identified as
-“mz\_experimental”, MoNA values are identified as “mz\_massbank”, etc.
-This also applies to confidence level rankings and similarity scores: A
-column titled mz\_similarity\_score1 refers to the similarity score
-calculated during the Confidence Level 1 annotation.
+For clarity, phobos also adds an additional primary column to the data
+frame titled “primary\_key”: a simple key column consisting of 1-nrow of
+the data frame. A frame consisting of 100 rows would have a primary key
+column of 1-100.
+
+As the annotation progresses, the column names in the data frames (mz,
+rt, z, column, MS2) will be modified according to their source. For
+example, all “theoretical” mz values, e.g. values that are derived from
+a standards sheet, are identified as “mz\_theoretical”, where as
+experimental values are identified as “mz\_experimental”, MassBank
+values are identified as “mz\_massbank”, etc. This also applies to
+confidence level rankings and similarity scores: A column titled
+mz\_similarity\_score1 refers to the similarity score calculated during
+the Confidence Level 1 annotation.
 
 Below is an example of an experimental dataframe in the correct format.
 
@@ -148,27 +150,25 @@ Below is an example of an experimental dataframe in the correct format.
 | Isethionic Acid | 125 | 432 | HILIC  |  -1 | 124.99041, 100; 94.97973, 27.2  |
 | I126.904R4.8    | 127 | 288 | HILIC  |  -1 | 126.90401, 100; 85.03849, 1.4   |
 
-Experimental Data
-
 ------------------------------------------------------------------------
 
 ### Confidence Level 1
 
-In order to receive a confidence level 1 annotation, a mass feature must
+In order to receive a Confidence Level 1 annotation, a mass feature must
 be compared to an authentic chemical standard using two independent and
-orthogonal data. Within the MARS project, a mass feature must match to a
-chemical standard by column, charge, mz, retention time, and fall below
-a user-defined ppm.
+orthogonal checks. Within the MARS project, a mass feature must have a
+good match to a chemical standard by column, charge, mz, retention time,
+and fall below a user-defined ppm.
 
 The experimental data is compared to the theoretical data (the Ingalls
-Standards csv) for confidence level 1. A version of the theoretical
+Standards csv) for Confidence Level 1. A version of the theoretical
 data, modified for the phobos package, is included in the phobos
 example\_data/ subdirectory and can be imported using the
 read.csv(“example\_data/Example\_Theoretical\_Data.csv”) command. The
 complete Ingalls Standards csv is located on the [Ingalls Standards
 Github](https://github.com/IngallsLabUW/Ingalls_Standards/blob/master/Ingalls_Lab_Standards_NEW.csv)
 and can be downloaded for a more updated version. Like the experimental
-data, the theoretical data must be in a specific format before
+data, the theoretical data must be in the same specific format before
 comparison. **TODO: Right now the github standards doesn’t include the
 MS2 data, it will once consensus is reached!**
 
@@ -178,8 +178,6 @@ MS2 data, it will once consensus is reached!**
 | 9   | Alanine    |  90 |  678 | HILIC  |   1 | 72.08152, 100; 90.09258, 78.5   |
 | 18  | Arginine   | 175 | 1076 | HILIC  |   1 | 175.11914, 100; 116.071, 27.1   |
 | 25  | Asparagine | 133 |  712 | HILIC  |   1 | NA                              |
-
-Theoretical Data
 
 To annotate the experimental data for confidence level 1, use the
 AnnotateConfidenceLevel1() function. The values for mz.flexibility and
@@ -222,10 +220,9 @@ Confidence Level 1
 
 In the above table, the results have been given an m/z, rt, MS2, and ppm
 scores, which are used to create a total similarity score. Depending on
-the results, a mass feature is given a confidence rank and source (for
-the first step, either NA or Ingalls\_Standards). For more information
-about interpreting the MARS output, please jump to the bottom of this
-README to the “Interpreting Output” section.
+the results, a mass feature is given a confidence rank and source. For
+more information about interpreting the MARS output, please navigate to
+the “Interpreting Output” section.
 
 ------------------------------------------------------------------------
 
@@ -258,12 +255,15 @@ FUNCTION**.
 Confidence.Level.2 <- read.csv("example_data/Example_ConfidenceLevel2.csv")
 ```
 
-|     | MassFeature      | primary\_key | compound\_theoretical | massbank\_match2 | massbank\_ppm | MS2\_cosine\_similarity2 | confidence\_rank | confidence\_source |
-|:----|:-----------------|-------------:|:----------------------|:-----------------|--------------:|:-------------------------|:-----------------|:-------------------|
-| 1   | I102.0549R12.14  |            1 | NA                    | NA               |            NA | NA                       | NA               | NA                 |
-| 2   | Uracil           |            2 | Uracil                | NA               |            NA | NA                       | 1                | Ingalls\_Standards |
-| 95  | Sulfolactic Acid |           15 | Sulfolactic Acid      | NA               |            NA | NA                       | 1                | Ingalls\_Standards |
-| 119 | I217.93R10.87    |           24 | NA                    | NA               |            NA | NA                       | NA               | NA                 |
+|     | MassFeature         | primary\_key | compound\_theoretical | massbank\_match2                                                                                                                                                                                                                                                                     | massbank\_ppm | MS2\_cosine\_similarity2 | confidence\_rank | confidence\_source           |
+|:----|:--------------------|-------------:|:----------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------:|:-------------------------|:-----------------|:-----------------------------|
+| 1   | I102.0549R12.14     |            1 | NA                    | NA                                                                                                                                                                                                                                                                                   |            NA | NA                       | NA               | NA                           |
+| 2   | Uracil              |            2 | Uracil                | NA                                                                                                                                                                                                                                                                                   |            NA | NA                       | 1                | Ingalls\_Standards           |
+| 10  | I124.0064R10.88     |            3 | Taurine               | NA                                                                                                                                                                                                                                                                                   |            NA | NA                       | 1                | Ingalls\_Standards           |
+| 18  | Isethionic Acid     |            4 | Isethionic Acid       | NA                                                                                                                                                                                                                                                                                   |            NA | NA                       | 1                | Ingalls\_Standards           |
+| 26  | I126.904R4.8        |            5 | NA                    | NA                                                                                                                                                                                                                                                                                   |            NA | NA                       | NA               | NA                           |
+| 27  | L-Pyroglutamic acid |            6 | Taurine, D4           | ID: PR100586; L-Pyroglutamic acid; pGlu; pyroGlu; Pyroglutamate; Pidolic acid; L-Glutimic acid; L-5-Oxoproline; (S)-(?)-2-Pyrrolidone-5-carboxylic acid; (S)-5-Oxo-2-pyrrolidinecarboxylic acid; L-a-Aminoglutaric Acid Lactam; L-5-Oxo-2-pyrrolidinecarboxylic acid ID:ID: PR100586 |           4.3 | NA                       | 2                | MassBank                     |
+| 28  | L-Pyroglutamic acid |            6 | L-Pyroglutamic acid   | ID: PR100586; L-Pyroglutamic acid; pGlu; pyroGlu; Pyroglutamate; Pidolic acid; L-Glutimic acid; L-5-Oxoproline; (S)-(?)-2-Pyrrolidone-5-carboxylic acid; (S)-5-Oxo-2-pyrrolidinecarboxylic acid; L-a-Aminoglutaric Acid Lactam; L-5-Oxo-2-pyrrolidinecarboxylic acid ID:ID: PR100586 |           4.3 | NA                       | 1; 2             | Ingalls\_Standards; MassBank |
 
 Confidence Level 2
 
