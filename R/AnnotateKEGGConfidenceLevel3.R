@@ -14,8 +14,8 @@
 #' # Load experimental data that has already been annotated for Confidence Levels 1, 2 & 3
 #' # using the AnnotateConfidenceLevel1, AnnotateMoNAConfidenceLevel2 and AnnotateMoNAConfidenceLevel3 functions.
 #'
-#' Confidence.Level.3.MoNA <- read.csv("example_data/Example_ConfidenceLevel3_MoNA.csv")
-#' KEGG.Data <- read.csv("example_data/Example_KEGGData.csv")
+#' Confidence.Level.3.MoNA <- read.csv("data/Example_ConfidenceLevel3_MoNA.csv")
+#' KEGG.Data <- read.csv("data/Example_KEGGData.csv")
 #'
 #' Example_KEGG_ConfidenceLevel3 <- AnnotateKEGGConfidenceLevel3(Confidence.Level.3.MoNA = Confidence.Level.3.MoNA,
 #' KEGG.Data <- KEGG.Data, mz.flexibility = 0.02, ppm.tolerance = 15)

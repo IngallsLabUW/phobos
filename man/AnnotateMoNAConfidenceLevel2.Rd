@@ -38,9 +38,9 @@ library(phobos)
 # Load experimental data that has already been annotated for Confidence Level 1 using the AnnotateConfidenceLevel1 function.
 # Remember that dataframe format is important: please refer to README or the documentation for AnnotateConfidenceLevel1() for details.
 
-Confidence.Level.1 <- read.csv("example_data/Example_ConfidenceLevel1.csv")
-MassBank.Neg <- read.csv("example_data/NEG_Spectra.csv")
-MassBank.Pos <- read.csv("example_data/POS_Spectra.csv")
+Confidence.Level.1 <- read.csv("data/Example_ConfidenceLevel1.csv")
+MassBank.Neg <- read.csv("data/NEG_Spectra.csv")
+MassBank.Pos <- read.csv("data/POS_Spectra.csv")
 Example_ConfidenceLevel2 <- AnnotateMoNAConfidenceLevel2(Confidence.Level.1 = Confidence.Level.1, MassBank.Neg = MassBank.Neg,
 MassBank.Pos = MassBank.Pos, mz.flexibility = 0.02
 
