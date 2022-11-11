@@ -28,21 +28,13 @@ knitr::opts_chunk$set(
 - [Common Contaminants](https://github.com/IngallsLabUWphobos#Common Contaminants) 
 - [Interpreting Output](https://github.com/IngallsLabUWphobos#Interpreting Output) 
 
-phobos is an R package of custom functions that accompany the Ingalls Lab MARS Project.
-
-The MARS project helps identify and rank unknown mass features (MFs) in untargeted metabolomics data. It consists of two major sections: 
-
-- A central "HomeBase" database containing compiled mass features detected by the Ingalls lab with *m/z* (mass/charge), retention time (in seconds), chromatographic column, ion charge, and fragmentation data, as well as all previous MARS missions(?) and metadata (ship information, dates, depths, regions, etc.).
-- This package, *phobos*: A package of functions for annotating, ranking, and scoring the unknown mass features, as well as other common data transformations associated with the MARS project.
-
-
-**phobos aims to be: Flexible, updatable, searchable, rankable, exportable.**
+phobos is an R package of custom functions for identifying and ranking unknown mass features (MFs) in metabolomics data, colloquially known as the MARS Project. The package annotates, ranks, and scores the unknown mass features, and performs common data transformations.
 
 ![MARS](example_data/MARS_Workflow.png)
 
 ## Installation
 
-You can install the development version of phobos from [Github](https://github.com/IngallsLabUW/phobos) with:
+You can install phobos from [Github](https://github.com/IngallsLabUW/phobos) with:
 
 ``` {r}
 devtools::install_github("IngallsLabUW/phobos")
@@ -56,9 +48,9 @@ library(phobos)
 
 ## Description
 
-A common problem in metabolomics is how to handle unknown but determinable mass features. The output of non-targeted metabolite runs produces an abundance of spectra that can be discretely separated and isolated, but often remain unidentified, or identified with non-standard confidence. 
+A common problem in metabolomics is how to handle unknown but present mass features. The output of non-targeted runs produces an abundance of spectra that can be discretely separated and isolated, but often remain unidentified, or identified with non-standard confidence. 
 
-The phobos package, designed as part of the Ingalls MARS (Metabolite Annotation, Rank and Sort) Project, prioritizes simplicity, efficiency, and confidence in metabolite identification. To encourage confidence consistency, phobos adheres to the proposed minimum reporting standards for chemical analysis as laid out in the Metabolomics Standards Initiative (MSI) [2007 paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3772505/pdf/nihms504189.pdf). In addition to utilizing the [Ingalls Lab Standards](https://github.com/IngallsLabUW/Ingalls_Standards) for foremost confidence annotations, phobos provides functionality for incorporating spectral comparison to third-party sources such as [MassBank of North America (MoNA)](https://mona.fiehnlab.ucdavis.edu/), [KEGG](https://www.genome.jp/kegg/), and [Metlin](https://metlin.scripps.edu/landing_page.php?pgcontent=mainPage), **TODO: METLIN TBD**.
+The phobos package, designed to accompany the Ingalls MARS (Metabolite Annotation, Rank and Sort) Project, prioritizes simplicity, efficiency, and confidence in metabolite identification. To encourage confidence consistency, phobos adheres to the proposed minimum reporting standards for chemical analysis as laid out in the Metabolomics Standards Initiative (MSI) [2007 paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3772505/pdf/nihms504189.pdf). In addition to utilizing the [Ingalls Lab Standards](https://github.com/IngallsLabUW/Ingalls_Standards) for foremost confidence annotations, phobos provides functionality for incorporating spectral comparison to third-party sources such as [MassBank of North America (MoNA)](https://mona.fiehnlab.ucdavis.edu/), [KEGG](https://www.genome.jp/kegg/), and [Metlin](https://metlin.scripps.edu/landing_page.php?pgcontent=mainPage), **TODO: METLIN TBD**.
 
 For a complete description of the MARS annotation process, as well as all references for the equations used in the phobos package, please refer to the MARS Design Doc.
 

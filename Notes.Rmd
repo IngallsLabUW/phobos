@@ -68,3 +68,5 @@ MSDial-ingestible: Connect ms2 data that we have to the standards list, search t
 
 - For DDA high resolution, the mass spec sees a high signal. When it see that, it takes above and below that signal and isolates it in the collision chamber. In the ms2 df, the first column is the exact mass with an intensity of 100 (maximum), then second mass and intensity, etc. 
 
+Previous Comments, plans for the future
+- A central "HomeBase" database containing compiled mass features detected by the Ingalls lab with *m/z* (mass/charge), retention time (in seconds), chromatographic column, ion charge, and fragmentation data, as well as all previous MARS missions(?) and metadata (ship information, dates, depths, regions, etc.).
