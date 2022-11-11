@@ -47,8 +47,8 @@ library(phobos)
 # - "z": The polarity, numeric.
 # - "MS2": MS2 data for those compounds that have it, character, in concatenated format.
 
-experimental.values <- read.csv("example_data/Example_Experimental_Data.csv")
-theoretical.values <- read.csv("example_data/Example_Theoretical_Data.csv")
+experimental.values <- read.csv("data/Example_Experimental_Data.csv")
+theoretical.values <- read.csv("data/Example_Theoretical_Data.csv")
 example.confidence.1 <- AnnotateConfidenceLevel1(experimental.values = experimental.values,
 theoretical.values = theoretical.values, mz.flexibility = 0.02, rt.flexibility = 30)
 }
