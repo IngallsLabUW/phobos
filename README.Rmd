@@ -28,7 +28,7 @@ knitr::opts_chunk$set(
 - [Common Contaminants](https://github.com/IngallsLabUWphobos#Common Contaminants) 
 - [Interpreting Output](https://github.com/IngallsLabUWphobos#Interpreting Output) 
 
-phobos is an R package of custom functions for identifying and ranking unknown mass features (MFs) in metabolomics data, colloquially known as the MARS Project. The package annotates, ranks, and scores the unknown mass features, and performs common data transformations.
+phobos is an R package of custom functions for identifying and ranking unknown mass features (MFs) in metabolomics data. The package annotates, ranks, and scores the unknown mass features, and performs data transformations common to the [Ingalls Lab](https://sites.google.com/view/anitra-ingalls).
 
 ![MARS](example_data/MARS_Workflow.png)
 
