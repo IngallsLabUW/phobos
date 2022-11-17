@@ -82,8 +82,8 @@ ConcatToScan <- function(concat.format) {
 IsolateMoNACandidates <- function(MoNA.Mass, experimental.df, potential.candidates) {
   requireNamespace("dplyr", quietly = TRUE)
   potential.candidates <- potential.candidates %>%
-    dplyr::filter(MH_mass > MoNA.Mass - 0.020, # These should not be hard-coded!
-           MH_mass < MoNA.Mass + 0.020) %>%
+    # dplyr::filter(MH_mass > MoNA.Mass - 0.020, # These should not be hard-coded! Also not really sure why this is here.
+    #        MH_mass < MoNA.Mass + 0.020) %>%
     fuzzyjoin::difference_inner_join(experimental.df, by = "MH_mass", max_dist = 0.02) %>%
     dplyr::filter(z_massbank2 == z_experimental) %>%
     dplyr::rename(scan1 = spectrum_KRHform_filtered, # scan1 is MS2 from MoNA

@@ -109,7 +109,6 @@ AnnotateConfidenceLevel1 <- function(experimental.values, theoretical.values, mz
     dplyr::rename("rt_sec_experimental" = rt)
   colnames(No.CL1.Match.df)[c(2, 4:6)] <- paste(colnames(No.CL1.Match.df)[c(2, 4:6)], "experimental", sep = "_")
 
-
   No.Fuzzy.Match.df <- experimental.values %>%
     dplyr::anti_join(Fuzzy.Join) %>%
     dplyr::rename("rt_sec_experimental" = rt)

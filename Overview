@@ -1,0 +1,107 @@
+**********Confidence Level 1 breakdown**********
+
+Tidy and setup
+- Make sure experimental input is in a standardized format (column names and class)
+- Mutate a primary key for ID (literally just 1-nrow)
+- From the modified, MS2-included standards, make a column to isolate voltage.
+
+Logic
+- Fuzzyjoin the experimental and theoretical table based on overlapping mz values, according to the user-defined mz flexibility (our default is 0.2). Change column names and reorder.
+- Match polarity and column.
+- Rowwise:
+  ppm mass error = ((abs(mz_experimental - mz_theoretical)) / mz_theoretical) * 10^6)
+  MS2 cosine similarity = MS2CosineSimilarity(MS2_experimental, MS2_theoretical, mz.flexibility), if both MFs have accompanying cosines.
+    - make a mini dataframe from a concatenated scan
+    - create weights for both scantables by squaring the mz and multiplying by the intensity: weight1 <- (scan1[, "mz"] ^ 2) * sqrt(scan1[, "intensity"])
+    - create a difference matrix: sapply(scan1[, "mz"], function(x) scan2[, "mz"] - x). Basically finding the difference between each combination of mzs.
+    - find which differences are less than 0.02 (aka the mz flexibility, shouldn't be hard coded but here we are)
+    - calculate the "MS2 cosine similarity" = sum(weight1[same.index[, 2]] * weight2[same.index[, 1]]) / (sqrt(sum(weight2 ^ 2)) * sqrt(sum(weight1 ^ 2)))
+  calculate a total similarity score according to which values have been calculated (if there is an MS2 similarity score, use one equation, if not, then use another.)       total_similarity_score1 = ifelse(is.na(MS2_cosine_similarity1), mean(c(mz_similarity_score1, rt_similarity_score1) * 100), mean(c(MS2_cosine_similarity1,           mz_similarity_score1, rt_similarity_score1) * 100)))
+
+- Do a sanity check: Have any compounds been lost? Check for those that didn't get fuzzy matches, fuzzy matches that then got thrown out due to wrong polarity/column, and then check against the original data to make sure all features have been accounted for. Create dataframes of the "unmatched" features.
+
+- Combine the "unmatched" with the "matched" for a full dataframe of all your original featues with the new similarity scores included.
+
+- Decide if a feature gets a confidence rank of 1: ifelse(mz_similarity_score1 > 0.9 & rt_similarity_score1 > 0.75 & ppm_mass_error1 < 7, 1, NA).
+- If something has been ranked a 1, add that it has come from the Ingalls standards.
+
+
+**********MoNA Confidence Level 2 breakdown**********
+
+Download the MoNA positive and negative spectra from the website. This is downloaded as a JSON and the code is written (I think) to convert it, but it's very out of date and probably isn't in the most practical layout. Tidied spreadsheets of the data are in package/google drive.
+
+Tidy and setup external data (a lot of this can probably be done before)
+- Subtract or add hydrogen (1.0072766) from the MoNA mass for reference
+- Tidy spectra, dropping NA or blank MS2s
+
+Tidy and setup experimental spectra
+- Isolate experimental observations that actually have MS2 data
+- Wrangle mz, MS2, and primary key into appropriate shapes for upcoming transformations
+
+Assign variables from theoretical and experimental for parallelized comparison (otherwise it takes, literally, forever). Unfortunately I have only done this for Macs :D
+
+First do an mz comparison with MoNA (this step has a lot of issues with it, honestly I think it should probably be completely rewritten, particularly from a unit-test perspective):
+- For some reason, I do a filtering step that I think is redundant.
+- Do another fuzzy join on a (no!) hardcoded 0.02 value between experimental data and MoNA
+- Filter for the correct polarity
+- rename a bunch of columns so MS2 cosine similarity functions can be applied (i think some of this renaming is unnecessary)
+- Add a quick check if there are no potential matches on ms1 (aka, if there isn't a good match to ms1 we don't try to do similarity on ms2)
+
+MS2 comparison (this step is bundled in with the above step as one kind of unwieldy function, as well as the filters below. Should probably be split.)
+- Same MS2 cosine calculation as CL1, just written to handle the new columns.
+- Calculate ppm error: massbank_ppm = abs(mass2 - mass1) / mass1 * 10^6)
+- Filter out matches that fall below a hardcoded ppm filter of 7, and a hardcoded ms2 cosine similiarty of 0.5
+
+Return those experimental observations that had matches (this is also bundled up, maybe should be its own thing) and then rejoin those matches with the full confidence level 1 dataframe.
+Mutate mz similarity score, same calculations as above, for MoNa mz similarity matches.
+BUG FOUND HERE: For some strange reason, I add a second ms2 cosine similarity calculation here, but only if there s more than one set of mz:intensity measurements in the massbank ms2 data.
+Mutate a second total similarity score that does not include retention time similarity (KRH advised against using RT due to Rt variation across labs).
+BUG FOUND HERE: Create confidence rank of 2 if the mz similarity score of 2 is greater than 0.9. There is no input of ms2 for some reason. Also create confidence source from MoNA.
+
+**********MoNA Confidence Level 3 breakdown**********
+
+Reimport experimental values from previously annotated dataset. Probably not necessary, annotation should be independent. This step does involve removing experimental values that have two potential matches but no source.
+
+Tidy mona spectra (probably is redundant)
+- Add a "z" column to massbank.
+BUG FOUND - Make MH mass by subtracting hydrogen, but forgot to do it for the positive ones.
+
+Comparisons
+- Do our usual fuzzy join on the hardcoded value.
+- Filter for appropriate z
+- Rename columns as necessary
+- calculate mh_mass similarity score with normal calcs
+
+Do the same sanity checks as in CL1, basically make sure you haven't lost any compounds. Could be more lightweight.
+Rejoin with your CL2 data.
+Create ppm mass error.
+Make confidence rank of 3 if mz_similarity_score3 > 0.9 & ppm_mass_error3 < 7
+Tidy and export
+
+
+**********KEGG Confidence Level 3 breakdown**********
+
+Will wrote the code to get KEGG info but it hasn't been run in a while. I will update that. In the meantime the tidied premade set (which may or may not be reproducible) is on the google drive and in the example data.
+
+Set mz flexibility to 0.02 and ppm tolerance to 15
+Reimport cl3mona stuff (probably unnecessary) and prep for comparison
+
+Tidy KEGG and add z and column info.
+
+Do a fuzzyjoin (and this time its not hardcoded wtf)
+
+Mutate ppm and similarity score (didn't use functions for some reason)
+
+Filter for z and ppm scores that fall outside of user-defined bounds.
+
+Join the matched KEGG Ids with the full names.
+
+Mutate rank ifelse(mz_similarity_scoreKEGG > 0.9, 3, NA)). Doesn't include ppm as a filtering.
+
+
+
+**********Confidence Level 4 breakdown**********
+
+Literally everything else. Maybe 4 should have some kind of consistency or metrics rather than "literally everything else"
+
+
