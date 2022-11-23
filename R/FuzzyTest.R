@@ -20,10 +20,10 @@ MzCloseEnough <- function(x, y) {
 }
 
 ## Load data
-experimental <- read.csv("example_data/Example_Experimental_Data.csv") %>%
-  select(MassFeature, mz)
+experimental <- read.csv("example_data/Example_Experimental_Data.csv") #%>%
+  # select(MassFeature, mz)
 
-theoretical <- read.csv("example_data/Example_Theoretical_Data.csv") %>%
+theoretical <- read.csv("example_data/Example_Theoretical_Data.csv") %>% ## The theoretical data must be only two unique columns for this to work
   select(compound, mz) %>%
   unique() %>%
   drop_na()

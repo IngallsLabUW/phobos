@@ -94,7 +94,7 @@ complete %>%
 
 
 
-
+## original
 weight1 <- (scan1[, "mz"] ^ 2) * sqrt(scan1[, "intensity"]) # high mz, high intensity = larger weight according to current function
 weight2 <- (scan2[, "mz"] ^ 2) * sqrt(scan2[, "intensity"])
 
