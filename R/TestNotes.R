@@ -9,7 +9,7 @@ pmppm <- function(mass, ppm=4)c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))
 experimental.values <- read.csv("example_data/Example_Experimental_Data.csv")
 
 # pass experimental df to CalcTotSim1, which takes each observation in each column as an argument, rt, mz, ms2str, col, z)
-# Takes the theoritcal value and ensures we are matching within mz window, z, and column.
+# Takes the theoretical value and ensures we are matching within mz window, z, and column.
 # Calculates similarity scores for rt, mz, ms2.
 CalculateTotalSimScore1 <- function(mz_i, rt_i, col_i, z_i, MS2str_i, theoretical_db) {
   theoretical_db %>%
