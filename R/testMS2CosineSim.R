@@ -38,7 +38,6 @@ theoretical4 <- c("60.05646, 302463; 64.17995, 4225; 68.11596, 3495; 70.06591, 1
 theoretical5 <- c("50.68667, 3597; 60.05649, 325893; 63.70285, 3851; 70.06595, 214896; 72.08157, 23573; 83.3022, 3745; 94.37806, 3664; 94.64034, 3611; 97.88653, 3667; 98.02602, 3807; 104.53662, 4044; 107.66678, 3768; 112.08753, 29813; 113.0714, 4161; 114.10293, 14074; 115.08696, 10128; 116.07111, 377898; 126.07323, 3911; 130.09787, 130216; 131.95659, 4670; 135.25867, 3535; 135.69394, 3750; 135.97992, 3850; 157.10873, 46256; 158.09279, 177553; 160.53001, 4332; 175.11931, 1471160") %>%
   MakeScantable()
 
-
 complete.theoretical <- bind_rows(list(a = theoretical1, b = theoretical2, c = theoretical3, d = theoretical4, e = theoretical5), .id = "id")
 
 ## Create distance matrix and perform hierarchical cluster analysis
@@ -66,12 +65,12 @@ complete.theoretical %>%
 ggplotly()
 
 
-complete.theoretical %>%
+complete.theoretical %>% # TODO What is the point of this step?
   filter(mz > 125, mz < 150) %>%
   summarise(sd_mz = sd(mz),
             sd_int = sd(intensity))
 
-## Assign cluster to experimental data
+## Assign cluster to experimental data and plot
 exp_assigned <- experimental %>%
   rowwise() %>%
   mutate(cluster=AssignCluster(mz, intensity, complete.theoretical))
