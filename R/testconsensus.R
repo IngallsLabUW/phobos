@@ -1,13 +1,23 @@
 library(tidyverse)
 
-
-## Need to make an adjustment for "n consensus fragments", not 4:6/9:11 for the testing purposes. This could be a little softer...
-## increasing suspicion as we move away from 5. How many "intensity clusters" at mz clusters do we have? Now we're accounting
-## for two intensity clusters, but it's possible we'd have three, four...
+## Will is going to take a look at the problem outlined below and see if selection will help.
+# Need to make an adjustment for "n consensus fragments", not 4:6/9:11 for the testing purposes. This could be a little softer...
+# increasing suspicion as we move away from 5. How many "intensity clusters" at mz clusters do we have? Now we're accounting
+# for two intensity clusters, but it's possible we'd have three, four...
 
 init_dat <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv")
 
-mz_group <- function(mz_vals, ppm){
+## Create mock experimental and theoretical data from the standards runs.
+## First four runs make theoretical data, which will be "consensed" using the script below.
+## The last run will be the experimental.
+mock.experimental <- init_dat %>%
+  filter(str_detect(filename, "pos5|neg5"))
+
+mock.theoretical <- init_dat %>%
+  filter(!str_detect(filename, "pos5|neg5"))
+
+## Will's mz grouping function: exclusively groups on mz
+mz_group <- function(mz_vals, ppm) {
   group_vec <- numeric(length(mz_vals))
   group_num <- 1L
   init_vec <- mz_vals
@@ -15,7 +25,7 @@ mz_group <- function(mz_vals, ppm){
   while(length(init_vec)>0){
     mz_i <- init_vec[1]
     err <- mz_i*ppm/1000000
-    mz_idxs <- init_vec>mz_i-err & init_vec<mz_i+err
+    mz_idxs <- init_vec>mz_i-err & init_vec<mz_i+err # locate indexes falling within defined error range
     group_vec[as.numeric(names(mz_idxs)[mz_idxs])] <- group_num
     init_vec <- init_vec[!mz_idxs]
     group_num <- group_num+1L
@@ -23,22 +33,23 @@ mz_group <- function(mz_vals, ppm){
   group_vec
 }
 
-# dat %>%
-#   filter(compound_name=="L-Alanine") %>%
-#   separate_rows(MS2, sep = "; ") %>%
-#   separate(MS2, into = c("mz", "int"), sep = ", ") %>%
-#   mutate(mz=as.numeric(mz)) %>%
-#   mutate(int=as.numeric(int)) %>%
-#   group_by(filename, voltage) %>%
-#   mutate(int=int/max(int)*100) %>%
-#   ungroup() %>%
-#   arrange(desc(int)) %>%
-#   mutate(mz_group=mz_group(mz, ppm = 10)) %>%
-#   filter(mz_group%in%sort(unique(mz_group))[1:20]) %>%
-#   ggplot() +
-#   geom_point(aes(x=mz, y=int, color=factor(mz_group), group=filename)) +
-#   facet_wrap(~voltage, ncol=1)
-# plotly::ggplotly()
+# Test the grouping function on a single compound
+dat <- init_dat %>%
+  filter(compound_name == "L-Alanine") %>%
+  separate_rows(MS2, sep = "; ") %>%
+  separate(MS2, into = c("mz", "int"), sep = ", ") %>%
+  mutate(mz=as.numeric(mz)) %>%
+  mutate(int=as.numeric(int)) %>%
+  group_by(filename, voltage) %>%
+  mutate(int=int/max(int)*100) %>%
+  ungroup() %>%
+  arrange(desc(int)) %>%
+  mutate(mz_group=mz_group(mz, ppm = 10)) %>%
+  filter(mz_group%in%sort(unique(mz_group))[1:20]) %>% # Take only the first 20 mz groups
+  ggplot() +
+  geom_point(aes(x=mz, y=int, color=factor(mz_group), group=filename)) +
+  facet_wrap(~voltage, ncol=1)
+plotly::ggplotly()
 
 
 #' General plan:
@@ -54,11 +65,11 @@ mz_group <- function(mz_vals, ppm){
 #'  5. Repeat for each voltage separately
 #'  6. Repeat for each compound separately
 # Takes about a minute to run
-conMS2_dat <- init_dat %>%
+consensus_MS2 <- mock.experimental %>%
   mutate(polarity=str_extract(filename, "pos|neg")) %>%
   distinct(compound_name, polarity) %>%
   # Loop over each compound separately, expect a single character vector back
-  mutate(consensus_MS2=map_chr(compound_name, function(cmpd_name){
+  mutate(consensus_MS2 = map_chr(compound_name, function(cmpd_name) {
     print(cmpd_name)
     # Grab the fragments associated with a given file
     # Parse into tidy format (cols for name, mz, int)
@@ -67,17 +78,19 @@ conMS2_dat <- init_dat %>%
     # Remove fragments less than 1% the intensity of the largest one
     meth_frags <- init_dat %>%
       filter(compound_name==cmpd_name) %>%
-      separate_rows(MS2, sep = "; ") %>%
+      separate_rows(MS2, sep = "; ") %>% ## standardize and scale.
       separate(MS2, into = c("mz", "int"), sep = ", ") %>%
       mutate(mz=as.numeric(mz)) %>%
       mutate(int=as.numeric(int)) %>%
       group_by(filename, voltage) %>%
       mutate(int=int/max(int)*100) %>%
       ungroup() %>%
-      arrange(desc(int)) %>%
-      mutate(mz_group=mz_group(mz, ppm = 10)) %>%
+      arrange(desc(int)) %>% ## finish standardizing and scaling
+      mutate(mz_group=mz_group(mz, ppm = 10)) %>% ## group using the mz grouping function
       filter(int>1)
-    # Loop over each voltage separately, expect single character vector back
+
+    ## Within in standardized, grouped compound,
+    ## loop over each voltage separately, expect single character vector back
     all_volts <- sort(unique(meth_frags$voltage))
     map_chr(all_volts, function(volts_i){
       good_frags <- meth_frags %>%
@@ -113,7 +126,8 @@ conMS2_dat <- init_dat %>%
         summarize(cut_height=10^floor(mean(log10(cut_height)))) %>%
         pull(cut_height)
       # Use ideal cut height to separate tree
-      # Only keep clusters that are in 5 +/- 1 file (one dups/missing ok)
+      # Only keep clusters that are in 5 +/- 1 file (one dups/missing ok),
+      # or 10 +/- 1 for "bimodal superipmosed lollipop effect"
       consistent_frags <- cutree_output %>%
         filter(cut_height==best_cut_height) %>%
         group_by(mz_group) %>%
@@ -142,12 +156,18 @@ conMS2_dat <- init_dat %>%
 # Unit test check that output can be parsed
 # First separate voltages into different rows, then parse into separate columns
 # Next separate mz/int pairs into different rows, then parse into columns
-conMS2_dat %>%
+consensus_MS2 %>%
   separate_rows(consensus_MS2, sep = ": ") %>%
   separate(consensus_MS2, into = c("voltage", "MS2"), sep = "V ") %>%
   separate_rows(MS2, sep = "; ") %>%
   separate(MS2, into = c("mz", "int"), sep = ", ") %>%
   mutate(mz=as.numeric(mz), int=as.numeric(int))
 
-out_file_name <- "example_data/Ingalls_Lab_Standards_MSMS_consensed.csv"
-write.csv(conMS2_dat, out_file_name, row.names = FALSE)
+# original
+#out_file_name <- "example_data/Ingalls_Lab_Standards_MSMS_consensed.csv"
+#write.csv(consensus_MS2, out_file_name, row.names = FALSE)
+
+out_file_name <- "example_data/Mock_Experimental_FourRuns.csv"
+write.csv(consensus_MS2, out_file_name, row.names = FALSE)
+
+#
