@@ -1,8 +1,7 @@
 library(tidyverse)
-## Make four of the ingalls msms runs to make the theoretical data, so the conMS2_dat will actually be composed of four runs.
-## and make the fifth the "experimental".
-## and then randomize the "experimental".
-## Need to make an adjustment for "n consensus files", not 4:6/9:11 for the testing purposes. This could be a little softer...
+
+
+## Need to make an adjustment for "n consensus fragments", not 4:6/9:11 for the testing purposes. This could be a little softer...
 ## increasing suspicion as we move away from 5. How many "intensity clusters" at mz clusters do we have? Now we're accounting
 ## for two intensity clusters, but it's possible we'd have three, four...
 
