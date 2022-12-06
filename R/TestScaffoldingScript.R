@@ -25,7 +25,6 @@ CalculateTotalSimScore1 <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error,
     filter(z == z_i) %>%
     mutate(MS1SimScore = MS1SimilarityScore(mz_exp = mz_i, mz_theo = mz, flex = 5)) %>%
     mutate(RT1SimScore = RTSimilarityScore(rt_exp = rt_i, rt_theo = rt, flex = 30)) %>%
-    # TODO MS2 flex is totally made up, and is still the old function, and currently isn't working like the Ms1 and Rt sim scores (won't apply to full df)
     mutate(MS21SimScore = MS21SimilarityScore(ms2_exp = MS2str_i, ms2_theo = MS2[1], flex = 0.02)) %>%
     mutate(TotalSimScore = TotalSimilarityScore(MS1SimScore, RT1SimScore, MS21SimScore)) %>%
     select(compound, ends_with("SimScore"))
