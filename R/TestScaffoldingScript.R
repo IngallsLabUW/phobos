@@ -12,20 +12,23 @@ library(tidyverse)
 ## for two intensity clusters, but it's possible we'd have three, four...
 
 experimental.values <- read.csv("example_data/Example_Experimental_Data.csv")
-theoretical.values <- read.csv("example_data/Example_Theoretical_Data.csv")
+theoretical.values <- read.csv("example_data/Example_Theoretical_Data.csv") %>%
+  drop_na()
 
 # Pass experimental values to the CalculateTotalSimScore1 function, which takes each observation in each column as an argument (mz, rt, col, z, ms2str)
 # Compares to the complete set of theoretical value and ensures we are matching within mz window, z, and column.
 # Calculates similarity scores for rt, mz, ms2.
 
-CalculateTotalSimScore1 <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error, theoretical_db) {
+CalculateTotalSimScore1 <- function(mz_i, rt_i, col_i, z_i,
+                                    MS2str_i,
+                                    ppm_error, theoretical_db) {
   output <- theoretical_db %>%
     filter(mz < mz_i + ((mz_i * ppm_error)/1e6) & mz > mz_i - ((mz_i * ppm_error)/1e6)) %>% ## 50 is ppm error
     filter(column == col_i) %>%
     filter(z == z_i) %>%
     mutate(MS1SimScore = MS1SimilarityScore(mz_exp = mz_i, mz_theo = mz, flex = 5)) %>%
     mutate(RT1SimScore = RTSimilarityScore(rt_exp = rt_i, rt_theo = rt, flex = 30)) %>%
-    mutate(MS21SimScore = MS21SimilarityScore(ms2_exp = MS2str_i, ms2_theo = MS2[1], flex = 0.02)) %>%
+    mutate(MS21SimScore = as.numeric(lapply(MS2, MS21SimilarityScore, ms2_theo = MS2str_i, flex = 0.02))) %>%
     mutate(TotalSimScore = TotalSimilarityScore(MS1SimScore, RT1SimScore, MS21SimScore)) %>%
     select(compound, ends_with("SimScore"))
 
@@ -44,10 +47,9 @@ MakeScantable <- function(concatenated.scan) {
     dplyr::arrange(desc(intensity))
 
   return(scantable)
-} ## TODO this is still the old function- the separate_rows produces an error
+}
 
 MS1SimilarityScore <- function(mz_exp, mz_theo, flex) {
-  print(mz_theo)
   similarity.score = exp(-0.5 * (((mz_exp - mz_theo) / flex) ^ 2))
 
   return(similarity.score)
@@ -70,7 +72,6 @@ MS21SimilarityScore <- function(ms2_exp, ms2_theo, flex) {
 }
 
 RTSimilarityScore <- function(rt_exp, rt_theo, flex) {
-  print(rt_theo)
   similarity.score = exp(-0.5 * (((rt_exp - rt_theo) / flex) ^ 2))
 
   return(similarity.score)
@@ -83,17 +84,30 @@ TotalSimilarityScore <- function(ms1_sim, rt_sim, ms2_sim) {
 }
 
 
-## Produces dataframe of potential matches and all sim scores.
+## Example: Produces dataframe of potential matches and all sim scores.
 OutputDF <- CalculateTotalSimScore1(mz_i = experimental.values[1, 2], rt_i = experimental.values[1, 3],
                                 col_i = experimental.values[1, 4], z_i = experimental.values[1, 5],
                                 MS2str_i = experimental.values[1, 6], ppm_error = 100000, theoretical_db = theoretical.values)
 
-# Outputs dataframe of
+## Should produce dataframe with an appended column of dataframes
+TestDF <- experimental.values %>%
+  slice(1:5) %>%
+  drop_na() %>%
+  rowwise() %>%
+  mutate(newcol = list(CalculateTotalSimScore1(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
+                                          MS2str_i = MS2,
+                                          ppm_error = 1000000,
+                                          theoretical_db = theoretical.values)))
 
-experimental.values %>%
-  mutate(TotalSimScoreDF = lapply(CalculateTotalSimScore1(mz, rt, col, z, MS2str, theoretical.values))) %>%
-  ## Annotate CL1 function needs to be written, actually makes the confidence rank decision and source (aka theoretical_db).
-  mutate(Cl1_choice = sapply(AnnotateCL1(TotalSimScoreDF))) # will append single string oclumn
+
+## Annotate CL1 function needs to be written,
+## actually makes the confidence rank decision and source (aka theoretical_db).
+t <- experimental.values %>%
+  rowwise() %>%
+  mutate(newcol = lapply(., CalculateTotalSimScore1, ppm_error = 1000000,
+                                                          theoretical_db = theoretical.values))
+
+  mutate(Cl1_choice = sapply(AnnotateCL1(TotalSimScoreDF))) # will append single string column
 #appends a "best match" column
 
 

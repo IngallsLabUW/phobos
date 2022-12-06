@@ -4,7 +4,7 @@ library(fuzzyjoin)
 ## Flexible fuzzy join test script
 
 ## Functions
-GetFlex <- function(mz) { # Should molecule class and flex windows be arguments? Are they gonna change?
+GetFlex <- function(mz) {
   molecule.class <- c(100, 200, 500)
   flex <- c(0.00025, 0.0005, 0.0012)
   for (i in 1:length(molecule.class)) {

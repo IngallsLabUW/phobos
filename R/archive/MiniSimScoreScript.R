@@ -7,8 +7,6 @@ theoretical.values <- read.csv("example_data/Example_Theoretical_Data.csv") %>%
 
 # All functions -----------------------------------------------------------
 CalculateTotalSimScore1 <- function(mz_i, rt_i, col_i, z_i, MS2_i, ppm_error, theoretical_db) {
-  # Each "x_i" value refers to a row of the listed column in the experimental dataframe.
-  # So mz_i is row i of the "mz" column, rt_i is that same row i of the rt column, etc."
   output <- theoretical_db %>%
     filter(mz < mz_i + ((mz_i * ppm_error)/1e6) & mz > mz_i - ((mz_i * ppm_error)/1e6)) %>%
     filter(column == col_i) %>%
@@ -53,6 +51,9 @@ MS2SimilarityScore <- function(ms2_exp, ms2_theo, flex) {
 
   return(cosine.similarity)
 }
+
+test <- experimental.values %>%
+  mutate(newcol = lapply(MS2, MakeScantable))
 
 
 # Create output dataframe -------------------------------------------------
