@@ -2,7 +2,6 @@ library(tidyverse)
 
 ### WKumler + RML Startup script
 
-## MAIN QUESTIONS FOR WILL
 # Clustering: Will do cosine similarity between "yellow triangle/consensus msms spectra" and experimental dot
 # MS2 Sim Score is not working like the others in terms of producing a column upon comparison to the experimental values.
 # MS2 Sim Score separate_rows also produced some headaches.
@@ -85,12 +84,12 @@ TotalSimilarityScore <- function(ms1_sim, rt_sim, ms2_sim) {
 
 
 ## Example: Produces dataframe of potential matches and all sim scores.
-OutputDF <- CalculateTotalSimScore1(mz_i = experimental.values[1, 2], rt_i = experimental.values[1, 3],
+SingleOutput <- CalculateTotalSimScore1(mz_i = experimental.values[1, 2], rt_i = experimental.values[1, 3],
                                 col_i = experimental.values[1, 4], z_i = experimental.values[1, 5],
                                 MS2str_i = experimental.values[1, 6], ppm_error = 100000, theoretical_db = theoretical.values)
 
-## Should produce dataframe with an appended column of dataframes
-TestDF <- experimental.values %>%
+## Produces a dataframe with a column of dataframes all containing the information from SingleOutput
+AllOutput <- experimental.values %>%
   slice(1:5) %>%
   drop_na() %>%
   rowwise() %>%
@@ -102,10 +101,24 @@ TestDF <- experimental.values %>%
 
 ## Annotate CL1 function needs to be written,
 ## actually makes the confidence rank decision and source (aka theoretical_db).
-t <- experimental.values %>%
-  rowwise() %>%
-  mutate(newcol = lapply(., CalculateTotalSimScore1, ppm_error = 1000000,
-                                                          theoretical_db = theoretical.values))
+
+test <- AllOutput %>%
+  mutate(finalcol = AllOutput[[7]][[2]][which.max(AllOutput[[7]][[2]]$TotalSimScore),])
+
+
+group_number <- 1L
+df_column <- AllOutput[[7]]
+names(df_column) <- seq_along(df_column)
+while(length(df_column) > 0){
+  mz_i <- df_column[1]
+  AllOutput[[7]][[i]][which.max(AllOutput[[7]][[i]]$TotalSimScore),]
+  # mz_idxs <- df_column>mz_i-err & df_column<mz_i+err # locate indexes falling within defined error range
+  # group_vec[as.numeric(names(mz_idxs)[mz_idxs])] <- group_number
+  # df_column <- df_column[!mz_idxs]
+  print(mz_i)
+  group_number <- group_number+1L
+}
+
 
   mutate(Cl1_choice = sapply(AnnotateCL1(TotalSimScoreDF))) # will append single string column
 #appends a "best match" column

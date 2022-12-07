@@ -84,15 +84,3 @@ complete.theoretical %>%
   geom_point(data = exp_assigned %>% mutate(mz = mz/7.331762e-05), size=3) +
   geom_point(aes(x = mean_mz, y = mean_intensity), color = "yellow", shape = 2, size = 3)
 
-
-## original
-weight1 <- (scan1[, "mz"] ^ 2) * sqrt(scan1[, "intensity"]) # high mz, high intensity = larger weight according to current function
-weight2 <- (scan2[, "mz"] ^ 2) * sqrt(scan2[, "intensity"])
-
-diff.matrix <- sapply(scan1[, "mz"], function(x) scan2[, "mz"] - x) # calculate difference between all mzs
-## use dist here instead??
-
-same.index <- which(abs(diff.matrix) < 0.02, arr.ind = TRUE) # filter for mzs within given range (currently 0.02, which is including a lot)
-
-cosine.similarity <- sum(weight1[same.index[, 2]] * weight2[same.index[, 1]]) /
-  (sqrt(sum(weight2 ^ 2)) * sqrt(sum(weight1 ^ 2)))

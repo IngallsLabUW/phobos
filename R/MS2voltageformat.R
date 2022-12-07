@@ -21,4 +21,4 @@ dfmsms <- voltagedmsms %>%
   separate(MS2, into = c("voltage", "MS2"), sep = "V ")
 
 
-write.csv(voltagedmsms, "~/work/phobos/example_data/Concatenated_Voltage_MSMS.csv", row.names = FALSE)
+#write.csv(voltagedmsms, "~/work/phobos/example_data/Concatenated_Voltage_MSMS.csv", row.names = FALSE)
