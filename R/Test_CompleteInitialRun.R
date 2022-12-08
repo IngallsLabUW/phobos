@@ -2,38 +2,66 @@ library(tidyverse)
 
 ### WKumler + RML Startup script
 
-# Clustering: Will do cosine similarity between "yellow triangle/consensus msms spectra" and experimental dot
-# MS2 Sim Score is not working like the others in terms of producing a column upon comparison to the experimental values.
-# MS2 Sim Score separate_rows also produced some headaches.
-# Output looks ok but haven't completed the final step of modifying the original dataframe (?) input or actually selecting the best value.
-## Need to make an adjustment for "n consensus files", not 4:6/9:11 for the testing purposes. This could be a little softer...
+# Notes -------------------------------------------------------------------
+# MS2 Sim Score separate_rows produced some headaches.
+# Need to make an adjustment for "n consensus files", not 4:6/9:11 for the testing purposes. This could be a little softer...
 ## increasing suspicion as we move away from 5. How many "intensity clusters" at mz clusters do we have? Now we're accounting
 ## for two intensity clusters, but it's possible we'd have three, four...
 
-experimental.values <- read.csv("example_data/Example_Experimental_Data.csv")
-theoretical.values <- read.csv("example_data/Example_Theoretical_Data.csv")  %>%
-  ##THIS NEEDS TO GO
-  drop_na()
+# Outline -------------------------------------------------------------------
+# Create consensus MS2 data from four of the five MSMS runs of the Ingalls standards.
+# Using the functions below, create a Total Similarity Score for entries that fall within
+# column, z, and mz filters.
+# The cosine similarity will be calculated between "yellow triangle/consensus msms spectra" and experimental dot
 
-# Pass experimental values to the CalculateTotalSimScore1 function, which takes each observation in each column as an argument (mz, rt, col, z, ms2str)
-# Compares to the complete set of theoretical value and ensures we are matching within mz window, z, and column.
-# Calculates similarity scores for rt, mz, ms2.
+# Prepare experimental and theoretical data -------------------------------------------------------------------
+ingalls.standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv",
+                                                    stringsAsFactors = FALSE, header = TRUE) %>%
+  select(compound_name = Compound_Name, mz, rt = RT_minute, column = Column, z) %>%
+  mutate(rt = rt * 60) %>%
+  distinct()
 
-CalculateTotalSimScore1 <- function(mz_i, rt_i, col_i, z_i,MS2str_i,ppm_error, theoretical_db) {
-  output <- theoretical_db %>%
-    filter(mz < mz_i + ((mz_i * ppm_error)/1e6) & mz > mz_i - ((mz_i * ppm_error)/1e6)) %>% ## 50 is ppm error
+## Theoretical and Experimental data, in their concatenated voltage input format
+four.runs.theoretical <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
+  filter(!str_detect(filename, "pos5|neg5")) %>%
+  select(-filename) %>%
+  group_by(voltage, compound_name) %>%
+  summarize(MS2 = paste(voltage, MS2, sep = "V ", collapse = ": ")) %>%
+  as.data.frame() %>%
+  left_join(ingalls.standards, by = "compound_name")
+
+single.run.experimental <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
+  filter(str_detect(filename, "pos5|neg5")) %>%
+  select(-filename) %>%
+  group_by(voltage, compound_name) %>%
+  summarize(MS2 = paste(voltage, MS2, sep = "V ", collapse = ": ")) %>%
+  as.data.frame() %>%
+  left_join(ingalls.standards, by = "compound_name")
+
+# Functions ---------------------------------------------------------------
+
+CreatePotentialMatches_1 <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error, theoretical_db) {
+  # Pass experimental values and a theoretical data frame to this function to produce a new nested
+  # column with all potential matches. Each observation in each column is an argument
+  # (mz, rt, col, z, ms2 in concatenated format). The theoretical data frame should be in the appropriate format.
+  # Experimental values are compared to the complete set of theoretical value and matches within mz window,
+  # z, and column. Calculates similarity scores for rt, mz, ms2.
+  #
+  # Returns: A column of nested dataframes containing all potential theoretical matches.
+  potential.matches <- theoretical_db %>%
+    filter(mz < mz_i + ((mz_i * ppm_error)/1e6) & mz > mz_i - ((mz_i * ppm_error)/1e6)) %>%
     filter(column == col_i) %>%
     filter(z == z_i) %>%
-    mutate(MS1SimScore = MS1SimilarityScore(mz_exp = mz_i, mz_theo = mz, flex = 5)) %>%
-    mutate(RT1SimScore = RTSimilarityScore(rt_exp = rt_i, rt_theo = rt, flex = 30)) %>%
+    mutate(MS1SimScore = CalculateMzSimScore_1(mz_exp = mz_i, mz_theo = mz, flex = 5)) %>%
+    mutate(RT1SimScore = CalculateRTSimScore_1(rt_exp = rt_i, rt_theo = rt, flex = 30)) %>%
+    ## TODO
+    #mutate(MS2SimScore = ifelse(is.na(MS2), NA, as.numeric(lapply(MS2, CalculateMS2SimScore_1, ms2_theo = MS2str_i, flex = 0.02)))) %>%
     ##
-    #mutate(MS2SimScore = ifelse(is.na(MS2), NA, as.numeric(lapply(MS2, MS21SimilarityScore, ms2_theo = MS2str_i, flex = 0.02)))) %>%
-    ##
-    mutate(MS2SimScore = as.numeric(lapply(MS2, MS21SimilarityScore, ms2_theo = MS2str_i, flex = 0.02))) %>%
-    mutate(TotalSimScore = TotalSimilarityScore(MS1SimScore, RT1SimScore, MS2SimScore)) %>%
+    mutate(MS2SimScore = as.numeric(lapply(MS2, CalculateMS2SimScore_1, ms2_theo = MS2str_i, flex = 0.02))) %>%
+    mutate(TotalSimScore = CalculateTotalSimScore_1(MS1SimScore, RT1SimScore, MS2SimScore)) %>%
     select(compound, ends_with("SimScore"))
 
-  return(output)
+  return(potential.matches)
 }
 
 MakeScantable <- function(concatenated.scan) {
@@ -50,14 +78,15 @@ MakeScantable <- function(concatenated.scan) {
   return(scantable)
 }
 
-MS1SimilarityScore <- function(mz_exp, mz_theo, flex) {
+CalculateMzSimScore_1 <- function(mz_exp, mz_theo, flex) {
   similarity.score = exp(-0.5 * (((mz_exp - mz_theo) / flex) ^ 2))
 
   return(similarity.score)
-}
+} ## TODO The flex values are hardcoded in the Calctotalsimscore1 function
 
-MS21SimilarityScore <- function(ms2_exp, ms2_theo, flex) {
-# Comparison will be between experimental and "consensus" spectra according to Horai et. al 2010 as justification for using spectra
+CalculateMS2SimScore_1 <- function(ms2_exp, ms2_theo, flex) {
+# Comparison will be between experimental and "consensus" spectra according to Horai et. al 2010
+# as justification for using spectra
   scan1 <- MakeScantable(ms2_exp)
   scan2 <- MakeScantable(ms2_theo)
 
@@ -72,30 +101,36 @@ MS21SimilarityScore <- function(ms2_exp, ms2_theo, flex) {
   return(cosine.similarity)
 }
 
-RTSimilarityScore <- function(rt_exp, rt_theo, flex) {
+CalculateRTSimScore_1 <- function(rt_exp, rt_theo, flex) {
   similarity.score = exp(-0.5 * (((rt_exp - rt_theo) / flex) ^ 2))
 
   return(similarity.score)
 }
 
-TotalSimilarityScore <- function(ms1_sim, rt_sim, ms2_sim) {
+CalculateTotalSimScore_1 <- function(ms1_sim, rt_sim, ms2_sim) {
   total.similarity.score <- ((ms1_sim + rt_sim + ms2_sim) / 3) * 100
 
   return(total.similarity.score)
 }
 
 
-## Example: Produces dataframe of potential matches and all sim scores.
-SingleOutput <- CalculateTotalSimScore1(mz_i = experimental.values[1, 2], rt_i = experimental.values[1, 3],
-                                col_i = experimental.values[1, 4], z_i = experimental.values[1, 5],
-                                MS2str_i = experimental.values[1, 6], ppm_error = 100000, theoretical_db = theoretical.values)
+## Example: Produces dataframe of potential matches and all sim scores for a single row of experimental data.
+# SingleOutput <- CreatePotentialMatches_1(mz_i = experimental.values[1, 2], rt_i = experimental.values[1, 3],
+#                                 col_i = experimental.values[1, 4], z_i = experimental.values[1, 5],
+#                                 MS2str_i = experimental.values[1, 6], ppm_error = 100000, theoretical_db = theoretical.values)
+
+single.frame <- CreatePotentialMatches_1(mz_i = single.run.experimental$mz[1], rt_i = single.run.experimental$rt[1],
+                                col_i = single.run.experimental$column[1], z_i = single.run.experimental$z[1],
+                                MS2str_i = single.run.experimental$MS2[1], ppm_error = 100,
+                                theoretical_db = four.runs.theoretical)
+
 
 ## Produces a dataframe with a column of dataframes all containing the information from SingleOutput
 AllOutput <- experimental.values %>%
   slice(1:5) %>%
   drop_na() %>% ##THIS NEEDS TO GO
   rowwise() %>%
-  mutate(newcol = list(CalculateTotalSimScore1(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
+  mutate(newcol = list(CreatePotentialMatches_1(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
                                           MS2str_i = MS2,
                                           ppm_error = 1000000,
                                           theoretical_db = theoretical.values)))

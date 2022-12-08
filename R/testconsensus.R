@@ -7,15 +7,6 @@ library(tidyverse)
 
 init_dat <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv")
 
-## Create mock experimental and theoretical data from the standards runs.
-## First four runs make theoretical data, which will be "consensed" using the script below.
-## The last run will be the experimental.
-mock.experimental <- init_dat %>%
-  filter(str_detect(filename, "pos5|neg5"))
-
-mock.theoretical <- init_dat %>%
-  filter(!str_detect(filename, "pos5|neg5"))
-
 ## Will's mz grouping function: exclusively groups on mz
 mz_group <- function(mz_vals, ppm) {
   group_vec <- numeric(length(mz_vals))
