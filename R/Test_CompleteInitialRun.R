@@ -14,7 +14,7 @@ library(tidyverse)
 # column, z, and mz filters.
 # The cosine similarity will be calculated between "yellow triangle/consensus msms spectra" and experimental dot
 
-# Prepare experimental and theoretical data -------------------------------------------------------------------
+# Prepare all data -------------------------------------------------------------------
 ingalls.standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv",
                                                     stringsAsFactors = FALSE, header = TRUE) %>%
   select(compound_name = Compound_Name, mz, rt = RT_minute, column = Column, z) %>%
@@ -22,23 +22,31 @@ ingalls.standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/In
   distinct()
 
 ## Theoretical and Experimental data, in their concatenated voltage input format
-four.runs.theoretical <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
-  filter(!str_detect(filename, "pos5|neg5")) %>%
-  select(-filename) %>%
-  group_by(voltage, compound_name) %>%
-  summarize(MS2 = paste(voltage, MS2, sep = "V ", collapse = ": ")) %>%
-  as.data.frame() %>%
-  left_join(ingalls.standards, by = "compound_name")
+consensus.theoretical <- read_csv("example_data/Mock_Experimental_FourRuns.csv") %>%
+  mutate(z = ifelse(polarity == "pos", 1, -1)) %>%
+  rename(MS2 = consensus_MS2) %>%
+  left_join(ingalls.standards, by = c("compound_name", "z")) %>%
+  separate_rows(MS2, sep = ": ") %>%
+  select(compound_name, mz, rt, column, z, MS2)
 
 single.run.experimental <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
   filter(str_detect(filename, "pos5|neg5")) %>%
-  select(-filename) %>%
   group_by(voltage, compound_name) %>%
   summarize(MS2 = paste(voltage, MS2, sep = "V ", collapse = ": ")) %>%
   as.data.frame() %>%
-  left_join(ingalls.standards, by = "compound_name")
+  left_join(ingalls.standards, by = "compound_name") %>%
+  select(compound_name, mz, rt, column, z, MS2)
+
+experimental.values <- read.csv("example_data/Example_Experimental_Data.csv")
 
 # Functions ---------------------------------------------------------------
+# mz_i <- single.run.experimental$mz[1]
+# rt_i <- single.run.experimental$rt[1]
+# col_i <- single.run.experimental$column[1]
+# z_i <- single.run.experimental$z[1]
+# MS2str_i <- single.run.experimental$MS2[1]
+# ppm_error <- 100
+# theoretical_db <- consensus.theoretical
 
 CreatePotentialMatches_1 <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error, theoretical_db) {
   # Pass experimental values and a theoretical data frame to this function to produce a new nested
@@ -59,13 +67,14 @@ CreatePotentialMatches_1 <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error
     ##
     mutate(MS2SimScore = as.numeric(lapply(MS2, CalculateMS2SimScore_1, ms2_theo = MS2str_i, flex = 0.02))) %>%
     mutate(TotalSimScore = CalculateTotalSimScore_1(MS1SimScore, RT1SimScore, MS2SimScore)) %>%
-    select(compound, ends_with("SimScore"))
+    select(compound_name, ends_with("SimScore")) ## Should this include voltage?
 
   return(potential.matches)
 }
 
 MakeScantable <- function(concatenated.scan) {
   requireNamespace("dplyr", quietly = TRUE)
+  concatenated.scan <- trimws(gsub(".*V", "", concatenated.scan))
 
   scantable <- read.table(text = as.character(concatenated.scan),
                           col.names = c("mz", "intensity"), fill = TRUE) %>%
@@ -115,14 +124,10 @@ CalculateTotalSimScore_1 <- function(ms1_sim, rt_sim, ms2_sim) {
 
 
 ## Example: Produces dataframe of potential matches and all sim scores for a single row of experimental data.
-# SingleOutput <- CreatePotentialMatches_1(mz_i = experimental.values[1, 2], rt_i = experimental.values[1, 3],
-#                                 col_i = experimental.values[1, 4], z_i = experimental.values[1, 5],
-#                                 MS2str_i = experimental.values[1, 6], ppm_error = 100000, theoretical_db = theoretical.values)
-
 single.frame <- CreatePotentialMatches_1(mz_i = single.run.experimental$mz[1], rt_i = single.run.experimental$rt[1],
                                 col_i = single.run.experimental$column[1], z_i = single.run.experimental$z[1],
                                 MS2str_i = single.run.experimental$MS2[1], ppm_error = 100,
-                                theoretical_db = four.runs.theoretical)
+                                theoretical_db = consensus.theoretical)
 
 
 ## Produces a dataframe with a column of dataframes all containing the information from SingleOutput
@@ -133,7 +138,7 @@ AllOutput <- experimental.values %>%
   mutate(newcol = list(CreatePotentialMatches_1(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
                                           MS2str_i = MS2,
                                           ppm_error = 1000000,
-                                          theoretical_db = theoretical.values)))
+                                          theoretical_db = consensus.theoretical)))
 
 
 # Last step start here ---------------------------------------------------------
