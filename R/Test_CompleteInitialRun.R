@@ -3,10 +3,11 @@ library(tidyverse)
 ### WKumler + RML Startup script
 
 # Notes -------------------------------------------------------------------
+# How do we want to handle voltage columns? Should we match on them?
 # MS2 Sim Score separate_rows produced some headaches.
 # Need to make an adjustment for "n consensus files", not 4:6/9:11 for the testing purposes. This could be a little softer...
-## increasing suspicion as we move away from 5. How many "intensity clusters" at mz clusters do we have? Now we're accounting
-## for two intensity clusters, but it's possible we'd have three, four...
+# increasing suspicion as we move away from 5. How many "intensity clusters" at mz clusters do we have? Now we're accounting
+# for two intensity clusters, but it's possible we'd have three, four...
 
 # Outline -------------------------------------------------------------------
 # Create consensus MS2 data from four of the five MSMS runs of the Ingalls standards.
@@ -27,7 +28,8 @@ consensus.theoretical <- read_csv("example_data/Mock_Experimental_FourRuns.csv")
   rename(MS2 = consensus_MS2) %>%
   left_join(ingalls.standards, by = c("compound_name", "z")) %>%
   separate_rows(MS2, sep = ": ") %>%
-  select(compound_name, mz, rt, column, z, MS2) %>%
+  mutate(voltage = sub("\\V.*", "", MS2)) %>% ## Currently just creating this voltage column
+  select(compound_name, voltage, mz, rt, column, z, MS2) %>%
   drop_na() ##TODO THIS NEEDS TO GO
 
 single.run.experimental <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
@@ -40,7 +42,13 @@ single.run.experimental <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv
   drop_na() ##TODO THIS NEEDS TO GO
 
 # Functions ---------------------------------------------------------------
-
+mz_i <- single.run.experimental$mz[1]
+rt_i <- single.run.experimental$rt[1]
+col_i <- single.run.experimental$column[1]
+z_i <- single.run.experimental$z[1]
+MS2str_i <- single.run.experimental$MS2[1]
+ppm_error <- 100
+theoretical_db <- consensus.theoretical
 CreatePotentialMatches_1 <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error, theoretical_db) {
   # Pass experimental values and a theoretical data frame to this function to produce a new nested
   # column with all potential matches. Each observation in each column is an argument
@@ -59,7 +67,7 @@ CreatePotentialMatches_1 <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error
                                 lapply(MS2, CalculateMS2SimScore_1, ms2_theo = MS2str_i, flex = 0.02), NA))) %>%
 
     mutate(TotalSimScore = CalculateTotalSimScore_1(MS1SimScore, RT1SimScore, MS2SimScore)) %>%
-    select(compound_name, ends_with("SimScore")) ## Should this include voltage?
+    select(compound_name, voltage, ends_with("SimScore")) ## Should this include voltage?
 
   return(potential.matches)
 }
@@ -135,8 +143,9 @@ single.frame <- CreatePotentialMatches_1(mz_i = single.run.experimental$mz[5], r
 
 
 ## Produces a dataframe with a nested column
+## I have done this once and it took over an hour but worked. For now I am slicing the first 10 rows.
 AllOutput <- single.run.experimental %>%
-  slice(1:5) %>%
+  slice(1:10) %>%
   rowwise() %>%
   mutate(matches = list(CreatePotentialMatches_1(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
                                           MS2str_i = MS2,
@@ -150,26 +159,19 @@ MyData <- AllOutput
 # Inside one of the nested data frames
 FilteredOutput <- MyData[[7]][[1]][which.max(MyData[[7]][[1]]$TotalSimScore),]
 
-## Works but eeewwwww
+## Worked for a while, but now doesn't, also eeewwwww
 UnnestedData <- MyData %>%
-  unnest(newcol) %>%
+  unnest(matches, names_repair = "universal") %>%
   group_by(MassFeature) %>%
   top_n(1, TotalSimScore) %>%
   unique()
 
-## Also works but also eeewwwww
+## Works but also eeewwwww and a ton of warnings
 for (i in 1:nrow(MyData)) {
-  MyData$finalcol[i] = MyData[[7]][[i]][which.max(MyData[[7]][[i]]$TotalSimScore),]
+  MyData$finalchoice[i] = MyData[[7]][[i]][which.max(MyData[[7]][[i]]$TotalSimScore),]
   MyData$source[i] = "IngallsStandards"
 }
 
 
-
-
-
   mutate(Cl1_choice = sapply(AnnotateCL1(TotalSimScoreDF)))
 
-
-  # need to append single string column
-# appends a "best match" column
-# Wishlist: timestamp
