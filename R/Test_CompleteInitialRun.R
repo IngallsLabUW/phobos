@@ -27,7 +27,8 @@ consensus.theoretical <- read_csv("example_data/Mock_Experimental_FourRuns.csv")
   rename(MS2 = consensus_MS2) %>%
   left_join(ingalls.standards, by = c("compound_name", "z")) %>%
   separate_rows(MS2, sep = ": ") %>%
-  select(compound_name, mz, rt, column, z, MS2)
+  select(compound_name, mz, rt, column, z, MS2) %>%
+  drop_na() ##TODO THIS NEEDS TO GO
 
 single.run.experimental <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
   filter(str_detect(filename, "pos5|neg5")) %>%
@@ -35,18 +36,10 @@ single.run.experimental <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv
   summarize(MS2 = paste(voltage, MS2, sep = "V ", collapse = ": ")) %>%
   as.data.frame() %>%
   left_join(ingalls.standards, by = "compound_name") %>%
-  select(compound_name, mz, rt, column, z, MS2)
-
-experimental.values <- read.csv("example_data/Example_Experimental_Data.csv")
+  select(compound_name, mz, rt, column, z, MS2) %>%
+  drop_na() ##TODO THIS NEEDS TO GO
 
 # Functions ---------------------------------------------------------------
-# mz_i <- single.run.experimental$mz[1]
-# rt_i <- single.run.experimental$rt[1]
-# col_i <- single.run.experimental$column[1]
-# z_i <- single.run.experimental$z[1]
-# MS2str_i <- single.run.experimental$MS2[1]
-# ppm_error <- 100
-# theoretical_db <- consensus.theoretical
 
 CreatePotentialMatches_1 <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error, theoretical_db) {
   # Pass experimental values and a theoretical data frame to this function to produce a new nested
@@ -62,29 +55,33 @@ CreatePotentialMatches_1 <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error
     filter(z == z_i) %>%
     mutate(MS1SimScore = CalculateMzSimScore_1(mz_exp = mz_i, mz_theo = mz, flex = 5)) %>%
     mutate(RT1SimScore = CalculateRTSimScore_1(rt_exp = rt_i, rt_theo = rt, flex = 30)) %>%
-    ## TODO
-    #mutate(MS2SimScore = ifelse(is.na(MS2), NA, as.numeric(lapply(MS2, CalculateMS2SimScore_1, ms2_theo = MS2str_i, flex = 0.02)))) %>%
-    ##
-    mutate(MS2SimScore = as.numeric(lapply(MS2, CalculateMS2SimScore_1, ms2_theo = MS2str_i, flex = 0.02))) %>%
+    mutate(MS2SimScore = as.numeric(ifelse(str_detect(MS2, ","),
+                                lapply(MS2, CalculateMS2SimScore_1, ms2_theo = MS2str_i, flex = 0.02), NA))) %>%
+
     mutate(TotalSimScore = CalculateTotalSimScore_1(MS1SimScore, RT1SimScore, MS2SimScore)) %>%
     select(compound_name, ends_with("SimScore")) ## Should this include voltage?
 
   return(potential.matches)
 }
 
-MakeScantable <- function(concatenated.scan) {
+MakeScantable <- function(concatenated.scan) { ## TODO need to figure out what happens when there is no MS2 data
   requireNamespace("dplyr", quietly = TRUE)
   concatenated.scan <- trimws(gsub(".*V", "", concatenated.scan))
 
-  scantable <- read.table(text = as.character(concatenated.scan),
-                          col.names = c("mz", "intensity"), fill = TRUE) %>%
-    dplyr::mutate(mz = as.numeric(mz %>% stringr::str_replace(",", "")),
-                  intensity = as.numeric(intensity %>% stringr::str_replace(";", "")),
-                  intensity = round(intensity / max(intensity) * 100, digits = 1)) %>%
-    dplyr::filter(intensity > 0.5) %>%
-    dplyr::arrange(desc(intensity))
+  if(concatenated.scan == "") {
+    print("no data here")
 
-  return(scantable)
+  } else {
+    scantable <- read.table(text = as.character(concatenated.scan),
+                            col.names = c("mz", "intensity"), fill = TRUE) %>%
+      dplyr::mutate(mz = as.numeric(mz %>% stringr::str_replace(",", "")),
+                    intensity = as.numeric(intensity %>% stringr::str_replace(";", "")),
+                    intensity = round(intensity / max(intensity) * 100, digits = 1)) %>%
+      dplyr::filter(intensity > 0.5) %>%
+      dplyr::arrange(desc(intensity))
+
+    return(scantable)
+  }
 }
 
 CalculateMzSimScore_1 <- function(mz_exp, mz_theo, flex) {
@@ -99,15 +96,22 @@ CalculateMS2SimScore_1 <- function(ms2_exp, ms2_theo, flex) {
   scan1 <- MakeScantable(ms2_exp)
   scan2 <- MakeScantable(ms2_theo)
 
-  weight1 <- (scan1[, "mz"] ^ 2) * (scan1[, "intensity"] ^ 0.5) # Need consensus to assign weights
-  weight2 <- (scan2[, "mz"] ^ 2) * (scan2[, "intensity"] ^ 0.5)
+  if(class(scan1) == "character" | class(scan2) == "character") {
+    print("MS2 data is missing")
 
-  diff.matrix <- sapply(scan1[, "mz"], function(x) scan2[, "mz"] - x)
-  same.index <- which(abs(diff.matrix) < flex, arr.ind = TRUE)
-  cosine.similarity <- sum(weight1[same.index[, 2]] * weight2[same.index[, 1]]) /
-    (sqrt(sum(weight2 ^ 2)) * sqrt(sum(weight1 ^ 2)))
+  } else{
 
-  return(cosine.similarity)
+    # Need consensus to assign weights
+    weight1 <- (scan1[, "mz"] ^ 2) * (scan1[, "intensity"] ^ 0.5)
+    weight2 <- (scan2[, "mz"] ^ 2) * (scan2[, "intensity"] ^ 0.5)
+
+    diff.matrix <- sapply(scan1[, "mz"], function(x) scan2[, "mz"] - x)
+    same.index <- which(abs(diff.matrix) < flex, arr.ind = TRUE)
+    cosine.similarity <- sum(weight1[same.index[, 2]] * weight2[same.index[, 1]]) /
+      (sqrt(sum(weight2 ^ 2)) * sqrt(sum(weight1 ^ 2)))
+
+    return(cosine.similarity)
+  }
 }
 
 CalculateRTSimScore_1 <- function(rt_exp, rt_theo, flex) {
@@ -124,18 +128,17 @@ CalculateTotalSimScore_1 <- function(ms1_sim, rt_sim, ms2_sim) {
 
 
 ## Example: Produces dataframe of potential matches and all sim scores for a single row of experimental data.
-single.frame <- CreatePotentialMatches_1(mz_i = single.run.experimental$mz[1], rt_i = single.run.experimental$rt[1],
-                                col_i = single.run.experimental$column[1], z_i = single.run.experimental$z[1],
-                                MS2str_i = single.run.experimental$MS2[1], ppm_error = 100,
+single.frame <- CreatePotentialMatches_1(mz_i = single.run.experimental$mz[5], rt_i = single.run.experimental$rt[5],
+                                col_i = single.run.experimental$column[5], z_i = single.run.experimental$z[5],
+                                MS2str_i = single.run.experimental$MS2[5], ppm_error = 100,
                                 theoretical_db = consensus.theoretical)
 
 
-## Produces a dataframe with a column of dataframes all containing the information from SingleOutput
-AllOutput <- experimental.values %>%
+## Produces a dataframe with a nested column
+AllOutput <- single.run.experimental %>%
   slice(1:5) %>%
-  drop_na() %>% ##THIS NEEDS TO GO
   rowwise() %>%
-  mutate(newcol = list(CreatePotentialMatches_1(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
+  mutate(matches = list(CreatePotentialMatches_1(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
                                           MS2str_i = MS2,
                                           ppm_error = 1000000,
                                           theoretical_db = consensus.theoretical)))
