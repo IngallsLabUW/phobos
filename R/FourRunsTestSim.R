@@ -36,6 +36,7 @@ MS2SimilarityScore <- function(ms2_exp, ms2_theo, flex) {
 
   return(cosine.similarity)
 }
+
 mz_group <- function(mz_vals, ppm) {
   ## Will's mz grouping function: exclusively groups on mz
   group_vec <- numeric(length(mz_vals))
@@ -54,8 +55,6 @@ mz_group <- function(mz_vals, ppm) {
 }
 
 testimscore <- MS21SimilarityScore(SingleRunExperimental[1,2], FourRunsTheoretical[1,2], 0.02)
-
-
 
 
 # Test the grouping function on a single compound

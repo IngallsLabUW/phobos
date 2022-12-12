@@ -8,6 +8,7 @@ library(tidyverse)
 # Need to make an adjustment for "n consensus files", not 4:6/9:11 for the testing purposes. This could be a little softer...
 # increasing suspicion as we move away from 5. How many "intensity clusters" at mz clusters do we have? Now we're accounting
 # for two intensity clusters, but it's possible we'd have three, four...
+# Still slicing the final dataset because while it does technically run, it took over an hour.
 
 # Outline -------------------------------------------------------------------
 # Create consensus MS2 data from four of the five MSMS runs of the Ingalls standards.
@@ -29,8 +30,7 @@ consensus.theoretical <- read_csv("example_data/Mock_Experimental_FourRuns.csv")
   left_join(ingalls.standards, by = c("compound_name", "z")) %>%
   separate_rows(MS2, sep = ": ") %>%
   mutate(voltage = sub("\\V.*", "", MS2)) %>% ## Currently just creating this voltage column
-  select(compound_name, voltage, mz, rt, column, z, MS2) %>%
-  drop_na() ##TODO THIS NEEDS TO GO
+  select(compound_name, voltage, mz, rt, column, z, MS2)
 
 single.run.experimental <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
   filter(str_detect(filename, "pos5|neg5")) %>%
@@ -38,17 +38,16 @@ single.run.experimental <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv
   summarize(MS2 = paste(voltage, MS2, sep = "V ", collapse = ": ")) %>%
   as.data.frame() %>%
   left_join(ingalls.standards, by = "compound_name") %>%
-  select(compound_name, mz, rt, column, z, MS2) %>%
-  drop_na() ##TODO THIS NEEDS TO GO
+  select(compound_name, mz, rt, column, z, MS2)
 
 # Functions ---------------------------------------------------------------
-mz_i <- single.run.experimental$mz[1]
-rt_i <- single.run.experimental$rt[1]
-col_i <- single.run.experimental$column[1]
-z_i <- single.run.experimental$z[1]
-MS2str_i <- single.run.experimental$MS2[1]
-ppm_error <- 100
-theoretical_db <- consensus.theoretical
+# mz_i <- single.run.experimental$mz[1]
+# rt_i <- single.run.experimental$rt[1]
+# col_i <- single.run.experimental$column[1]
+# z_i <- single.run.experimental$z[1]
+# MS2str_i <- single.run.experimental$MS2[1]
+# ppm_error <- 100
+# theoretical_db <- consensus.theoretical
 CreatePotentialMatches_1 <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error, theoretical_db) {
   # Pass experimental values and a theoretical data frame to this function to produce a new nested
   # column with all potential matches. Each observation in each column is an argument
@@ -143,7 +142,9 @@ single.frame <- CreatePotentialMatches_1(mz_i = single.run.experimental$mz[5], r
 
 
 ## Produces a dataframe with a nested column
-## I have done this once and it took over an hour but worked. For now I am slicing the first 10 rows.
+## This works on the full dataframe but takes just under an hour to complete.
+start.time <- Sys.time()
+
 AllOutput <- single.run.experimental %>%
   slice(1:10) %>%
   rowwise() %>%
@@ -151,12 +152,15 @@ AllOutput <- single.run.experimental %>%
                                           MS2str_i = MS2,
                                           ppm_error = 1000000,
                                           theoretical_db = consensus.theoretical)))
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+time.taken
 
 
 # Last step start here ---------------------------------------------------------
 MyData <- AllOutput
 
-# Inside one of the nested data frames
+# Inside one of the nested data frames, selecting for highest Total Score.
 FilteredOutput <- MyData[[7]][[1]][which.max(MyData[[7]][[1]]$TotalSimScore),]
 
 ## Worked for a while, but now doesn't, also eeewwwww
@@ -172,6 +176,6 @@ for (i in 1:nrow(MyData)) {
   MyData$source[i] = "IngallsStandards"
 }
 
-
+## Needs to end in this format
   mutate(Cl1_choice = sapply(AnnotateCL1(TotalSimScoreDF)))
 

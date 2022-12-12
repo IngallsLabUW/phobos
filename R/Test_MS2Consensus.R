@@ -65,7 +65,7 @@ plotly::ggplotly()
 #'  5. Repeat for each voltage separately
 #'  6. Repeat for each compound separately
 # Takes about a minute to run
-consensus_MS2 <- mock.experimental %>%
+consensus_MS2 <- mock.theoretical %>%
   mutate(polarity=str_extract(filename, "pos|neg")) %>%
   distinct(compound_name, polarity) %>%
   # Loop over each compound separately, expect a single character vector back
@@ -170,4 +170,3 @@ consensus_MS2 %>%
 out_file_name <- "example_data/Mock_Experimental_FourRuns.csv"
 write.csv(consensus_MS2, out_file_name, row.names = FALSE)
 
-#
