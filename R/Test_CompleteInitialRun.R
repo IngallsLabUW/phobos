@@ -8,7 +8,8 @@ library(tidyverse)
 # Need to make an adjustment for "n consensus files", not 4:6/9:11 for the testing purposes. This could be a little softer...
 # increasing suspicion as we move away from 5. How many "intensity clusters" at mz clusters do we have? Now we're accounting
 # for two intensity clusters, but it's possible we'd have three, four...
-# Still slicing the final dataset because while it does technically run, it took over an hour.
+# Full run is taking 51 minutes.
+# Without the MS2 steps, the total process took 50 seconds.
 
 # Outline -------------------------------------------------------------------
 # Create consensus MS2 data from four of the five MSMS runs of the Ingalls standards.
@@ -23,8 +24,8 @@ ingalls.standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/In
   mutate(rt = rt * 60) %>%
   distinct()
 
-## Theoretical and Experimental data, in their concatenated voltage input format
-consensus.theoretical <- read_csv("example_data/Mock_Experimental_FourRuns.csv") %>%
+## Theoretical and Experimental data, in their standardized concatenated voltage input format
+consensus.theoretical <- read_csv("example_data/Consensed_Theoretical_FourRuns.csv") %>%
   mutate(z = ifelse(polarity == "pos", 1, -1)) %>%
   rename(MS2 = consensus_MS2) %>%
   left_join(ingalls.standards, by = c("compound_name", "z")) %>%
@@ -32,23 +33,38 @@ consensus.theoretical <- read_csv("example_data/Mock_Experimental_FourRuns.csv")
   mutate(voltage = sub("\\V.*", "", MS2)) %>% ## Currently just creating this voltage column
   select(compound_name, voltage, mz, rt, column, z, MS2)
 
-single.run.experimental <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
+single.experimental <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
   filter(str_detect(filename, "pos5|neg5")) %>%
-  group_by(voltage, compound_name) %>%
+  separate_rows(MS2, sep = "; ") %>%
+  separate(MS2, into = c("mz", "int"), sep = ", ") %>%
+  mutate(mz=as.numeric(mz)) %>%
+  mutate(int=as.numeric(int)) %>%
+  group_by(compound_name, filename, voltage) %>%
+  mutate(int=int/max(int)*100) %>%
+  ungroup() %>%
+  arrange(desc(int)) %>%
+  filter(int>1) %>%
+  group_by(voltage, compound_name, filename) %>%
+  summarize(MS2 = paste(mz, int, sep = ", ", collapse = "; ")) %>%
   summarize(MS2 = paste(voltage, MS2, sep = "V ", collapse = ": ")) %>%
   as.data.frame() %>%
   left_join(ingalls.standards, by = "compound_name") %>%
-  select(compound_name, mz, rt, column, z, MS2)
+  mutate(voltage = sub("\\V.*", "", MS2)) %>% ## Currently just creating this voltage column
+  select(compound_name, voltage, mz, rt, column, z, MS2)
 
 # Functions ---------------------------------------------------------------
-# mz_i <- single.run.experimental$mz[1]
-# rt_i <- single.run.experimental$rt[1]
-# col_i <- single.run.experimental$column[1]
-# z_i <- single.run.experimental$z[1]
-# MS2str_i <- single.run.experimental$MS2[1]
-# ppm_error <- 100
-# theoretical_db <- consensus.theoretical
-CreatePotentialMatches_1 <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error, theoretical_db) {
+
+mz_i <- single.experimental$mz[1]
+rt_i <- single.experimental$rt[1]
+col_i <- single.experimental$column[1]
+z_i <- single.experimental$z[1]
+MS2str_i <- single.experimental$MS2[1]
+ppm_error <- 10
+theoretical_db <- consensus.theoretical
+
+CreatePotentialMatches_1 <- function(mz_i, rt_i, col_i, z_i,
+                                     MS2str_i,
+                                     ppm_error, theoretical_db) {
   # Pass experimental values and a theoretical data frame to this function to produce a new nested
   # column with all potential matches. Each observation in each column is an argument
   # (mz, rt, col, z, ms2 in concatenated format). The theoretical data frame should be in the appropriate format.
@@ -63,7 +79,7 @@ CreatePotentialMatches_1 <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error
     mutate(MS1SimScore = CalculateMzSimScore_1(mz_exp = mz_i, mz_theo = mz, flex = 5)) %>%
     mutate(RT1SimScore = CalculateRTSimScore_1(rt_exp = rt_i, rt_theo = rt, flex = 30)) %>%
     mutate(MS2SimScore = as.numeric(ifelse(str_detect(MS2, ","),
-                                lapply(MS2, CalculateMS2SimScore_1, ms2_theo = MS2str_i, flex = 0.02), NA))) %>%
+                               lapply(MS2, CalculateMS2SimScore_1, ms2_theo = MS2str_i, flex = 0.02), NA))) %>%
 
     mutate(TotalSimScore = CalculateTotalSimScore_1(MS1SimScore, RT1SimScore, MS2SimScore)) %>%
     select(compound_name, voltage, ends_with("SimScore")) ## Should this include voltage?
@@ -71,12 +87,12 @@ CreatePotentialMatches_1 <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error
   return(potential.matches)
 }
 
-MakeScantable <- function(concatenated.scan) { ## TODO need to figure out what happens when there is no MS2 data
+MakeScantable <- function(concatenated.scan) {
   requireNamespace("dplyr", quietly = TRUE)
   concatenated.scan <- trimws(gsub(".*V", "", concatenated.scan))
 
-  if(concatenated.scan == "") {
-    print("no data here")
+  if (concatenated.scan == "") {
+    print("Missing data")
 
   } else {
     scantable <- read.table(text = as.character(concatenated.scan),
@@ -97,6 +113,8 @@ CalculateMzSimScore_1 <- function(mz_exp, mz_theo, flex) {
   return(similarity.score)
 } ## TODO The flex values are hardcoded in the Calctotalsimscore1 function
 
+# ms2_exp <- single.experimental$MS2[1]
+# ms2_theo <- potential.matches$MS2[5]
 CalculateMS2SimScore_1 <- function(ms2_exp, ms2_theo, flex) {
 # Comparison will be between experimental and "consensus" spectra according to Horai et. al 2010
 # as justification for using spectra
@@ -104,7 +122,7 @@ CalculateMS2SimScore_1 <- function(ms2_exp, ms2_theo, flex) {
   scan2 <- MakeScantable(ms2_theo)
 
   if(class(scan1) == "character" | class(scan2) == "character") {
-    print("MS2 data is missing")
+    print(paste(ms2_exp, "MS2 data is missing"))
 
   } else{
 
@@ -135,9 +153,10 @@ CalculateTotalSimScore_1 <- function(ms1_sim, rt_sim, ms2_sim) {
 
 
 ## Example: Produces dataframe of potential matches and all sim scores for a single row of experimental data.
-single.frame <- CreatePotentialMatches_1(mz_i = single.run.experimental$mz[5], rt_i = single.run.experimental$rt[5],
-                                col_i = single.run.experimental$column[5], z_i = single.run.experimental$z[5],
-                                MS2str_i = single.run.experimental$MS2[5], ppm_error = 100,
+single.frame <- CreatePotentialMatches_1(mz_i = single.experimental$mz[5], rt_i = single.experimental$rt[5],
+                                col_i = single.experimental$column[5], z_i = single.experimental$z[5],
+                                MS2str_i = single.experimental$MS2[5],
+                                ppm_error = 100,
                                 theoretical_db = consensus.theoretical)
 
 
@@ -145,7 +164,7 @@ single.frame <- CreatePotentialMatches_1(mz_i = single.run.experimental$mz[5], r
 ## This works on the full dataframe but takes just under an hour to complete.
 start.time <- Sys.time()
 
-AllOutput <- single.run.experimental %>%
+AllOutput <- single.experimental %>%
   slice(1:10) %>%
   rowwise() %>%
   mutate(matches = list(CreatePotentialMatches_1(mz_i = mz, rt_i = rt, col_i = column, z_i = z,

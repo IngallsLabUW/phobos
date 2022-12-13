@@ -5,15 +5,14 @@ library(tidyverse)
 # increasing suspicion as we move away from 5. How many "intensity clusters" at mz clusters do we have? Now we're accounting
 # for two intensity clusters, but it's possible we'd have three, four...
 
-init_dat <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv")
+original_MS2_data <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv")
 
 ## Create mock experimental and theoretical data from the standards runs.
 ## First four runs make theoretical data, which will be "consensed" using the script below.
-## The last run will be the experimental.
-mock.experimental <- init_dat %>%
+mock.experimental <- original_MS2_data %>%
   filter(str_detect(filename, "pos5|neg5"))
 
-mock.theoretical <- init_dat %>%
+mock.theoretical <- original_MS2_data %>%
   filter(!str_detect(filename, "pos5|neg5"))
 
 ## Will's mz grouping function: exclusively groups on mz
@@ -34,7 +33,7 @@ mz_group <- function(mz_vals, ppm) {
 }
 
 # Test the grouping function on a single compound
-dat <- init_dat %>%
+dat <- original_MS2_data %>%
   filter(compound_name == "L-Alanine") %>%
   separate_rows(MS2, sep = "; ") %>%
   separate(MS2, into = c("mz", "int"), sep = ", ") %>%
@@ -76,9 +75,9 @@ consensus_MS2 <- mock.theoretical %>%
     # Normalize to % of largest fragment in a given file/voltage
     # Group in m/z space
     # Remove fragments less than 1% the intensity of the largest one
-    meth_frags <- init_dat %>%
+    meth_frags <- mock.theoretical %>%
       filter(compound_name==cmpd_name) %>%
-      separate_rows(MS2, sep = "; ") %>% ## standardize and scale.
+      separate_rows(MS2, sep = "; ") %>% ## start standardizing and scaling
       separate(MS2, into = c("mz", "int"), sep = ", ") %>%
       mutate(mz=as.numeric(mz)) %>%
       mutate(int=as.numeric(int)) %>%
@@ -167,6 +166,6 @@ consensus_MS2 %>%
 #out_file_name <- "example_data/Ingalls_Lab_Standards_MSMS_consensed.csv"
 #write.csv(consensus_MS2, out_file_name, row.names = FALSE)
 
-out_file_name <- "example_data/Mock_Experimental_FourRuns.csv"
+out_file_name <- "example_data/Consensed_Theoretical_FourRuns.csv"
 write.csv(consensus_MS2, out_file_name, row.names = FALSE)
 
