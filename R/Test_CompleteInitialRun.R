@@ -1,3 +1,4 @@
+library(parallel)
 library(tidyverse)
 
 ### WKumler + RML Startup script
@@ -16,6 +17,9 @@ library(tidyverse)
 # Using the functions below, create a Total Similarity Score for entries that fall within
 # column, z, and mz filters.
 # The cosine similarity will be calculated between "yellow triangle/consensus msms spectra" and experimental dot
+
+# Define the cores on your machine to speed the process.
+numCores <- parallel::detectCores()-1
 
 # Prepare all data -------------------------------------------------------------------
 ingalls.standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv",
@@ -79,8 +83,7 @@ CreatePotentialMatches_1 <- function(mz_i, rt_i, col_i, z_i,
     mutate(MS1SimScore = CalculateMzSimScore_1(mz_exp = mz_i, mz_theo = mz, flex = 5)) %>%
     mutate(RT1SimScore = CalculateRTSimScore_1(rt_exp = rt_i, rt_theo = rt, flex = 30)) %>%
     mutate(MS2SimScore = as.numeric(ifelse(str_detect(MS2, ","),
-                               lapply(MS2, CalculateMS2SimScore_1, ms2_theo = MS2str_i, flex = 0.02), NA))) %>%
-
+                               parallel::mclapply(MS2, CalculateMS2SimScore_1, ms2_theo = MS2str_i, flex = 0.02, mc.cores = numCores), NA))) %>%
     mutate(TotalSimScore = CalculateTotalSimScore_1(MS1SimScore, RT1SimScore, MS2SimScore)) %>%
     select(compound_name, voltage, ends_with("SimScore")) ## Should this include voltage?
 
@@ -161,7 +164,7 @@ single.frame <- CreatePotentialMatches_1(mz_i = single.experimental$mz[5], rt_i 
 
 
 ## Produces a dataframe with a nested column
-## This works on the full dataframe but takes just under an hour to complete.
+## This works on the full dataframe, and with parallel processes running, takes 10-12 mins to complete.
 start.time <- Sys.time()
 
 AllOutput <- single.experimental %>%
