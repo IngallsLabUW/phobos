@@ -2,6 +2,8 @@ library(parallel)
 library(profvis)
 library(tidyverse)
 
+
+
 ### WKumler + RML Startup script
 
 # Notes -------------------------------------------------------------------
@@ -18,9 +20,6 @@ library(tidyverse)
 # Using the functions below, create a Total Similarity Score for entries that fall within
 # column, z, and mz filters.
 # The cosine similarity will be calculated between "yellow triangle/consensus msms spectra" and experimental dot
-
-# Define the cores on your machine to speed the process.
-numCores <- parallel::detectCores()-1
 
 # Prepare all data -------------------------------------------------------------------
 ingalls.standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv",
@@ -51,19 +50,23 @@ single.experimental <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %
   filter(int>1) %>%
   group_by(voltage, compound_name, filename) %>%
   summarize(MS2 = paste(mz, int, sep = ", ", collapse = "; ")) %>%
+  rowwise() %>%
   summarize(MS2 = paste(voltage, MS2, sep = "V ", collapse = ": ")) %>%
   as.data.frame() %>%
   left_join(ingalls.standards, by = "compound_name") %>%
   mutate(voltage = sub("\\V.*", "", MS2)) %>% ## Currently just creating this voltage column
-  select(compound_name, voltage, mz, rt, column, z, MS2)
+  select(compound_name, voltage, mz, rt, column, z, MS2) %>%
+  ##
+  ##
+  filter(str_detect(MS2, ";"))
 
 # Functions ---------------------------------------------------------------
 
-mz_i <- single.experimental$mz[1]
-rt_i <- single.experimental$rt[1]
-col_i <- single.experimental$column[1]
-z_i <- single.experimental$z[1]
-MS2str_i <- single.experimental$MS2[1]
+mz_i <- single.experimental$mz[3]
+rt_i <- single.experimental$rt[3]
+col_i <- single.experimental$column[3]
+z_i <- single.experimental$z[3]
+MS2str_i <- single.experimental$MS2[3]
 ppm_error <- 10
 theoretical_db <- consensus.theoretical
 
@@ -84,7 +87,7 @@ CreatePotentialMatches_1 <- function(mz_i, rt_i, col_i, z_i,
     mutate(MS1SimScore = CalculateMzSimScore_1(mz_exp = mz_i, mz_theo = mz, flex = 5)) %>%
     mutate(RT1SimScore = CalculateRTSimScore_1(rt_exp = rt_i, rt_theo = rt, flex = 30)) %>%
     mutate(MS2SimScore = as.numeric(ifelse(str_detect(MS2, ","),
-                               parallel::mclapply(MS2, CalculateMS2SimScore_1, ms2_theo = MS2str_i, flex = 0.02, mc.cores = numCores), NA))) %>%
+                               lapply(MS2, CalculateMS2SimScore_1, ms2_theo = MS2str_i, flex = 0.02), NA))) %>%
     mutate(TotalSimScore = CalculateTotalSimScore_1(MS1SimScore, RT1SimScore, MS2SimScore)) %>%
     select(compound_name, voltage, ends_with("SimScore")) ## Should this include voltage?
 
@@ -100,7 +103,7 @@ MakeScantable <- function(concatenated.scan) {
     print("Missing data")
 
   } else {
-    scantable <- separate(concatenated.scan, sep = ";", fill = "right") ## lol i have literally googled this exact question before
+    #scantable <- strsplit(concatenated.scan, split = ";") ## lol i have literally googled this exact question before
     scantable <- read.table(text = as.character(concatenated.scan),
                             col.names = c("mz", "intensity"), fill = TRUE) %>%
       dplyr::mutate(mz = as.numeric(mz %>% stringr::str_replace(",", "")),
@@ -119,18 +122,19 @@ CalculateMzSimScore_1 <- function(mz_exp, mz_theo, flex) {
   return(similarity.score)
 } ## TODO The flex values are hardcoded in the Calctotalsimscore1 function
 
-#ms2_exp <- single.experimental$MS2[1]
-#ms2_theo <- potential.matches$MS2[5]
+counter <- 0
 CalculateMS2SimScore_1 <- function(ms2_exp, ms2_theo, flex) {
 # Comparison will be between experimental and "consensus" spectra according to Horai et. al 2010
 # as justification for using spectra
+  counter <<- counter + 1
   scan1 <- MakeScantable(ms2_exp)
+  print(paste("scan1:", scan1))
   scan2 <- MakeScantable(ms2_theo)
+  print(paste("scan2:", scan2))
 
-  # if(class(scan1) == "character" | class(scan2) == "character") {
-  #   print(paste(ms2_exp, "MS2 data is missing"))
   if(class(scan1) == "character" | class(scan2) == "character") {
     print(paste(ms2_exp, "MS2 data is missing"))
+
 
   } else{
 
@@ -145,6 +149,8 @@ CalculateMS2SimScore_1 <- function(ms2_exp, ms2_theo, flex) {
 
     return(cosine.similarity)
   }
+  print(paste("run count:", counter))
+
 }
 
 CalculateRTSimScore_1 <- function(rt_exp, rt_theo, flex) {
@@ -161,49 +167,49 @@ CalculateTotalSimScore_1 <- function(ms1_sim, rt_sim, ms2_sim) {
 
 
 ## Example: Produces dataframe of potential matches and all sim scores for a single row of experimental data.
-single.frame <- CreatePotentialMatches_1(mz_i = single.experimental$mz[5], rt_i = single.experimental$rt[5],
-                                col_i = single.experimental$column[5], z_i = single.experimental$z[5],
-                                MS2str_i = single.experimental$MS2[5],
+single.frame <- CreatePotentialMatches_1(mz_i = single.experimental$mz[3], rt_i = single.experimental$rt[3],
+                                col_i = single.experimental$column[3], z_i = single.experimental$z[3],
+                                MS2str_i = single.experimental$MS2[3],
                                 ppm_error = 100,
                                 theoretical_db = consensus.theoretical)
 
 
 ## Produces a dataframe with a nested column
 ## This works on the full dataframe, and with parallel processes running, takes 10-12 mins to complete.
-profvis({
-  start.time <- Sys.time()
 
-  AllOutput <- single.experimental %>%
-    slice(1:3) %>%
-    rowwise() %>%
-    mutate(matches = list(CreatePotentialMatches_1(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
-                                                   MS2str_i = MS2,
-                                                   ppm_error = 1000000,
-                                                   theoretical_db = consensus.theoretical)))
-  end.time <- Sys.time()
-  time.taken <- end.time - start.time
-  print(time.taken)
-})
+start.time <- Sys.time()
 
-# Last step start here ---------------------------------------------------------
-MyData <- AllOutput
+AllOutput <- single.experimental %>%
+  rowwise() %>%
+  mutate(matches = list(CreatePotentialMatches_1(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
+                                                 MS2str_i = MS2,
+                                                 ppm_error = 10,
+                                                 theoretical_db = consensus.theoretical)))
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+print(time.taken)
 
-# Inside one of the nested data frames, selecting for highest Total Score.
-FilteredOutput <- MyData[[7]][[1]][which.max(MyData[[7]][[1]]$TotalSimScore),]
 
-## Worked for a while, but now doesn't, also eeewwwww
-UnnestedData <- MyData %>%
-  unnest(matches, names_repair = "universal") %>%
-  group_by(MassFeature) %>%
-  top_n(1, TotalSimScore) %>%
-  unique()
-
-## Works but also eeewwwww and a ton of warnings
-for (i in 1:nrow(MyData)) {
-  MyData$finalchoice[i] = MyData[[7]][[i]][which.max(MyData[[7]][[i]]$TotalSimScore),]
-  MyData$source[i] = "IngallsStandards"
-}
-
-## Needs to end in this format
-  mutate(Cl1_choice = sapply(AnnotateCL1(TotalSimScoreDF)))
+# # Last step start here ---------------------------------------------------------
+# MyData <- AllOutput
+#
+# # Inside one of the nested data frames, selecting for highest Total Score.
+# FilteredOutput <- MyData[[7]][[1]][which.max(MyData[[7]][[1]]$TotalSimScore),]
+#
+# ## Worked for a while, but now doesn't, also eeewwwww
+# UnnestedData <- MyData %>%
+#   unnest(matches, names_repair = "universal") %>%
+#   group_by(MassFeature) %>%
+#   top_n(1, TotalSimScore) %>%
+#   unique()
+#
+# ## Works but also eeewwwww and a ton of warnings
+# for (i in 1:nrow(MyData)) {
+#   MyData$finalchoice[i] = MyData[[7]][[i]][which.max(MyData[[7]][[i]]$TotalSimScore),]
+#   MyData$source[i] = "IngallsStandards"
+# }
+#
+# ## Needs to end in this format
+#   mutate(Cl1_choice = sapply(AnnotateCL1(TotalSimScoreDF)))
+#
 
