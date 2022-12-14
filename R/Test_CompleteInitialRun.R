@@ -1,4 +1,5 @@
 library(parallel)
+library(profvis)
 library(tidyverse)
 
 ### WKumler + RML Startup script
@@ -94,10 +95,12 @@ MakeScantable <- function(concatenated.scan) {
   requireNamespace("dplyr", quietly = TRUE)
   concatenated.scan <- trimws(gsub(".*V", "", concatenated.scan))
 
-  if (concatenated.scan == "") {
+  if (is.na(concatenated.scan) || concatenated.scan == "") {
+
     print("Missing data")
 
   } else {
+    # scantable <- str_split_fixed(concatenated.scan, ";", 10) ## lol i have literally googled this exact question before
     scantable <- read.table(text = as.character(concatenated.scan),
                             col.names = c("mz", "intensity"), fill = TRUE) %>%
       dplyr::mutate(mz = as.numeric(mz %>% stringr::str_replace(",", "")),
@@ -116,14 +119,16 @@ CalculateMzSimScore_1 <- function(mz_exp, mz_theo, flex) {
   return(similarity.score)
 } ## TODO The flex values are hardcoded in the Calctotalsimscore1 function
 
-# ms2_exp <- single.experimental$MS2[1]
-# ms2_theo <- potential.matches$MS2[5]
+#ms2_exp <- single.experimental$MS2[1]
+#ms2_theo <- potential.matches$MS2[5]
 CalculateMS2SimScore_1 <- function(ms2_exp, ms2_theo, flex) {
 # Comparison will be between experimental and "consensus" spectra according to Horai et. al 2010
 # as justification for using spectra
   scan1 <- MakeScantable(ms2_exp)
   scan2 <- MakeScantable(ms2_theo)
 
+  # if(class(scan1) == "character" | class(scan2) == "character") {
+  #   print(paste(ms2_exp, "MS2 data is missing"))
   if(class(scan1) == "character" | class(scan2) == "character") {
     print(paste(ms2_exp, "MS2 data is missing"))
 
@@ -165,19 +170,20 @@ single.frame <- CreatePotentialMatches_1(mz_i = single.experimental$mz[5], rt_i 
 
 ## Produces a dataframe with a nested column
 ## This works on the full dataframe, and with parallel processes running, takes 10-12 mins to complete.
-start.time <- Sys.time()
+profvis({
+  start.time <- Sys.time()
 
-AllOutput <- single.experimental %>%
-  slice(1:10) %>%
-  rowwise() %>%
-  mutate(matches = list(CreatePotentialMatches_1(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
-                                          MS2str_i = MS2,
-                                          ppm_error = 1000000,
-                                          theoretical_db = consensus.theoretical)))
-end.time <- Sys.time()
-time.taken <- end.time - start.time
-time.taken
-
+  AllOutput <- single.experimental %>%
+    slice(1:3) %>%
+    rowwise() %>%
+    mutate(matches = list(CreatePotentialMatches_1(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
+                                                   MS2str_i = MS2,
+                                                   ppm_error = 1000000,
+                                                   theoretical_db = consensus.theoretical)))
+  end.time <- Sys.time()
+  time.taken <- end.time - start.time
+  print(time.taken)
+})
 
 # Last step start here ---------------------------------------------------------
 MyData <- AllOutput
