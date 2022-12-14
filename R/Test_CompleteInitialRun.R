@@ -100,7 +100,7 @@ MakeScantable <- function(concatenated.scan) {
     print("Missing data")
 
   } else {
-    # scantable <- str_split_fixed(concatenated.scan, ";", 10) ## lol i have literally googled this exact question before
+    scantable <- separate(concatenated.scan, sep = ";", fill = "right") ## lol i have literally googled this exact question before
     scantable <- read.table(text = as.character(concatenated.scan),
                             col.names = c("mz", "intensity"), fill = TRUE) %>%
       dplyr::mutate(mz = as.numeric(mz %>% stringr::str_replace(",", "")),
