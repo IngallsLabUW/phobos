@@ -98,12 +98,11 @@ MakeScantable <- function(concatenated.scan) {
   requireNamespace("dplyr", quietly = TRUE)
   concatenated.scan <- trimws(gsub(".*V", "", concatenated.scan))
 
-  if (is.na(concatenated.scan) || concatenated.scan == "") {
+  if (concatenated.scan == "") {
 
     print("Missing data")
 
   } else {
-    #scantable <- strsplit(concatenated.scan, split = ";") ## lol i have literally googled this exact question before
     scantable <- read.table(text = as.character(concatenated.scan),
                             col.names = c("mz", "intensity"), fill = TRUE) %>%
       dplyr::mutate(mz = as.numeric(mz %>% stringr::str_replace(",", "")),
@@ -122,15 +121,11 @@ CalculateMzSimScore_1 <- function(mz_exp, mz_theo, flex) {
   return(similarity.score)
 } ## TODO The flex values are hardcoded in the Calctotalsimscore1 function
 
-counter <- 0
 CalculateMS2SimScore_1 <- function(ms2_exp, ms2_theo, flex) {
 # Comparison will be between experimental and "consensus" spectra according to Horai et. al 2010
 # as justification for using spectra
-  counter <<- counter + 1
   scan1 <- MakeScantable(ms2_exp)
-  print(paste("scan1:", scan1))
   scan2 <- MakeScantable(ms2_theo)
-  print(paste("scan2:", scan2))
 
   if(class(scan1) == "character" | class(scan2) == "character") {
     print(paste(ms2_exp, "MS2 data is missing"))
@@ -149,7 +144,6 @@ CalculateMS2SimScore_1 <- function(ms2_exp, ms2_theo, flex) {
 
     return(cosine.similarity)
   }
-  print(paste("run count:", counter))
 
 }
 
@@ -181,35 +175,22 @@ start.time <- Sys.time()
 
 AllOutput <- single.experimental %>%
   rowwise() %>%
+  slice(1:10) %>%
   mutate(matches = list(CreatePotentialMatches_1(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
                                                  MS2str_i = MS2,
                                                  ppm_error = 10,
-                                                 theoretical_db = consensus.theoretical)))
+                                                 theoretical_db = consensus.theoretical))) %>%
+  ungroup() %>%
+  mutate(top_choice=sapply(matches, function(cmpd_matches){
+    cmpd_matches %>%
+      group_by(compound_name) %>%
+      summarize(med_sim_overall=median(TotalSimScore, na.rm=TRUE)) %>%
+      arrange(desc(med_sim_overall)) %>%
+      slice(1) %>%
+      pull(compound_name)
+  }))
 end.time <- Sys.time()
 time.taken <- end.time - start.time
 print(time.taken)
 
-
-# # Last step start here ---------------------------------------------------------
-# MyData <- AllOutput
-#
-# # Inside one of the nested data frames, selecting for highest Total Score.
-# FilteredOutput <- MyData[[7]][[1]][which.max(MyData[[7]][[1]]$TotalSimScore),]
-#
-# ## Worked for a while, but now doesn't, also eeewwwww
-# UnnestedData <- MyData %>%
-#   unnest(matches, names_repair = "universal") %>%
-#   group_by(MassFeature) %>%
-#   top_n(1, TotalSimScore) %>%
-#   unique()
-#
-# ## Works but also eeewwwww and a ton of warnings
-# for (i in 1:nrow(MyData)) {
-#   MyData$finalchoice[i] = MyData[[7]][[i]][which.max(MyData[[7]][[i]]$TotalSimScore),]
-#   MyData$source[i] = "IngallsStandards"
-# }
-#
-# ## Needs to end in this format
-#   mutate(Cl1_choice = sapply(AnnotateCL1(TotalSimScoreDF)))
-#
 
