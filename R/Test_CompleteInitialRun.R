@@ -1,8 +1,4 @@
-library(parallel)
-library(profvis)
 library(tidyverse)
-
-
 
 ### WKumler + RML Startup script
 
@@ -55,20 +51,20 @@ single.experimental <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %
   as.data.frame() %>%
   left_join(ingalls.standards, by = "compound_name") %>%
   mutate(voltage = sub("\\V.*", "", MS2)) %>% ## Currently just creating this voltage column
-  select(compound_name, voltage, mz, rt, column, z, MS2) %>%
+  select(compound_name, voltage, mz, rt, column, z, MS2) # %>%
   ##
   ##
-  filter(str_detect(MS2, ";"))
+  #filter(str_detect(MS2, ";"))
 
 # Functions ---------------------------------------------------------------
 
-mz_i <- single.experimental$mz[3]
-rt_i <- single.experimental$rt[3]
-col_i <- single.experimental$column[3]
-z_i <- single.experimental$z[3]
-MS2str_i <- single.experimental$MS2[3]
-ppm_error <- 10
-theoretical_db <- consensus.theoretical
+# mz_i <- single.experimental$mz[1]
+# rt_i <- single.experimental$rt[1]
+# col_i <- single.experimental$column[1]
+# z_i <- single.experimental$z[1]
+# MS2str_i <- single.experimental$MS2[1]
+# ppm_error <- 10
+# theoretical_db <- consensus.theoretical
 
 CreatePotentialMatches_1 <- function(mz_i, rt_i, col_i, z_i,
                                      MS2str_i,
@@ -127,12 +123,27 @@ CalculateMS2SimScore_1 <- function(ms2_exp, ms2_theo, flex) {
   scan1 <- MakeScantable(ms2_exp)
   scan2 <- MakeScantable(ms2_theo)
 
-  if(class(scan1) == "character" | class(scan2) == "character") {
-    print(paste(ms2_exp, "MS2 data is missing"))
+  # if (class(scan1) == "character" | class(scan2) == "character") {
+  #   print(paste(ms2_exp, "MS2 data is missing"))
+  # } else if (nrow(scan1) < 2 | nrow(scan2) < 2) {
+  #   print("MS2 data isn't long enough")
+  # } else {
+  #
+  #   # Need consensus to assign weights
+  #   weight1 <- (scan1[, "mz"] ^ 2) * (scan1[, "intensity"] ^ 0.5)
+  #   weight2 <- (scan2[, "mz"] ^ 2) * (scan2[, "intensity"] ^ 0.5)
+  #
+  #   diff.matrix <- sapply(scan1[, "mz"], function(x) scan2[, "mz"] - x)
+  #   same.index <- which(abs(diff.matrix) < flex, arr.ind = TRUE)
+  #   cosine.similarity <- sum(weight1[same.index[, 2]] * weight2[same.index[, 1]]) /
+  #     (sqrt(sum(weight2 ^ 2)) * sqrt(sum(weight1 ^ 2)))
+  #
+  #   return(cosine.similarity)
+  # }
+  if ((class(scan1) == "character" || class(scan2) == "character" || nrow(scan1) < 2 || nrow(scan2) < 2) == TRUE) {
+    print("oops")
 
-
-  } else{
-
+  } else {
     # Need consensus to assign weights
     weight1 <- (scan1[, "mz"] ^ 2) * (scan1[, "intensity"] ^ 0.5)
     weight2 <- (scan2[, "mz"] ^ 2) * (scan2[, "intensity"] ^ 0.5)
@@ -144,7 +155,6 @@ CalculateMS2SimScore_1 <- function(ms2_exp, ms2_theo, flex) {
 
     return(cosine.similarity)
   }
-
 }
 
 CalculateRTSimScore_1 <- function(rt_exp, rt_theo, flex) {
@@ -161,21 +171,19 @@ CalculateTotalSimScore_1 <- function(ms1_sim, rt_sim, ms2_sim) {
 
 
 ## Example: Produces dataframe of potential matches and all sim scores for a single row of experimental data.
-single.frame <- CreatePotentialMatches_1(mz_i = single.experimental$mz[3], rt_i = single.experimental$rt[3],
-                                col_i = single.experimental$column[3], z_i = single.experimental$z[3],
-                                MS2str_i = single.experimental$MS2[3],
+single.frame <- CreatePotentialMatches_1(mz_i = single.experimental$mz[1], rt_i = single.experimental$rt[1],
+                                col_i = single.experimental$column[1], z_i = single.experimental$z[1],
+                                MS2str_i = single.experimental$MS2[1],
                                 ppm_error = 100,
                                 theoretical_db = consensus.theoretical)
 
 
 ## Produces a dataframe with a nested column
-## This works on the full dataframe, and with parallel processes running, takes 10-12 mins to complete.
-
 start.time <- Sys.time()
 
 AllOutput <- single.experimental %>%
+  slice(1:25) %>%
   rowwise() %>%
-  slice(1:10) %>%
   mutate(matches = list(CreatePotentialMatches_1(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
                                                  MS2str_i = MS2,
                                                  ppm_error = 10,
