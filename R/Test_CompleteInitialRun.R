@@ -134,7 +134,7 @@ CalculateMS2SimScore_1 <- function(ms2_exp, ms2_theo, flex) {
     return(NA)
 
   } else {
-    # Need consensus to assign weights
+    # TODO: Need consensus to assign weights
     weight1 <- (scan1[, "mz"] ^ 2) * (scan1[, "intensity"] ^ 0.5)
     weight2 <- (scan2[, "mz"] ^ 2) * (scan2[, "intensity"] ^ 0.5)
 
@@ -171,7 +171,7 @@ single.frame <- CreatePotentialMatches_1(mz_i = single.experimental$mz[25], rt_i
 ## Produces a dataframe with a nested column
 start.time <- Sys.time()
 AllOutput <- single.experimental %>%
-  slice(1:30) %>%
+  slice(1:10) %>%
   rowwise() %>%
   mutate(matches = list(CreatePotentialMatches_1(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
                                                  MS2str_i = MS2,

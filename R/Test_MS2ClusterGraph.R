@@ -65,7 +65,7 @@ complete.theoretical %>%
 ggplotly()
 
 
-complete.theoretical %>% # TODO What is the point of this step?
+complete.theoretical %>%
   filter(mz > 125, mz < 150) %>%
   summarise(sd_mz = sd(mz),
             sd_int = sd(intensity))
