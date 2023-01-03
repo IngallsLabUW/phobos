@@ -1,44 +1,49 @@
 library(pbapply)
 library(tidyverse)
 
-### Annotate Confidence Level 1: Ingalls Standards comparison
+### Annotate Confidence Level 2: Comparisons with the MoNA Database
 
 # Notes -------------------------------------------------------------------
-# Prepping the data can be kind of a big step, see preparation for experimental.data.
-# May need documentation in the future
-# Need to make an adjustment for "n consensus files", not 4:6/9:11 for the testing purposes.
-# How many "intensity clusters" at mz points do we have? Now we're accounting
-# for two intensity clusters, but it's possible we'd have three, four...
-# Still need to switch out the 4:1 experimental/theoretical runs.
-# Comparison will be between experimental and "consensus" spectra according to Horai et. al 2010
-# as justification for using spectra
-# TODO: Need consensus to assign weights in the MS2 similarity score.
-# TODO: The med_sim_overall function is choosing some incorrect top choices.
+# In previous versions we have subtracted hydrogen for reference. I've included that here.
+# The MoNA spreadsheets are still in the original KRH download. Her code no longer works, so
+# that part will need to be rewritten. For now I have turned the original spreadsheets into
+# what I think will closely resemble the final product, but should be easy to change.
+# The total similarity score needs to be more flexible depending on what is present/absent. Messy right now.
+# We are ignoring voltage since it doesn't always match with the voltage we have, but keeping the columns in.
+# Should we make the filters more permissive on this level?
+
 
 # Outline -------------------------------------------------------------------
-# Use "consensed" MS2 data created from four of the five Ingalls Standards run as theoretical data.
-# See TakeMS2Consensus.R script for details.
+# Use the downloaded MoNA relational spreadsheets as theoretical data. Downloads here: https://mona.fiehnlab.ucdavis.edu/downloads
 # Use "single" MS2 data from the fifth run as experimental data.
+
 # Create a Total Similarity Score for entries that fall within column, z, and mz filters.
 # The cosine similarity will be calculated between "yellow triangle/consensus msms spectra" and experimental dot.
 # Script produces a data frame with a nested column of data frames containing all potential matches for each row.
 # Whole process takes just under a minute.
 
 # Prepare all data -------------------------------------------------------------------
+
+## Theoretical data
+MoNA.Neg <- read.csv("example_data/MoNA_RelationalSpreadsheets/NEG_Spectra.csv") %>%
+  mutate(mz = M_mass + 1.0072766) %>%
+  mutate(z = -1)
+MoNA.Pos <- read.csv("example_data/MoNA_RelationalSpreadsheets/POS_Spectra.csv") %>%
+  mutate(z = 1) %>%
+  mutate(mz = M_mass - 1.0072766)
+
+MoNA <- MoNA.Neg %>%
+  rbind(MoNA.Pos) %>%
+  mutate(voltage = trimws(str_remove(CE, "[^ ]*$"))) %>% # icky but works
+  mutate(MS2 = paste(voltage, "V ", spectrum_KRHform_filtered, sep = "")) %>%
+  select(ID, compound_name = Names, voltage, mz, z, MS2)
+
+## Experimental data
 ingalls.standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv",
-                                                    stringsAsFactors = FALSE, header = TRUE) %>%
+                              stringsAsFactors = FALSE, header = TRUE) %>%
   select(compound_name = Compound_Name, HILIC_Mix, mz, rt = RT_minute, column = Column, z) %>%
   mutate(rt = rt * 60) %>%
   distinct()
-
-## Theoretical and Experimental data, in their standardized concatenated voltage input format.
-## Theoretical data is the "consensed" four runs, and experimental is the final run.
-theoretical.data <- read_csv("example_data/Consensed_Theoretical_FourRuns.csv") %>%
-  mutate(z = ifelse(polarity == "pos", 1, -1)) %>%
-  left_join(ingalls.standards, by = c("compound_name", "z")) %>%
-  separate_rows(consensus_MS2, sep = ": ") %>%
-  mutate(voltage = sub("\\V.*", "", consensus_MS2)) %>%
-  select(compound_name, voltage, mz, rt, column, z, MS2 = consensus_MS2)
 
 experimental.data <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
   filter(str_detect(filename, "pos5|neg5")) %>%
@@ -57,28 +62,23 @@ experimental.data <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
   rowwise() %>%
   mutate(MS2 = paste(voltage, MS2, sep = "V ", collapse = ": ")) %>%
   left_join(ingalls.standards, by = c("compound_name", "z", "HILIC_Mix")) %>%
-  select(compound_name, voltage, mz, rt, column, z, MS2) %>%
+  select(compound_name, voltage, mz, z, MS2) %>%
   drop_na()
 
 # Functions ---------------------------------------------------------------
 
-ConfLevel1Matches <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error, theoretical_db) {
+ConfLevel2Matches <- function(mz_i, col_i, z_i, MS2str_i, ppm_error, theoretical_db) {
   # Pass experimental values and a theoretical data frame to this function to produce a new nested
-  # column with all potential matches. Each observation in each column is an argument
-  # (mz, rt, col, z, ms2 in concatenated format). The theoretical data frame should be in the appropriate format.
-  # Experimental values are compared to the complete set of theoretical value and matches within mz window,
-  # z, and column. Calculates similarity scores for rt, mz, ms2.
+  # column with all potential matches. Each observation in each column is an argument.
   #
   # Returns: A column of nested dataframes containing all potential theoretical matches.
   potential.matches <- theoretical_db %>%
     filter(mz < mz_i + ((mz_i * ppm_error)/1e6) & mz > mz_i - ((mz_i * ppm_error)/1e6)) %>%
-    filter(column == col_i) %>%
     filter(z == z_i) %>%
     mutate(MS1SimScore = CalcMzSimScore(mz_exp = mz_i, mz_theo = mz, flex = 5)) %>% ## TODO do we want these to not be hard coded?
-    mutate(RT1SimScore = CalcRTSimScore(rt_exp = rt_i, rt_theo = rt, flex = 30)) %>%
-    mutate(MS2SimScore = as.numeric(ifelse(str_detect(MS2, ","),
-                               pblapply(MS2, CalcMS2SimScore, ms2_theo = MS2str_i, flex = 0.02), NA))) %>%
-    mutate(TotalSimScore = CalcTotalSimScore(MS1SimScore, RT1SimScore, MS2SimScore)) %>%
+    # mutate(MS2SimScore = as.numeric(ifelse(str_detect(MS2, ","),
+    #                                        pblapply(MS2, CalcMS2SimScore, ms2_theo = MS2str_i, flex = 0.02), NA))) %>%
+    # mutate(TotalSimScore = CalcTotalSimScore(MS1SimScore, MS2SimScore)) %>%
     select(compound_name, voltage, ends_with("SimScore"))
 
   return(potential.matches)
@@ -142,31 +142,24 @@ CalcMS2SimScore <- function(ms2_exp, ms2_theo, flex) {
   }
 }
 
-CalcRTSimScore <- function(rt_exp, rt_theo, flex) {
-  # Takes in experimental and theoretical retention time values in a data frame, as well as a user-defined flexibility.
-  #
-  # Returns a similarity score.
-  similarity.score = exp(-0.5 * (((rt_exp - rt_theo) / flex) ^ 2))
-
-  return(similarity.score)
-}
-
-CalcTotalSimScore <- function(ms1_sim, rt_sim, ms2_sim) {
+CalcTotalSimScore <- function(ms1_sim, ms2_sim) { ## TODO: This needs to be more flexible, depending on which similarity scores are present
   # Takes in the similarity scores calculated by other functions.
   #
   # Returns: a "total" similarity score according to which scores are present.
 
-  total.sim.score <- ifelse(is.na(ms2_sim), ((ms1_sim + rt_sim) / 2) * 100, ((ms1_sim + rt_sim + ms2_sim) / 3) * 100)
+  #total.sim.score <- ifelse(is.na(ms2_sim), ((ms1_sim + rt_sim) / 2) * 100, ((ms1_sim + rt_sim + ms2_sim) / 3) * 100)
+
+  total.sim.score <- ifelse(is.na(ms2_sim), ms1_sim, ((ms1_sim + ms2_sim) / 2) * 100)
 
   return(total.sim.score)
 }
 
 
 ## Example: Produces a data frame of potential matches and all similiarity scores for a single row of experimental data.
-print(experimental.data[71, ])
-single.frame <- ConfLevel1Matches(mz_i = experimental.data$mz[71], rt_i = experimental.data$rt[71],
-                                  col_i = experimental.data$column[71], z_i = experimental.data$z[71],
-                                  MS2str_i = experimental.data$MS2[71], ppm_error = 100, theoretical_db = theoretical.data)
+print(experimental.data[25, ])
+single.frame <- ConfLevel2Matches(mz_i = experimental.data$mz[25], z_i = experimental.data$z[25],
+                                  #MS2str_i = experimental.data$MS2[25],
+                                  ppm_error = 100, theoretical_db = MoNA)
 
 
 ## Produces a dataframe with a nested column of all potential matches for each row of the experimental data.
@@ -174,9 +167,8 @@ start.time <- Sys.time()
 
 all.matches <- experimental.data %>%
   rowwise() %>%
-  mutate(matches = list(ConfLevel1Matches(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
-                                                 MS2str_i = MS2, ppm_error = 10,
-                                                 theoretical_db = theoretical.data))) %>%
+  mutate(matches = list(ConfLevel2Matches(mz_i = mz, z_i = z, MS2str_i = MS2,
+                                          ppm_error = 10, theoretical_db = MoNA))) %>%
   ungroup() %>%
   mutate(top_choice=sapply(matches, function(cmpd_matches){
     cmpd_matches %>%
@@ -185,7 +177,7 @@ all.matches <- experimental.data %>%
       arrange(desc(med_sim_overall)) %>%
       slice(1) %>%
       pull(compound_name)
-    }))
+  }))
 
 end.time <- Sys.time()
 time.taken <- end.time - start.time
@@ -193,6 +185,6 @@ print(time.taken)
 
 
 ## Issues are arising from the med sim choice function: not always picking the right thing.
-wrong.top.match <- all.matches %>%
+testing <- all.matches %>%
   filter(compound_name != top_choice)
 
