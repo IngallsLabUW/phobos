@@ -4,25 +4,28 @@ library(tidyverse)
 ### Annotate Confidence Level 1: Ingalls Standards comparison
 
 # Notes -------------------------------------------------------------------
-# Prepping the data can be kind of a big step, see preparation for experimental.data.
-# May need documentation in the future
-# Need to make an adjustment for "n consensus files", not 4:6/9:11 for the testing purposes.
-# How many "intensity clusters" at mz points do we have? Now we're accounting
-# for two intensity clusters, but it's possible we'd have three, four...
-# Still need to switch out the 4:1 experimental/theoretical runs.
-# Comparison will be between experimental and "consensus" spectra according to Horai et. al 2010
-# as justification for using spectra
-# TODO: Need consensus to assign weights in the MS2 similarity score.
-# TODO: The med_sim_overall function is choosing some incorrect top choices.
+# Prepping the data can be kind of a big step, see section for experimental.data.
+# Need to make an adjustment for "n consensus files", maybe not the current 4:6/9:11 being used for the testing.
+#   How many "intensity clusters" at mz points do we have? Now we're accounting
+#   for two intensity clusters, but it's possible we'd have three, four...
+# TODO: Randomize the 4:1 experimental:theoretical choices.
+# TODO: Need consensus to assign weights in the MS2 similarity score, according to Horai et al. 2010,
+#   also I believe we were going to use this as document/justification for spectra consensus.
+# TODO: The flex arguments in the similarity score calculations are hard coded within the
+#   big ConfLevel1 function. Should we change that?
+# TODO: I have a progress bar wrapped around the MS2 Sim Score function but this could be better.
+# TODO: The med_sim_overall function is choosing some incorrect top choices. Going with the max
+#   sim score has fewer wrong choices, but still a decent amount. This might change with adjusted weights?
 
 # Outline -------------------------------------------------------------------
 # Use "consensed" MS2 data created from four of the five Ingalls Standards run as theoretical data.
-# See TakeMS2Consensus.R script for details.
+#   See TakeMS2Consensus.R script for details.
 # Use "single" MS2 data from the fifth run as experimental data.
 # Create a Total Similarity Score for entries that fall within column, z, and mz filters.
 # The cosine similarity will be calculated between "yellow triangle/consensus msms spectra" and experimental dot.
-# Script produces a data frame with a nested column of data frames containing all potential matches for each row.
-# Whole process takes just under a minute.
+#   See MS2ClusterGraph.R for details.
+# The below script produces a data frame with a nested column of data frames containing all potential matches for each row.
+# Whole process takes about 1.5 minutes.
 
 # Prepare all data -------------------------------------------------------------------
 ingalls.standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv",
@@ -31,8 +34,8 @@ ingalls.standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/In
   mutate(rt = rt * 60) %>%
   distinct()
 
-## Theoretical and Experimental data, in their standardized concatenated voltage input format.
-## Theoretical data is the "consensed" four runs, and experimental is the final run.
+# Theoretical and Experimental data, in their standardized concatenated voltage input format.
+# Theoretical data is the "consensed" first four runs, and experimental is the final fifth run.
 theoretical.data <- read_csv("example_data/Consensed_Theoretical_FourRuns.csv") %>%
   mutate(z = ifelse(polarity == "pos", 1, -1)) %>%
   left_join(ingalls.standards, by = c("compound_name", "z")) %>%
@@ -61,11 +64,66 @@ experimental.data <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
   drop_na()
 
 # Functions ---------------------------------------------------------------
+CalcMS2SimScore <- function(ms2_exp, ms2_theo, flex) {
+  # Takes in concatenated experimental and theoretical MS2 values in a data frame,
+  # as well as a user-defined flexibility.
+  #
+  # Returns a cosine similarity score.
+  scan1 <- MakeScantable(ms2_exp)
+  scan2 <- MakeScantable(ms2_theo)
+
+  scans <- c(scan1, scan2)
+  length.check <- lapply(scans, length) < 2
+
+  if (TRUE %in% is.na(scans) || TRUE %in% length.check) {
+
+    return(NA)
+
+  } else {
+    weight1 <- (scan1[, "mz"] ^ 2) * (scan1[, "intensity"] ^ 0.5)
+    weight2 <- (scan2[, "mz"] ^ 2) * (scan2[, "intensity"] ^ 0.5)
+
+    diff.matrix <- sapply(scan1[, "mz"], function(x) scan2[, "mz"] - x)
+    same.index <- which(abs(diff.matrix) < flex, arr.ind = TRUE)
+    cosine.similarity <- sum(weight1[same.index[, 2]] * weight2[same.index[, 1]]) /
+      (sqrt(sum(weight2 ^ 2)) * sqrt(sum(weight1 ^ 2)))
+
+    return(cosine.similarity)
+  }
+}
+
+CalcMzSimScore <- function(mz_exp, mz_theo, flex) {
+  # Takes in experimental and theoretical m/z values in a data frame, as well as a user-defined flexibility.
+  #
+  # Returns a similarity score.
+  similarity.score = exp(-0.5 * (((mz_exp - mz_theo) / flex) ^ 2))
+
+  return(similarity.score)
+}
+
+CalcRTSimScore <- function(rt_exp, rt_theo, flex) {
+  # Takes in experimental and theoretical retention time values in a data frame, as well as a user-defined flexibility.
+  #
+  # Returns a similarity score.
+  similarity.score = exp(-0.5 * (((rt_exp - rt_theo) / flex) ^ 2))
+
+  return(similarity.score)
+}
+
+CalcTotalSimScore <- function(ms1_sim, rt_sim, ms2_sim) {
+  # Takes in the similarity scores calculated by other functions.
+  #
+  # Returns: a "total" similarity score according to which scores are present.
+
+  total.sim.score <- ifelse(is.na(ms2_sim), ((ms1_sim + rt_sim) / 2) * 100, ((ms1_sim + rt_sim + ms2_sim) / 3) * 100)
+
+  return(total.sim.score)
+}
 
 ConfLevel1Matches <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error, theoretical_db) {
   # Pass experimental values and a theoretical data frame to this function to produce a new nested
   # column with all potential matches. Each observation in each column is an argument
-  # (mz, rt, col, z, ms2 in concatenated format). The theoretical data frame should be in the appropriate format.
+  # (mz, rt, col, z, concatentenated ms2). The theoretical data frame should also be in the appropriate format.
   # Experimental values are compared to the complete set of theoretical value and matches within mz window,
   # z, and column. Calculates similarity scores for rt, mz, ms2.
   #
@@ -77,7 +135,7 @@ ConfLevel1Matches <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error, theor
     mutate(MS1SimScore = CalcMzSimScore(mz_exp = mz_i, mz_theo = mz, flex = 5)) %>% ## TODO do we want these to not be hard coded?
     mutate(RT1SimScore = CalcRTSimScore(rt_exp = rt_i, rt_theo = rt, flex = 30)) %>%
     mutate(MS2SimScore = as.numeric(ifelse(str_detect(MS2, ","),
-                               pblapply(MS2, CalcMS2SimScore, ms2_theo = MS2str_i, flex = 0.02), NA))) %>%
+                                           pblapply(MS2, CalcMS2SimScore, ms2_theo = MS2str_i, flex = 0.02), NA))) %>%
     mutate(TotalSimScore = CalcTotalSimScore(MS1SimScore, RT1SimScore, MS2SimScore)) %>%
     select(compound_name, voltage, ends_with("SimScore"))
 
@@ -109,60 +167,9 @@ MakeScantable <- function(concatenated.scan) {
   }
 }
 
-CalcMzSimScore <- function(mz_exp, mz_theo, flex) {
-  # Takes in experimental and theoretical m/z values in a data frame, as well as a user-defined flexibility.
-  #
-  # Returns a similarity score.
-  similarity.score = exp(-0.5 * (((mz_exp - mz_theo) / flex) ^ 2))
-
-  return(similarity.score)
-}
-
-CalcMS2SimScore <- function(ms2_exp, ms2_theo, flex) {
-  # Takes in experimental and theoretical MS2 values in a data frame, as well as a user-defined flexibility.
-  #
-  # Returns a cosine similarity score.
-  scan1 <- MakeScantable(ms2_exp)
-  scan2 <- MakeScantable(ms2_theo)
-
-  if ((is.na(scan1) || is.na(scan2) || nrow(scan1) < 2 || nrow(scan2) < 2)) {
-
-    return(NA)
-
-  } else {
-    weight1 <- (scan1[, "mz"] ^ 2) * (scan1[, "intensity"] ^ 0.5)
-    weight2 <- (scan2[, "mz"] ^ 2) * (scan2[, "intensity"] ^ 0.5)
-
-    diff.matrix <- sapply(scan1[, "mz"], function(x) scan2[, "mz"] - x)
-    same.index <- which(abs(diff.matrix) < flex, arr.ind = TRUE)
-    cosine.similarity <- sum(weight1[same.index[, 2]] * weight2[same.index[, 1]]) /
-      (sqrt(sum(weight2 ^ 2)) * sqrt(sum(weight1 ^ 2)))
-
-    return(cosine.similarity)
-  }
-}
-
-CalcRTSimScore <- function(rt_exp, rt_theo, flex) {
-  # Takes in experimental and theoretical retention time values in a data frame, as well as a user-defined flexibility.
-  #
-  # Returns a similarity score.
-  similarity.score = exp(-0.5 * (((rt_exp - rt_theo) / flex) ^ 2))
-
-  return(similarity.score)
-}
-
-CalcTotalSimScore <- function(ms1_sim, rt_sim, ms2_sim) {
-  # Takes in the similarity scores calculated by other functions.
-  #
-  # Returns: a "total" similarity score according to which scores are present.
-
-  total.sim.score <- ifelse(is.na(ms2_sim), ((ms1_sim + rt_sim) / 2) * 100, ((ms1_sim + rt_sim + ms2_sim) / 3) * 100)
-
-  return(total.sim.score)
-}
-
-
-## Example: Produces a data frame of potential matches and all similiarity scores for a single row of experimental data.
+# Example ---------------------------------------------------------------
+# Run the ConfLevel1Matches on a single row, which produces a data frame
+# of potential matches and all similarity scores.
 print(experimental.data[71, ])
 single.frame <- ConfLevel1Matches(mz_i = experimental.data$mz[71], rt_i = experimental.data$rt[71],
                                   col_i = experimental.data$column[71], z_i = experimental.data$z[71],
@@ -192,7 +199,7 @@ time.taken <- end.time - start.time
 print(time.taken)
 
 
-## Issues are arising from the med sim choice function: not always picking the right thing.
+## Issues are arising from the med sim choice function: not always picking the right one.
 wrong.top.match <- all.matches %>%
   filter(compound_name != top_choice)
 
