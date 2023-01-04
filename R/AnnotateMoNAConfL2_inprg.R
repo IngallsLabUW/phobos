@@ -5,26 +5,22 @@ library(tidyverse)
 
 # Notes -------------------------------------------------------------------
 # In previous versions we have subtracted hydrogen for reference. I've included that here.
-# The MoNA spreadsheets are still in the original KRH download. Her code no longer works, so
-# that part will need to be rewritten. For now I have turned the original spreadsheets into
-# what I think will closely resemble the final product, but should be easy to change.
-# The total similarity score needs to be more flexible depending on what is present/absent. Messy right now.
-# We are ignoring voltage since it doesn't always match with the voltage we have, but keeping the columns in.
+# We are ignoring voltage since MoNA doesn't always match with the voltages we use,
+#   but the columns are still included in the download and associated data.
 # Should we make the filters more permissive on this level?
-
+# TODO: The MoNA spreadsheets are still in the original KRH download, located in the example_data folder.
+#   The formatting code no longer works, so that part will need to be rewritten.
+# TODO: The total similarity score needs to be more flexible depending on what is present/absent. Messy right now.
 
 # Outline -------------------------------------------------------------------
 # Use the downloaded MoNA relational spreadsheets as theoretical data. Downloads here: https://mona.fiehnlab.ucdavis.edu/downloads
 # Use "single" MS2 data from the fifth run as experimental data.
+# Find similarity and matching using only mz, MS2, and z.
 
-# Create a Total Similarity Score for entries that fall within column, z, and mz filters.
-# The cosine similarity will be calculated between "yellow triangle/consensus msms spectra" and experimental dot.
-# Script produces a data frame with a nested column of data frames containing all potential matches for each row.
-# Whole process takes just under a minute.
 
 # Prepare all data -------------------------------------------------------------------
 
-## Theoretical data
+## Theoretical data: subtract hydrogen and mutate z columns
 MoNA.Neg <- read.csv("example_data/MoNA_RelationalSpreadsheets/NEG_Spectra.csv") %>%
   mutate(mz = M_mass + 1.0072766) %>%
   mutate(z = -1)
@@ -36,9 +32,11 @@ MoNA <- MoNA.Neg %>%
   rbind(MoNA.Pos) %>%
   mutate(voltage = trimws(str_remove(CE, "[^ ]*$"))) %>% # icky but works
   mutate(MS2 = paste(voltage, "V ", spectrum_KRHform_filtered, sep = "")) %>%
-  select(ID, compound_name = Names, voltage, mz, z, MS2)
+  select(ID, compound_name = Names, voltage, mz, z, MS2) #%>%
+  #####################################################################
+  #filter(str_detect(compound_name, regex("ectoine", ignore_case = TRUE)))
 
-## Experimental data
+## Experimental data: prepare the same way as in confidence level 1
 ingalls.standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv",
                               stringsAsFactors = FALSE, header = TRUE) %>%
   select(compound_name = Compound_Name, HILIC_Mix, mz, rt = RT_minute, column = Column, z) %>%
@@ -63,11 +61,21 @@ experimental.data <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
   mutate(MS2 = paste(voltage, MS2, sep = "V ", collapse = ": ")) %>%
   left_join(ingalls.standards, by = c("compound_name", "z", "HILIC_Mix")) %>%
   select(compound_name, voltage, mz, z, MS2) %>%
-  drop_na()
+  drop_na() %>%
+  as.data.frame() #%>%
+  #########################################
+  #filter(str_detect(compound_name, "Ectoine"))
 
 # Functions ---------------------------------------------------------------
+mz_i <- experimental.data[55, 3]
+z_i <- experimental.data[55, 4]
+MS2str_i <- experimental.data[55, 5]
+theoretical_db <- MoNA
+ppm_error <- 10000
 
-ConfLevel2Matches <- function(mz_i, col_i, z_i, MS2str_i, ppm_error, theoretical_db) {
+test.match <- ConfLevel2Matches(mz_i = mz_i, z_i = z_i, MS2str_i = MS2str_i, ppm_error = ppm_error, theoretical_db = MoNA)
+
+ConfLevel2Matches <- function(mz_i, z_i, MS2str_i, ppm_error, theoretical_db) {
   # Pass experimental values and a theoretical data frame to this function to produce a new nested
   # column with all potential matches. Each observation in each column is an argument.
   #
@@ -75,10 +83,10 @@ ConfLevel2Matches <- function(mz_i, col_i, z_i, MS2str_i, ppm_error, theoretical
   potential.matches <- theoretical_db %>%
     filter(mz < mz_i + ((mz_i * ppm_error)/1e6) & mz > mz_i - ((mz_i * ppm_error)/1e6)) %>%
     filter(z == z_i) %>%
-    mutate(MS1SimScore = CalcMzSimScore(mz_exp = mz_i, mz_theo = mz, flex = 5)) %>% ## TODO do we want these to not be hard coded?
-    # mutate(MS2SimScore = as.numeric(ifelse(str_detect(MS2, ","),
-    #                                        pblapply(MS2, CalcMS2SimScore, ms2_theo = MS2str_i, flex = 0.02), NA))) %>%
-    # mutate(TotalSimScore = CalcTotalSimScore(MS1SimScore, MS2SimScore)) %>%
+    mutate(MS1SimScore = CalcMzSimScore(mz_exp = mz_i, mz_theo = mz, flex = 20)) %>% ## TODO: these are still hard coded, same as CL1
+    mutate(MS2SimScore = as.numeric(ifelse(str_detect(MS2, ","),
+                                           pblapply(MS2, CalcMS2SimScore, ms2_theo = MS2str_i, flex = 0.02), NA))) %>%
+    mutate(TotalSimScore = CalcTotalSimScore(MS1SimScore, MS2SimScore)) %>%
     select(compound_name, voltage, ends_with("SimScore"))
 
   return(potential.matches)
@@ -125,7 +133,10 @@ CalcMS2SimScore <- function(ms2_exp, ms2_theo, flex) {
   scan1 <- MakeScantable(ms2_exp)
   scan2 <- MakeScantable(ms2_theo)
 
-  if ((is.na(scan1) || is.na(scan2) || nrow(scan1) < 2 || nrow(scan2) < 2)) {
+  scans <- c(scan1, scan2)
+  length.check <- lapply(scans, length) < 2
+
+  if (TRUE %in% is.na(scans) || TRUE %in% length.check) {
 
     return(NA)
 
@@ -147,8 +158,6 @@ CalcTotalSimScore <- function(ms1_sim, ms2_sim) { ## TODO: This needs to be more
   #
   # Returns: a "total" similarity score according to which scores are present.
 
-  #total.sim.score <- ifelse(is.na(ms2_sim), ((ms1_sim + rt_sim) / 2) * 100, ((ms1_sim + rt_sim + ms2_sim) / 3) * 100)
-
   total.sim.score <- ifelse(is.na(ms2_sim), ms1_sim, ((ms1_sim + ms2_sim) / 2) * 100)
 
   return(total.sim.score)
@@ -156,9 +165,10 @@ CalcTotalSimScore <- function(ms1_sim, ms2_sim) { ## TODO: This needs to be more
 
 
 ## Example: Produces a data frame of potential matches and all similiarity scores for a single row of experimental data.
-print(experimental.data[25, ])
-single.frame <- ConfLevel2Matches(mz_i = experimental.data$mz[25], z_i = experimental.data$z[25],
-                                  #MS2str_i = experimental.data$MS2[25],
+print(experimental.data[55, ])
+
+single.frame <- ConfLevel2Matches(mz_i = experimental.data$mz[55], z_i = experimental.data$z[55],
+                                  MS2str_i = experimental.data$MS2[55],
                                   ppm_error = 100, theoretical_db = MoNA)
 
 
@@ -184,7 +194,7 @@ time.taken <- end.time - start.time
 print(time.taken)
 
 
-## Issues are arising from the med sim choice function: not always picking the right thing.
-testing <- all.matches %>%
+## None of them actually match...
+wrong.matches <- all.matches %>%
   filter(compound_name != top_choice)
 
