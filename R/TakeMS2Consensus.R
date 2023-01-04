@@ -163,9 +163,6 @@ consensus_MS2 %>%
   mutate(mz=as.numeric(mz), int=as.numeric(int))
 
 # original
-#out_file_name <- "example_data/Ingalls_Lab_Standards_MSMS_consensed.csv"
-#write.csv(consensus_MS2, out_file_name, row.names = FALSE)
-
-out_file_name <- "example_data/Consensed_Theoretical_FourRuns.csv"
+out_file_name <- "example_data/Ingalls_Lab_Standards_MSMS_consensed.csv"
 write.csv(consensus_MS2, out_file_name, row.names = FALSE)
 
