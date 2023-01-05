@@ -57,12 +57,12 @@ experimental.data <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
   as.data.frame()
 
 # Functions ---------------------------------------------------------------
-mz_i <- experimental.data[55, 3]
-z_i <- experimental.data[55, 4]
-theoretical_db <- MoNA
-ppm_error <- 10000
+# mz_i <- experimental.data[55, 3]
+# z_i <- experimental.data[55, 4]
+# theoretical_db <- MoNA
+# ppm_error <- 10000
 
-test.match <- ConfLevel3Matches(mz_i = mz_i, z_i = z_i, ppm_error = ppm_error, theoretical_db = MoNA)
+#test.match <- ConfLevel3Matches(mz_i = mz_i, z_i = z_i, ppm_error = ppm_error, theoretical_db = MoNA)
 
 ConfLevel3Matches <- function(mz_i, z_i, ppm_error, theoretical_db) {
   # Pass experimental values and a theoretical data frame to this function to produce a new nested
@@ -113,7 +113,7 @@ start.time <- Sys.time()
 all.matches <- experimental.data %>%
   rowwise() %>%
   mutate(matches = list(ConfLevel3Matches(mz_i = mz, z_i = z,
-                                          ppm_error = 10, theoretical_db = MoNA))) %>%
+                                          ppm_error = 10000, theoretical_db = MoNA))) %>%
   ungroup() %>%
   mutate(top_choice=sapply(matches, function(cmpd_matches){
     cmpd_matches %>%
@@ -128,7 +128,3 @@ end.time <- Sys.time()
 time.taken <- end.time - start.time
 print(time.taken)
 
-
-## None of them actually match...
-wrong.matches <- all.matches %>%
-  filter(compound_name != top_choice)

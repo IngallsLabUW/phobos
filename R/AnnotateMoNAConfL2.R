@@ -10,6 +10,7 @@ library(tidyverse)
 # Should we make the filters more permissive on this level?
 # TODO: The MoNA spreadsheets are still in the original KRH download, located in the example_data folder.
 #   The formatting code no longer works, so that part will need to be rewritten.
+# TODO: If we keep the flex values very strict, nothing matches, but if we increase them, it takes forever.
 # TODO: The total similarity score needs to be more flexible depending on what is present/absent. Messy right now.
 
 # Outline -------------------------------------------------------------------
@@ -32,9 +33,7 @@ MoNA <- MoNA.Neg %>%
   rbind(MoNA.Pos) %>%
   mutate(voltage = trimws(str_remove(CE, "[^ ]*$"))) %>% # icky but works
   mutate(MS2 = paste(voltage, "V ", spectrum_KRHform_filtered, sep = "")) %>%
-  select(ID, compound_name = Names, voltage, mz, z, MS2) #%>%
-  #####################################################################
-  #filter(str_detect(compound_name, regex("ectoine", ignore_case = TRUE)))
+  select(ID, compound_name = Names, voltage, mz, z, MS2)
 
 ## Experimental data: prepare the same way as in confidence level 1
 ingalls.standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv",
@@ -62,18 +61,16 @@ experimental.data <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
   left_join(ingalls.standards, by = c("compound_name", "z", "HILIC_Mix")) %>%
   select(compound_name, voltage, mz, z, MS2) %>%
   drop_na() %>%
-  as.data.frame() #%>%
-  #########################################
-  #filter(str_detect(compound_name, "Ectoine"))
+  as.data.frame()
 
 # Functions ---------------------------------------------------------------
-mz_i <- experimental.data[55, 3]
-z_i <- experimental.data[55, 4]
-MS2str_i <- experimental.data[55, 5]
+mz_i <- experimental.data[37, 3]
+z_i <- experimental.data[37, 4]
+MS2str_i <- experimental.data[37, 5]
 theoretical_db <- MoNA
 ppm_error <- 10000
 
-test.match <- ConfLevel2Matches(mz_i = mz_i, z_i = z_i, MS2str_i = MS2str_i, ppm_error = ppm_error, theoretical_db = MoNA)
+# test.match <- ConfLevel2Matches(mz_i = mz_i, z_i = z_i, MS2str_i = MS2str_i, ppm_error = ppm_error, theoretical_db = MoNA)
 
 ConfLevel2Matches <- function(mz_i, z_i, MS2str_i, ppm_error, theoretical_db) {
   # Pass experimental values and a theoretical data frame to this function to produce a new nested
@@ -165,10 +162,10 @@ CalcTotalSimScore <- function(ms1_sim, ms2_sim) { ## TODO: This needs to be more
 
 
 ## Example: Produces a data frame of potential matches and all similiarity scores for a single row of experimental data.
-print(experimental.data[55, ])
+print(experimental.data[37, ])
 
-single.frame <- ConfLevel2Matches(mz_i = experimental.data$mz[55], z_i = experimental.data$z[55],
-                                  MS2str_i = experimental.data$MS2[55],
+single.frame <- ConfLevel2Matches(mz_i = experimental.data$mz[37], z_i = experimental.data$z[37],
+                                  MS2str_i = experimental.data$MS2[37],
                                   ppm_error = 100, theoretical_db = MoNA)
 
 
@@ -178,7 +175,7 @@ start.time <- Sys.time()
 all.matches <- experimental.data %>%
   rowwise() %>%
   mutate(matches = list(ConfLevel2Matches(mz_i = mz, z_i = z, MS2str_i = MS2,
-                                          ppm_error = 10, theoretical_db = MoNA))) %>%
+                                          ppm_error = 10000, theoretical_db = MoNA))) %>%
   ungroup() %>%
   mutate(top_choice=sapply(matches, function(cmpd_matches){
     cmpd_matches %>%

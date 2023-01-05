@@ -4,9 +4,7 @@ library(tidyverse)
 ### Annotate Confidence Level 3: KEGG
 
 # Notes -------------------------------------------------------------------
-
-
-# Outline -------------------------------------------------------------------
+# Looks like KEGG has implemented a subscription, and any code to create the csv is now out of date.
 
 # Prepare all data -------------------------------------------------------------------
 
@@ -102,8 +100,8 @@ ConfLevel3Matches <- function(mz_i, z_i, ppm_error, theoretical_db) {
 # Example ---------------------------------------------------------------
 # Run the ConfLevel3Matches on a single row, which produces a data frame
 # of potential matches and all similarity scores.
-print(experimental.data[71, ])
-single.frame <- ConfLevel3Matches(mz_i = experimental.data$mz[71], z_i = experimental.data$z[71],
+print(experimental.data[55, ])
+single.frame <- ConfLevel3Matches(mz_i = experimental.data$mz[55], z_i = experimental.data$z[55],
                                   ppm_error = 100, theoretical_db = KEGG.data)
 
 
@@ -112,9 +110,8 @@ start.time <- Sys.time()
 
 all.matches <- experimental.data %>%
   rowwise() %>%
-  mutate(matches = list(ConfLevel1Matches(mz_i = mz, rt_i = rt, col_i = column, z_i = z,
-                                          MS2str_i = MS2, ppm_error = 10,
-                                          theoretical_db = theoretical.data))) %>%
+  mutate(matches = list(ConfLevel3Matches(mz_i = mz, z_i = z, ppm_error = 10,
+                                          theoretical_db = KEGG.data))) %>%
   ungroup() %>%
   mutate(top_choice=sapply(matches, function(cmpd_matches){
     cmpd_matches %>%
@@ -130,7 +127,5 @@ time.taken <- end.time - start.time
 print(time.taken)
 
 
-## Issues are arising from the med sim choice function: not always picking the right one.
-wrong.top.match <- all.matches %>%
-  filter(compound_name != top_choice)
+
 

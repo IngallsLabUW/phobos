@@ -4,12 +4,12 @@ library(tidyverse)
 ### Annotate Confidence Level 1: Ingalls Standards comparison
 
 # Notes -------------------------------------------------------------------
-# Prepping the data can be kind of a big step, see section for experimental.data.
+# Prepping the data can be kind of a big step, see below section for experimental.data.
 # Need to make an adjustment for "n consensus files", maybe not the current 4:6/9:11 being used for the testing.
 #   How many "intensity clusters" at mz points do we have? Now we're accounting
 #   for two intensity clusters, but it's possible we'd have three, four...
 # TODO: Randomize the 4:1 experimental:theoretical choices.
-# TODO: Need consensus to assign weights in the MS2 similarity score, according to Horai et al. 2010,
+# TODO: Need to assign weights in the MS2 similarity score, according to Horai et al. 2010,
 #   also I believe we were going to use this as document/justification for spectra consensus.
 # TODO: The flex arguments in the similarity score calculations are hard coded within the
 #   big ConfLevel1 function. Should we change that?
@@ -21,9 +21,9 @@ library(tidyverse)
 # Use "consensed" MS2 data created from four of the five Ingalls Standards run as theoretical data.
 #   See TakeMS2Consensus.R script for details.
 # Use "single" MS2 data from the fifth run as experimental data.
-# Create a Total Similarity Score for entries that fall within column, z, and mz filters.
 # The cosine similarity will be calculated between "yellow triangle/consensus msms spectra" and experimental dot.
 #   See MS2ClusterGraph.R for details.
+# Create a Total Similarity Score for entries that fall within column, z, and mz filters.
 # The below script produces a data frame with a nested column of data frames containing all potential matches for each row.
 # Whole process takes about 1.5 minutes.
 
@@ -34,15 +34,15 @@ ingalls.standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/In
   mutate(rt = rt * 60) %>%
   distinct()
 
-# Theoretical and Experimental data, in their standardized concatenated voltage input format.
-# Theoretical data is the "consensed" first four runs, and experimental is the final fifth run.
-theoretical.data <- read_csv("example_data/Consensed_Theoretical_FourRuns.csv") %>%
+# Theoretical: four consensed runs, in a standardized concatenated voltage format.
+theoretical.data <- read_csv("example_data/Ingalls_Lab_Standards_MSMS_consensed.csv") %>%
   mutate(z = ifelse(polarity == "pos", 1, -1)) %>%
   left_join(ingalls.standards, by = c("compound_name", "z")) %>%
   separate_rows(consensus_MS2, sep = ": ") %>%
   mutate(voltage = sub("\\V.*", "", consensus_MS2)) %>%
   select(compound_name, voltage, mz, rt, column, z, MS2 = consensus_MS2)
 
+# Experimental: fifth single run, in a standardized concatenated voltage format.
 experimental.data <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
   filter(str_detect(filename, "pos5|neg5")) %>%
   separate_rows(MS2, sep = "; ") %>%
@@ -123,7 +123,7 @@ CalcTotalSimScore <- function(ms1_sim, rt_sim, ms2_sim) {
 ConfLevel1Matches <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error, theoretical_db) {
   # Pass experimental values and a theoretical data frame to this function to produce a new nested
   # column with all potential matches. Each observation in each column is an argument
-  # (mz, rt, col, z, concatentenated ms2). The theoretical data frame should also be in the appropriate format.
+  # (mz, rt, col, z, concatenated ms2). The theoretical data frame should also be in the appropriate format.
   # Experimental values are compared to the complete set of theoretical value and matches within mz window,
   # z, and column. Calculates similarity scores for rt, mz, ms2.
   #
@@ -169,7 +169,8 @@ MakeScantable <- function(concatenated.scan) {
 
 # Example ---------------------------------------------------------------
 # Run the ConfLevel1Matches on a single row, which produces a data frame
-# of potential matches and all similarity scores.
+# of potential matches and all similarity scores. In the full run, the below
+# data frame would be in a nested column appended to the experimental data.
 print(experimental.data[71, ])
 single.frame <- ConfLevel1Matches(mz_i = experimental.data$mz[71], rt_i = experimental.data$rt[71],
                                   col_i = experimental.data$column[71], z_i = experimental.data$z[71],

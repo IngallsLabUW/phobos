@@ -1,32 +1,44 @@
-**********Confidence Level 1 breakdown**********
+**********Overall Questions**********
+
+Functions are less flexible, and exist in script form rather than package form (or sourced file form) due to time restraints. If we want to change that setup, some functions will need to be checked and made applicable to all confidence levels. They currently can't live outside their script.
+
+We might want to reconsider the voltages and those interact with the matching, particularly after confidence level1 (?). They are still creating big row explosions like before and slowing stuff down in general.
+
+Acquiring the external stuff is going to take some work.
+
+**********Set up data**********
+
+In order to ensure that the MS2 (and MS1, rt, etc.) matching is accurate, we need to be comparing known data before we compare unknowns.
+Horai et al. 2010 recommends taking a consensus of MS2 data for comparison, as reproducibility of MS2 data is notoriously difficult.
+
+Therefore, we ran all of the Ingalls Standards 5 times (thanks Laura) and obtained five sets of MS2 data for each compound.
+We then took a consensus of four of the runs to create "theoretical data"; i.e, something to compare the fifth run to for accuracy.
+Because the fifth run is being compared to very similar runs, that removes variation that might interfere with comparisons.
+
+Taking a consensus of the MS2 data:
+- The data is scaled to an intensity of 100 and all intensities below 0.5 are removed.
+- Fragments are grouped exclusively on mz, and assigned a group number for those that fall within a user-defined ppm range.
+- Find clusters that are robust across files using hierarchical clustering in mz space, and cut the tree at a height that produces
+  the most groups with 5 +/-1 fragments, or 10 +/- fragments to account for "superimposed lollipops" (ask Will).
+
+
+**********Confidence Level 1**********
+Requires a good match to a known chemical standard.
 
 Tidy and setup
-- Make sure experimental input is in a standardized format (column names and class)
-- Mutate a primary key for ID (literally just 1-nrow)
-- From the modified, MS2-included standards, make a column to isolate voltage.
+- Make sure all inputs (experimental and theoretical) are in a standardized format.
 
-Logic
-- Fuzzyjoin the experimental and theoretical table based on overlapping mz values, according to the user-defined mz flexibility (our default is 0.2). Change column names and reorder.
+Process
+- Apply comparison function to each row (each compound @ each voltage) of the experimetnal data frame.
+- Filter the potential matches on m/z by user-defined ppm error.
 - Match polarity and column.
 - Rowwise:
-  ppm mass error = ((abs(mz_experimental - mz_theoretical)) / mz_theoretical) * 10^6)
-  MS2 cosine similarity = MS2CosineSimilarity(MS2_experimental, MS2_theoretical, mz.flexibility), if both MFs have accompanying cosines.
-    - make a mini dataframe from a concatenated scan
-    - create weights for both scantables by squaring the mz and multiplying by the intensity: weight1 <- (scan1[, "mz"] ^ 2) * sqrt(scan1[, "intensity"])
-    - create a difference matrix: sapply(scan1[, "mz"], function(x) scan2[, "mz"] - x). Basically finding the difference between each combination of mzs.
-    - find which differences are less than 0.02 (aka the mz flexibility, shouldn't be hard coded but here we are)
-    - calculate the "MS2 cosine similarity" = sum(weight1[same.index[, 2]] * weight2[same.index[, 1]]) / (sqrt(sum(weight2 ^ 2)) * sqrt(sum(weight1 ^ 2)))
-  calculate a total similarity score according to which values have been calculated (if there is an MS2 similarity score, use one equation, if not, then use another.)       total_similarity_score1 = ifelse(is.na(MS2_cosine_similarity1), mean(c(mz_similarity_score1, rt_similarity_score1) * 100), mean(c(MS2_cosine_similarity1,           mz_similarity_score1, rt_similarity_score1) * 100)))
-
-- Do a sanity check: Have any compounds been lost? Check for those that didn't get fuzzy matches, fuzzy matches that then got thrown out due to wrong polarity/column, and then check against the original data to make sure all features have been accounted for. Create dataframes of the "unmatched" features.
-
-- Combine the "unmatched" with the "matched" for a full dataframe of all your original featues with the new similarity scores included.
-
-- Decide if a feature gets a confidence rank of 1: ifelse(mz_similarity_score1 > 0.9 & rt_similarity_score1 > 0.75 & ppm_mass_error1 < 7, 1, NA).
-- If something has been ranked a 1, add that it has come from the Ingalls standards.
+  MS1 (m/z) and retention time (RT) Similarity Scores: exp(-0.5 * (((experimental value - theoretical value) / user-defined flexibility) ^ 2))
+  MS2 cosine similarity. If both sets of MS2 values are present, calculate the similarity using the 2015 MSDial paper similarity equations.
+  Total Similarity Score, according to which other similarity scores are present, also taken from 2015 MSDial paper.
 
 
-**********MoNA Confidence Level 2 breakdown**********
+**********Confidence Level 2: MoNA**********
 
 Download the MoNA positive and negative spectra from the website. This is downloaded as a JSON and the code is written (I think) to convert it, but it's very out of date and probably isn't in the most practical layout. Tidied spreadsheets of the data are in package/google drive.
 

@@ -1,18 +1,17 @@
 library(tidyverse)
 
-## Will is going to take a look at the problem outlined below and see if selection will help.
 # Need to make an adjustment for "n consensus fragments", not 4:6/9:11 for the testing purposes. This could be a little softer...
 # increasing suspicion as we move away from 5. How many "intensity clusters" at mz clusters do we have? Now we're accounting
 # for two intensity clusters, but it's possible we'd have three, four...
 
-original_MS2_data <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv")
+original.MS2.data <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv")
 
 ## Create mock experimental and theoretical data from the standards runs.
 ## First four runs make theoretical data, which will be "consensed" using the script below.
-mock.experimental <- original_MS2_data %>%
+mock.experimental <- original.MS2.data %>%
   filter(str_detect(filename, "pos5|neg5"))
 
-mock.theoretical <- original_MS2_data %>%
+mock.theoretical <- original.MS2.data %>%
   filter(!str_detect(filename, "pos5|neg5"))
 
 ## Will's mz grouping function: exclusively groups on mz
@@ -33,7 +32,7 @@ mz_group <- function(mz_vals, ppm) {
 }
 
 # Test the grouping function on a single compound
-dat <- original_MS2_data %>%
+dat <- original.MS2.data %>%
   filter(compound_name == "L-Alanine") %>%
   separate_rows(MS2, sep = "; ") %>%
   separate(MS2, into = c("mz", "int"), sep = ", ") %>%
