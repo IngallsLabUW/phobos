@@ -1,4 +1,4 @@
-**********Overall Questions**********
+**********Questions and TODO Items**********
 
 Functions are less flexible, and exist in script form rather than package form (or sourced file form) due to time restraints. If we want to change that setup, some functions will need to be checked and made applicable to all confidence levels. They currently can't live outside their script.
 
@@ -7,6 +7,8 @@ We might want to reconsider the voltages and those interact with the matching, p
 Acquiring the external stuff is going to take some work.
 
 **********Set up data**********
+
+https://doi.org/10.1038/nmeth.3393 for MSDIAL
 
 In order to ensure that the MS2 (and MS1, rt, etc.) matching is accurate, we need to be comparing known data before we compare unknowns.
 Horai et al. 2010 recommends taking a consensus of MS2 data for comparison, as reproducibility of MS2 data is notoriously difficult.
@@ -23,7 +25,22 @@ Taking a consensus of the MS2 data:
 
 
 **********Confidence Level 1**********
-Requires a good match on MS1, MS2, RT, column, z to a known chemical standard.
+Notes:
+Prepping the data can be a big step. See the production of experimental.data for details.
+Need to make an adjustment for "n consensus files", maybe not the current 4:6/9:11 being used for the testing.
+  How many "intensity clusters" at mz points do we have? Now we're accounting
+  for two intensity clusters, but it's possible we'd have three, four...
+TODO: Randomize the 4:1 experimental:theoretical choices.
+TODO: The flex arguments in the similarity score calculations are hard coded within the
+  big ConfLevel1 function. Should we change that?
+TODO: I have a progress bar wrapped around the MS2 Sim Score function but this could be better.
+TODO: The med_sim_overall function is choosing some incorrect top choices. Going with the max
+  sim score has fewer wrong choices, but still a decent amount.
+TODO: Not so much for CL1, but in the later levels we might want to include the original theoretical data
+  in the output columns. There's poor matching going on and it's difficult to see what is being matched.
+TODO: Have "clean = TRUE" argument to drop the nested dataframe altogether.
+
+Confidence Level 1 requires a good match on MS1, MS2, RT, column, z to a known chemical standard.
 
 Tidy and setup
 - Make sure all inputs (experimental and theoretical) are in a standardized format.
@@ -39,12 +56,18 @@ Process
 
 
 **********Confidence Level 2: MoNA**********
-Requires a good MS1, MS2, and z match to external database.
+Voltage needs to be considered since MoNA doesn't always match with the voltages we use, but the columns are still included in the download and associated data.
+Filters should be adjusted for this level; too small no good matches are made, too big and the process takes a very long time (around 40 minutes).
+TODO: The MoNA spreadsheets are still in the original KRH download, located in the example_data folder. The formatting code no longer works, so that part will need to be rewritten.
+TODO: The total similarity score needs to be more flexible depending on what is present/absent. Messy right now.
+
+Confidence Level 2 requires a good MS1, MS2, and z match to external database.
 
 Download the MoNA positive and negative spectra from the website. It will need to be changed from JSON to flat file. All the original code, downloads, and modified downloads are in the MARS project repository, located on the Ingalls Github.
 
 Tidy and setup
 - Make sure all inputs (experimental and theoretical) are in a standardized format.
+- The MoNA data requires hydrogen manipulation. See script for details.
 
 Process
 - Apply comparison function to each row (each compound @ each voltage) of the experimental data frame.
@@ -56,8 +79,11 @@ Process
   Total Similarity Score, according to which other similarity scores are present, also taken from 2015 MSDial paper.
 
 
-
 **********Confidence Level 3: MoNA**********
+
+Still adjusting the mass in MoNA to account for hydrogen.
+Should probably make the cutoffs even more flexible here.
+TODO: Progress bar needs to be added now that there is no MS2 similarity function.
 
 This step is the same as level 2, except that we match only on MS1 and z.
 
@@ -66,11 +92,11 @@ This step is the same as level 2, except that we match only on MS1 and z.
 
 There is code to access KEGG, but like the MoNA code, it is out of date. All the relevant info is also on the MARS Github, or on the Ingalls Google Drive under collaborative projects --> MARS.
 
-The comparison process is the same as Confidence Level 3, MoNA.
+The comparison process is the same as Confidence Level 3, MoNA, but applied to the KEGG database.
 
 
 **********Confidence Level 4 breakdown**********
 
-Literally everything else. Maybe 4 should have some kind of consistency or metrics rather than "literally everything else"
+Everything else.
 
 

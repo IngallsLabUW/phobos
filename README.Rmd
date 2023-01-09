@@ -20,6 +20,10 @@ knitr::opts_chunk$set(
 
 phobos is an R package of custom functions for identifying and ranking unknown mass features (MFs) in metabolomics data. The package annotates, ranks, and scores the unknown mass features, and performs data transformations common to the [Ingalls Lab](https://sites.google.com/view/anitra-ingalls).
 
+# TODO: Need to assign weights in the MS2 similarity score, according to Horai et al. 2010, (add DOI)
+#   also I believe we were going to use this as document/justification for spectra consensus.
+
+
 **Table of contents:** 
 
 - [Installation](https://github.com/IngallsLabUW/phobos#installation) 

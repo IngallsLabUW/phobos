@@ -3,22 +3,10 @@ library(tidyverse)
 
 ### Annotate Confidence Level 2: Comparisons with the MoNA Database
 
-# Notes -------------------------------------------------------------------
-# In previous versions we have subtracted hydrogen for reference. I've included that here.
-# We are ignoring voltage since MoNA doesn't always match with the voltages we use,
-#   but the columns are still included in the download and associated data.
-# Should we make the filters more permissive on this level?
-# TODO: The MoNA spreadsheets are still in the original KRH download, located in the example_data folder.
-#   The formatting code no longer works, so that part will need to be rewritten.
-# TODO: If we keep the flex values very strict, nothing matches, but if we increase them, it takes forever.
-# TODO: Should think about voltage here too; it's adding a ton of time and may not be valuable as a matching parameter.
-# TODO: The total similarity score needs to be more flexible depending on what is present/absent. Messy right now.
-
 # Outline -------------------------------------------------------------------
 # Use the downloaded MoNA relational spreadsheets as theoretical data. Downloads here: https://mona.fiehnlab.ucdavis.edu/downloads
 # Use "single" MS2 data from the fifth run as experimental data.
-# Find similarity and matching using only mz, MS2, and z.
-
+# Find similarity and matching using only MS1, MS2, and z.
 
 # Prepare all data -------------------------------------------------------------------
 
@@ -36,7 +24,7 @@ MoNA <- MoNA.Neg %>%
   mutate(MS2 = paste(voltage, "V ", spectrum_KRHform_filtered, sep = "")) %>%
   select(ID, compound_name = Names, voltage, mz, z, MS2)
 
-## Experimental data: prepare the same way as in confidence level 1
+## Experimental data: prepared the same way as in confidence level 1
 ingalls.standards <- read.csv("https://raw.githubusercontent.com/IngallsLabUW/Ingalls_Standards/master/Ingalls_Lab_Standards.csv",
                               stringsAsFactors = FALSE, header = TRUE) %>%
   select(compound_name = Compound_Name, HILIC_Mix, mz, rt = RT_minute, column = Column, z) %>%
@@ -65,64 +53,6 @@ experimental.data <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
   as.data.frame()
 
 # Functions ---------------------------------------------------------------
-mz_i <- experimental.data[37, 3]
-z_i <- experimental.data[37, 4]
-MS2str_i <- experimental.data[37, 5]
-theoretical_db <- MoNA
-ppm_error <- 10000
-
-# test.match <- ConfLevel2Matches(mz_i = mz_i, z_i = z_i, MS2str_i = MS2str_i, ppm_error = ppm_error, theoretical_db = MoNA)
-
-ConfLevel2Matches <- function(mz_i, z_i, MS2str_i, ppm_error, theoretical_db) {
-  # Pass experimental values and a theoretical data frame to this function to produce a new nested
-  # column with all potential matches. Each observation in each column is an argument.
-  #
-  # Returns: A column of nested dataframes containing all potential theoretical matches.
-  potential.matches <- theoretical_db %>%
-    filter(mz < mz_i + ((mz_i * ppm_error)/1e6) & mz > mz_i - ((mz_i * ppm_error)/1e6)) %>%
-    filter(z == z_i) %>%
-    mutate(MS1SimScore = CalcMzSimScore(mz_exp = mz_i, mz_theo = mz, flex = 20)) %>% ## TODO: these are still hard coded, same as CL1
-    mutate(MS2SimScore = as.numeric(ifelse(str_detect(MS2, ","),
-                                           pblapply(MS2, CalcMS2SimScore, ms2_theo = MS2str_i, flex = 0.02), NA))) %>%
-    mutate(TotalSimScore = CalcTotalSimScore(MS1SimScore, MS2SimScore)) %>%
-    select(compound_name, voltage, ends_with("SimScore"))
-
-  return(potential.matches)
-}
-
-MakeScantable <- function(concatenated.scan) {
-  # Takes in single character string of MS2, split by voltage., and creates
-  # Required format for concatenated.scan: "20V 146.11766, 100; 87.04468, 47.4; 60.08156, 26.3"
-  # Format is "voltage V mass, intensity; mass, intensity"
-  #
-  # Returns: a mini MS2 dataframe, scaled to a max intensity of 100 and filtered to a minimum intensity of 0.5.
-  requireNamespace("dplyr", quietly = TRUE)
-  concatenated.scan <- trimws(gsub(".*V", "", concatenated.scan))
-
-  if (concatenated.scan == "") {
-    return(NA)
-
-  } else {
-    scantable <- read.table(text = as.character(concatenated.scan),
-                            col.names = c("mz", "intensity"), fill = TRUE) %>%
-      dplyr::mutate(mz = as.numeric(mz %>% stringr::str_replace(",", "")),
-                    intensity = as.numeric(intensity %>% stringr::str_replace(";", "")),
-                    intensity = round(intensity / max(intensity) * 100, digits = 1)) %>%
-      dplyr::filter(intensity > 0.5) %>%
-      dplyr::arrange(desc(intensity))
-
-    return(scantable)
-  }
-}
-
-CalcMzSimScore <- function(mz_exp, mz_theo, flex) {
-  # Takes in experimental and theoretical m/z values in a data frame, as well as a user-defined flexibility.
-  #
-  # Returns a similarity score.
-  similarity.score = exp(-0.5 * (((mz_exp - mz_theo) / flex) ^ 2))
-
-  return(similarity.score)
-}
 
 CalcMS2SimScore <- function(ms2_exp, ms2_theo, flex) {
   # Takes in experimental and theoretical MS2 values in a data frame, as well as a user-defined flexibility.
@@ -151,18 +81,69 @@ CalcMS2SimScore <- function(ms2_exp, ms2_theo, flex) {
   }
 }
 
-CalcTotalSimScore <- function(ms1_sim, ms2_sim) { ## TODO: This needs to be more flexible, depending on which similarity scores are present
+CalcMzSimScore <- function(mz_exp, mz_theo, flex) {
+  # Takes in experimental and theoretical m/z values in a data frame, as well as a user-defined flexibility.
+  #
+  # Returns a similarity score.
+  similarity.score = exp(-0.5 * (((mz_exp - mz_theo) / flex) ^ 2))
+
+  return(similarity.score)
+}
+
+CalcTotalSimScore <- function(ms1_sim, ms2_sim) {
+  ## TODO: This needs to be more flexible, depending on which similarity scores are present
   # Takes in the similarity scores calculated by other functions.
   #
-  # Returns: a "total" similarity score according to which scores are present.
+  # Returns: a "total" similarity score according to which contributing scores are present.
 
   total.sim.score <- ifelse(is.na(ms2_sim), ms1_sim, ((ms1_sim + ms2_sim) / 2) * 100)
 
   return(total.sim.score)
 }
 
+ConfLevel2Matches <- function(mz_i, z_i, MS2str_i, ppm_error, theoretical_db) {
+  # Pass experimental values and a theoretical data frame to this function to produce a new nested
+  # column with all potential matches. Each observation in each column is an argument.
+  #
+  # Returns: A column of nested dataframes containing all potential theoretical matches.
+  potential.matches <- theoretical_db %>%
+    filter(mz < mz_i + ((mz_i * ppm_error)/1e6) & mz > mz_i - ((mz_i * ppm_error)/1e6)) %>%
+    filter(z == z_i) %>%
+    mutate(MS1SimScore = CalcMzSimScore(mz_exp = mz_i, mz_theo = mz, flex = 20)) %>% ## TODO: these are still hard coded.
+    mutate(MS2SimScore = as.numeric(ifelse(str_detect(MS2, ","),
+                                           pblapply(MS2, CalcMS2SimScore, ms2_theo = MS2str_i, flex = 0.02), NA))) %>%
+    mutate(TotalSimScore = CalcTotalSimScore(MS1SimScore, MS2SimScore)) %>%
+    select(compound_name, voltage, ends_with("SimScore"))
 
-## Example: Produces a data frame of potential matches and all similiarity scores for a single row of experimental data.
+  return(potential.matches)
+}
+
+MakeScantable <- function(concatenated.scan) {
+  # Takes in single character string of MS2, split by voltage, and creates
+  # Required format for concatenated.scan: "20V 146.11766, 100; 87.04468, 47.4; 60.08156, 26.3"
+  # Format is "voltage V mass, intensity; mass, intensity"
+  #
+  # Returns: a mini MS2 dataframe, scaled to a max intensity of 100 and filtered to a minimum intensity of 0.5.
+  requireNamespace("dplyr", quietly = TRUE)
+  concatenated.scan <- trimws(gsub(".*V", "", concatenated.scan))
+
+  if (concatenated.scan == "") {
+    return(NA)
+
+  } else {
+    scantable <- read.table(text = as.character(concatenated.scan),
+                            col.names = c("mz", "intensity"), fill = TRUE) %>%
+      dplyr::mutate(mz = as.numeric(mz %>% stringr::str_replace(",", "")),
+                    intensity = as.numeric(intensity %>% stringr::str_replace(";", "")),
+                    intensity = round(intensity / max(intensity) * 100, digits = 1)) %>%
+      dplyr::filter(intensity > 0.5) %>%
+      dplyr::arrange(desc(intensity))
+
+    return(scantable)
+  }
+}
+
+## Example: Produces a data frame of potential matches and all similarity scores for a single row of experimental data.
 print(experimental.data[37, ])
 
 single.frame <- ConfLevel2Matches(mz_i = experimental.data$mz[37], z_i = experimental.data$z[37],
@@ -174,7 +155,6 @@ single.frame <- ConfLevel2Matches(mz_i = experimental.data$mz[37], z_i = experim
 start.time <- Sys.time()
 
 all.matches <- experimental.data %>%
-  filter(str_detect(compound_name, "Homarine|Choline|Allopurinol")) %>%
   rowwise() %>%
   mutate(matches = list(ConfLevel2Matches(mz_i = mz, z_i = z, MS2str_i = MS2,
                                           ppm_error = 10000, theoretical_db = MoNA))) %>%

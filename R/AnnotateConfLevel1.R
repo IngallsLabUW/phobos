@@ -3,23 +3,6 @@ library(tidyverse)
 
 ### Annotate Confidence Level 1: Ingalls Standards comparison
 
-# Notes -------------------------------------------------------------------
-# Prepping the data can be kind of a big step, see below section for experimental.data.
-# Need to make an adjustment for "n consensus files", maybe not the current 4:6/9:11 being used for the testing.
-#   How many "intensity clusters" at mz points do we have? Now we're accounting
-#   for two intensity clusters, but it's possible we'd have three, four...
-# TODO: Randomize the 4:1 experimental:theoretical choices.
-# TODO: Need to assign weights in the MS2 similarity score, according to Horai et al. 2010, (add DOI)
-#   also I believe we were going to use this as document/justification for spectra consensus.
-# TODO: The flex arguments in the similarity score calculations are hard coded within the
-#   big ConfLevel1 function. Should we change that?
-# TODO: I have a progress bar wrapped around the MS2 Sim Score function but this could be better.
-# TODO: The med_sim_overall function is choosing some incorrect top choices. Going with the max
-#   sim score has fewer wrong choices, but still a decent amount. This might change with adjusted weights?
-# TODO: Not so much for CL1, but in the later levels we might want to include the original theoretical data
-#   in the output columns. There's poor matching going on and it's difficult to see what is being matched.
-# TODO: Have "clean = TRUE" argument to drop the nested dataframe altogether.
-
 # Outline -------------------------------------------------------------------
 # Use "consensed" MS2 data created from four of the five Ingalls Standards run as theoretical data.
 #   See TakeMS2Consensus.R script for details.
@@ -136,7 +119,7 @@ ConfLevel1Matches <- function(mz_i, rt_i, col_i, z_i, MS2str_i, ppm_error, theor
     filter(column == col_i) %>%
     filter(z == z_i) %>%
     mutate(MS1SimScore = CalcMzSimScore(mz_exp = mz_i, mz_theo = mz, flex = 5)) %>% ## TODO do we want these to not be hard coded?
-    mutate(RT1SimScore = CalcRTSimScore(rt_exp = rt_i, rt_theo = rt, flex = 30)) %>%
+    mutate(RT1SimScore = CalcRTSimScore(rt_exp = rt_i, rt_theo = rt, flex = 30)) %>% ## TODO do we want these to not be hard coded?
     mutate(MS2SimScore = as.numeric(ifelse(str_detect(MS2, ","),
                                            pblapply(MS2, CalcMS2SimScore, ms2_theo = MS2str_i, flex = 0.02), NA))) %>%
     mutate(TotalSimScore = CalcTotalSimScore(MS1SimScore, RT1SimScore, MS2SimScore)) %>%

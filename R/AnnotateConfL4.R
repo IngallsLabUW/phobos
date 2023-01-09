@@ -2,13 +2,7 @@ library(pbapply)
 library(tidyverse)
 
 ### Annotate Confidence Level 4: Everything else!
-# TODO: Should this be everything else?
 
-# Notes -------------------------------------------------------------------
-# Should we have some kind of filter for level 4? As in,
-#   this is definitely a consistent peak, shows up? Or does that come ahead of time?
-
-# Outline -------------------------------------------------------------------
 
 # Prepare data, experimental only! -------------------------------------------------------------------
 

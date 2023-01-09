@@ -3,12 +3,6 @@ library(tidyverse)
 
 ### Annotate Confidence Level 3: MoNA
 
-# Notes -------------------------------------------------------------------
-# Still adjusting the mass in MoNA to account for hydrogen.
-# Should probably make the cutoffs even more flexible here.
-# TODO: Progress bar could be made here.
-# TODO: We are basically not getting the correct matches here.
-
 # Outline -------------------------------------------------------------------
 # Use the downloaded MoNA relational spreadsheets as theoretical data. Downloads here: https://mona.fiehnlab.ucdavis.edu/downloads
 # Use "single" MS2 data from the fifth run as experimental data.
@@ -59,13 +53,6 @@ experimental.data <- read_csv("example_data/Ingalls_Lab_Standards_MSMS.csv") %>%
   as.data.frame()
 
 # Functions ---------------------------------------------------------------
-# mz_i <- experimental.data[55, 3]
-# z_i <- experimental.data[55, 4]
-# theoretical_db <- MoNA
-# ppm_error <- 10000
-
-#test.match <- ConfLevel3Matches(mz_i = mz_i, z_i = z_i, ppm_error = ppm_error, theoretical_db = MoNA)
-
 ConfLevel3Matches <- function(mz_i, z_i, ppm_error, theoretical_db) {
   # Pass experimental values and a theoretical data frame to this function to produce a new nested
   # column with all potential matches. Each observation in each column is an argument.

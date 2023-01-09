@@ -3,9 +3,6 @@ library(tidyverse)
 
 ### Annotate Confidence Level 3: KEGG
 
-# Notes -------------------------------------------------------------------
-# Looks like KEGG has implemented a subscription, and any code to create the csv is now out of date.
-
 # Prepare all data -------------------------------------------------------------------
 
 # Theoretical
