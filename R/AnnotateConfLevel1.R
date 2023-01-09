@@ -9,13 +9,16 @@ library(tidyverse)
 #   How many "intensity clusters" at mz points do we have? Now we're accounting
 #   for two intensity clusters, but it's possible we'd have three, four...
 # TODO: Randomize the 4:1 experimental:theoretical choices.
-# TODO: Need to assign weights in the MS2 similarity score, according to Horai et al. 2010,
+# TODO: Need to assign weights in the MS2 similarity score, according to Horai et al. 2010, (add DOI)
 #   also I believe we were going to use this as document/justification for spectra consensus.
 # TODO: The flex arguments in the similarity score calculations are hard coded within the
 #   big ConfLevel1 function. Should we change that?
 # TODO: I have a progress bar wrapped around the MS2 Sim Score function but this could be better.
 # TODO: The med_sim_overall function is choosing some incorrect top choices. Going with the max
 #   sim score has fewer wrong choices, but still a decent amount. This might change with adjusted weights?
+# TODO: Not so much for CL1, but in the later levels we might want to include the original theoretical data
+#   in the output columns. There's poor matching going on and it's difficult to see what is being matched.
+# TODO: Have "clean = TRUE" argument to drop the nested dataframe altogether.
 
 # Outline -------------------------------------------------------------------
 # Use "consensed" MS2 data created from four of the five Ingalls Standards run as theoretical data.

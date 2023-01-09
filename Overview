@@ -23,7 +23,7 @@ Taking a consensus of the MS2 data:
 
 
 **********Confidence Level 1**********
-Requires a good match to a known chemical standard.
+Requires a good match on MS1, MS2, RT, column, z to a known chemical standard.
 
 Tidy and setup
 - Make sure all inputs (experimental and theoretical) are in a standardized format.
@@ -39,77 +39,34 @@ Process
 
 
 **********Confidence Level 2: MoNA**********
+Requires a good MS1, MS2, and z match to external database.
 
-Download the MoNA positive and negative spectra from the website. This is downloaded as a JSON and the code is written (I think) to convert it, but it's very out of date and probably isn't in the most practical layout. Tidied spreadsheets of the data are in package/google drive.
+Download the MoNA positive and negative spectra from the website. It will need to be changed from JSON to flat file. All the original code, downloads, and modified downloads are in the MARS project repository, located on the Ingalls Github.
 
-Tidy and setup external data (a lot of this can probably be done before)
-- Subtract or add hydrogen (1.0072766) from the MoNA mass for reference
-- Tidy spectra, dropping NA or blank MS2s
+Tidy and setup
+- Make sure all inputs (experimental and theoretical) are in a standardized format.
 
-Tidy and setup experimental spectra
-- Isolate experimental observations that actually have MS2 data
-- Wrangle mz, MS2, and primary key into appropriate shapes for upcoming transformations
-
-Assign variables from theoretical and experimental for parallelized comparison (otherwise it takes, literally, forever). Unfortunately I have only done this for Macs :D
-
-First do an mz comparison with MoNA (this step has a lot of issues with it, honestly I think it should probably be completely rewritten, particularly from a unit-test perspective):
-- For some reason, I do a filtering step that I think is redundant.
-- Do another fuzzy join on a (no!) hardcoded 0.02 value between experimental data and MoNA
-- Filter for the correct polarity
-- rename a bunch of columns so MS2 cosine similarity functions can be applied (i think some of this renaming is unnecessary)
-- Add a quick check if there are no potential matches on ms1 (aka, if there isn't a good match to ms1 we don't try to do similarity on ms2)
-
-MS2 comparison (this step is bundled in with the above step as one kind of unwieldy function, as well as the filters below. Should probably be split.)
-- Same MS2 cosine calculation as CL1, just written to handle the new columns.
-- Calculate ppm error: massbank_ppm = abs(mass2 - mass1) / mass1 * 10^6)
-- Filter out matches that fall below a hardcoded ppm filter of 7, and a hardcoded ms2 cosine similiarty of 0.5
-
-Return those experimental observations that had matches (this is also bundled up, maybe should be its own thing) and then rejoin those matches with the full confidence level 1 dataframe.
-Mutate mz similarity score, same calculations as above, for MoNa mz similarity matches.
-BUG FOUND HERE: For some strange reason, I add a second ms2 cosine similarity calculation here, but only if there s more than one set of mz:intensity measurements in the massbank ms2 data.
-Mutate a second total similarity score that does not include retention time similarity (KRH advised against using RT due to Rt variation across labs).
-BUG FOUND HERE: Create confidence rank of 2 if the mz similarity score of 2 is greater than 0.9. There is no input of ms2 for some reason. Also create confidence source from MoNA.
-
-**********MoNA Confidence Level 3 breakdown**********
-
-Reimport experimental values from previously annotated dataset. Probably not necessary, annotation should be independent. This step does involve removing experimental values that have two potential matches but no source.
-
-Tidy mona spectra (probably is redundant)
-- Add a "z" column to massbank.
-BUG FOUND - Make MH mass by subtracting hydrogen, but forgot to do it for the positive ones.
-
-Comparisons
-- Do our usual fuzzy join on the hardcoded value.
-- Filter for appropriate z
-- Rename columns as necessary
-- calculate mh_mass similarity score with normal calcs
-
-Do the same sanity checks as in CL1, basically make sure you haven't lost any compounds. Could be more lightweight.
-Rejoin with your CL2 data.
-Create ppm mass error.
-Make confidence rank of 3 if mz_similarity_score3 > 0.9 & ppm_mass_error3 < 7
-Tidy and export
+Process
+- Apply comparison function to each row (each compound @ each voltage) of the experimental data frame.
+- Filter the potential matches on m/z by user-defined ppm error.
+- Match polarity and column.
+- Rowwise:
+  MS1 (m/z) Similarity Score: exp(-0.5 * (((experimental value - theoretical value) / user-defined flexibility) ^ 2))
+  MS2 cosine similarity. If both sets of MS2 values are present, calculate the similarity using the 2015 MSDial paper similarity equations.
+  Total Similarity Score, according to which other similarity scores are present, also taken from 2015 MSDial paper.
 
 
-**********KEGG Confidence Level 3 breakdown**********
 
-Will wrote the code to get KEGG info but it hasn't been run in a while. I will update that. In the meantime the tidied premade set (which may or may not be reproducible) is on the google drive and in the example data.
+**********Confidence Level 3: MoNA**********
 
-Set mz flexibility to 0.02 and ppm tolerance to 15
-Reimport cl3mona stuff (probably unnecessary) and prep for comparison
+This step is the same as level 2, except that we match only on MS1 and z.
 
-Tidy KEGG and add z and column info.
 
-Do a fuzzyjoin (and this time its not hardcoded wtf)
+**********Confidence Level 3: KEGG**********
 
-Mutate ppm and similarity score (didn't use functions for some reason)
+There is code to access KEGG, but like the MoNA code, it is out of date. All the relevant info is also on the MARS Github, or on the Ingalls Google Drive under collaborative projects --> MARS.
 
-Filter for z and ppm scores that fall outside of user-defined bounds.
-
-Join the matched KEGG Ids with the full names.
-
-Mutate rank ifelse(mz_similarity_scoreKEGG > 0.9, 3, NA)). Doesn't include ppm as a filtering.
-
+The comparison process is the same as Confidence Level 3, MoNA.
 
 
 **********Confidence Level 4 breakdown**********

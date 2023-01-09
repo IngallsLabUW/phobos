@@ -6,6 +6,8 @@ library(tidyverse)
 # Notes -------------------------------------------------------------------
 # Still adjusting the mass in MoNA to account for hydrogen.
 # Should probably make the cutoffs even more flexible here.
+# TODO: Progress bar could be made here.
+# TODO: We are basically not getting the correct matches here.
 
 # Outline -------------------------------------------------------------------
 # Use the downloaded MoNA relational spreadsheets as theoretical data. Downloads here: https://mona.fiehnlab.ucdavis.edu/downloads
@@ -104,7 +106,7 @@ CalcTotalSimScore <- function(ms1_sim) {
 print(experimental.data[55, ])
 
 single.frame <- ConfLevel3Matches(mz_i = experimental.data$mz[55], z_i = experimental.data$z[55],
-                                  ppm_error = 100, theoretical_db = MoNA)
+                                  ppm_error = 1000900, theoretical_db = MoNA)
 
 
 ## Produces a dataframe with a nested column of all potential matches for each row of the experimental data.

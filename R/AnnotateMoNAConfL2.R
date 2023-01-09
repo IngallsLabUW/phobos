@@ -11,6 +11,7 @@ library(tidyverse)
 # TODO: The MoNA spreadsheets are still in the original KRH download, located in the example_data folder.
 #   The formatting code no longer works, so that part will need to be rewritten.
 # TODO: If we keep the flex values very strict, nothing matches, but if we increase them, it takes forever.
+# TODO: Should think about voltage here too; it's adding a ton of time and may not be valuable as a matching parameter.
 # TODO: The total similarity score needs to be more flexible depending on what is present/absent. Messy right now.
 
 # Outline -------------------------------------------------------------------
@@ -166,13 +167,14 @@ print(experimental.data[37, ])
 
 single.frame <- ConfLevel2Matches(mz_i = experimental.data$mz[37], z_i = experimental.data$z[37],
                                   MS2str_i = experimental.data$MS2[37],
-                                  ppm_error = 100, theoretical_db = MoNA)
+                                  ppm_error = 10000, theoretical_db = MoNA)
 
 
 ## Produces a dataframe with a nested column of all potential matches for each row of the experimental data.
 start.time <- Sys.time()
 
 all.matches <- experimental.data %>%
+  filter(str_detect(compound_name, "Homarine|Choline|Allopurinol")) %>%
   rowwise() %>%
   mutate(matches = list(ConfLevel2Matches(mz_i = mz, z_i = z, MS2str_i = MS2,
                                           ppm_error = 10000, theoretical_db = MoNA))) %>%
@@ -189,9 +191,3 @@ all.matches <- experimental.data %>%
 end.time <- Sys.time()
 time.taken <- end.time - start.time
 print(time.taken)
-
-
-## None of them actually match...
-wrong.matches <- all.matches %>%
-  filter(compound_name != top_choice)
-
