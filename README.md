@@ -1,0 +1,234 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# phobos
+
+phobos is a process for identifying and ranking unknown mass features
+(MFs) in metabolomics data. The script annotates, ranks, and scores the
+unknown mass features, and performs data transformations common to the
+[Ingalls Lab](https://sites.google.com/view/anitra-ingalls).
+
+**Table of contents:**
+
+- [Confidence Level
+  1](https://github.com/IngallsLabUW/phobos#Confidence%20Level%201)
+- [Confidence Level
+  2](https://github.com/IngallsLabUW/phobos#Confidence%20Level%202)
+- [Confidence Level
+  3](https://github.com/IngallsLabUW/phobos#Confidence%20Level%203)
+- [Confidence Level
+  4](https://github.com/IngallsLabUW/phobos#Confidence%20Level%204)
+
+## Description
+
+A common problem in metabolomics is how to handle unknown but
+persistently present mass features. The output of non-targeted runs
+produces an abundance of spectra that can be discretely separated and
+isolated, but often remain unidentified or identified with non-standard
+confidence.
+
+The phobos package prioritizes simplicity, efficiency, and flexibility
+in feature annotation. To encourage confidence consistency, phobos
+adheres to the proposed minimum reporting standards for chemical
+analysis as laid out in the Metabolomics Standards Initiative (MSI)
+[2007
+paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3772505/pdf/nihms504189.pdf).
+In addition to utilizing the [Ingalls Lab
+Standards](https://github.com/IngallsLabUW/Ingalls_Standards) for
+foremost confidence annotations, phobos provides functionality for
+incorporating spectral comparison to third-party sources such as
+[MassBank of North America (MoNA)](https://mona.fiehnlab.ucdavis.edu/)
+and [KEGG](https://www.genome.jp/kegg/). The script uses equations from
+two papers: [Horai et al 2010](https://doi.org/10.1002/jms.1777) and
+[Tsugawa et al 2015](https://doi.org/10.1038/nmeth.3393).
+
+In order to ensure that the MS2 (and MS1, rt, etc.) matching is
+accurate, we need to be comparing known data before we compare unknowns.
+Horai et al. 2010 recommends taking a consensus of MS2 data for
+comparison, as reproducibility of MS2 data is notoriously difficult.
+
+Therefore, we ran all of the Ingalls Standards 5 times (thanks Laura)
+and obtained five sets of MS2 data for each compound. We then took a
+consensus of four of the runs to create “theoretical data”; i.e,
+something to compare the fifth run to for accuracy. Because the fifth
+run is being compared to very similar runs, that removes variation that
+might interfere with comparisons.
+
+Taking a consensus of the MS2 data: - The data is scaled to an intensity
+of 100 and all intensities below 0.5 are removed. - Fragments are
+grouped exclusively on mz, and assigned a group number for those that
+fall within a user-defined ppm range. - Find clusters that are robust
+across files using hierarchical clustering in mz space, and cut the tree
+at a height that produces the most groups with 5 +/-1 fragments, or 10
++/- fragments to account for “superimposed lollipops” (ask Will).
+
+## Usage
+
+phobos simplifies the identification process by transforming each
+individual MSI rank into a step for annotation. Users begin with a
+formatted data frame of experimental values, and compare those to
+theoretical values. With each successive function, a new column is added
+to the existing data frame with potential matches from each source.
+
+Before any of the scripts can be run, the experimental data is
+transformed *by the user* into a standardized format. It is important to
+pay attention to both the column names and the class; the code will not
+run if they are not in the correct configuration!
+
+Below is a list of the columns required to use phobos. The data frame
+must contain only these columns.
+
+- “compound_name”: Any identifier for a unique mass feature, character
+  class.
+- “voltage”: Voltage at which the feature was run on the instrument,
+  numeric class.
+- “mz”: The m/z value, numeric class.
+- “rt”: The retention time in seconds, numeric class.
+- “column”: The column the mass feature was run on, character class.
+  There are two options for this variable: “HILIC” or “RP” (short for
+  Reverse Phase).
+- “z”: The polarity, numeric class.
+- “MS2”: MS2 data for those compounds that have it, character class.
+  - **Important**: The MS2 data must be in the filtered, scaled and
+    concatenated format of “voltage V: mz, intensity;”, as in the data
+    frame below. For example purposes, the MS2 column below has been cut
+    off at two instances of “mz, intensity;” but real data will have
+    many more entries. Please see the “MS2voltageformat.R” script for
+    assistance in getting your MS2 data to the correct form.
+
+Below is an example of an experimental dataframe in the correct format.
+
+| compound_name                        | voltage |  mz |  rt | column |   z | MS2                                             |
+|:-------------------------------------|--------:|----:|----:|:-------|----:|:------------------------------------------------|
+| (3-Carboxypropyl)trimethylammonium   |      20 | 146 | 595 | HILIC  |   1 | 20V 146.11775, 100; 87.04473, 48.7610046351381  |
+| (R)-2,3-Dihydroxypropane-1-sulfonate |      20 | 155 | 640 | HILIC  |  -1 | 20V 155.00108, 100; 94.97968, 63.9739803723543  |
+| 1-Propanesulfonate                   |      20 | 123 | 169 | HILIC  |  -1 | 20V 79.95618, 100; 123.01107, 69.0983832330827  |
+| 2-Heptyl-3-hydroxy-quinolone         |      20 | 260 | 130 | HILIC  |   1 | 20V 260.16473, 100; 260.16486, 10.0757711790342 |
+| 2-Hydroxy-4-(methylthio)butyric acid |      20 | 149 | 161 | HILIC  |  -1 | 20V 149.02699, 100; 101.02328, 61.4425476252261 |
+
+------------------------------------------------------------------------
+
+### Confidence Level 1
+
+In order to receive a Confidence Level 1 annotation, a mass feature must
+be compared to an authentic chemical standard (for this lab, the
+[Ingalls Standards
+sheet](https://github.com/IngallsLabUW/Ingalls_Standards/blob/master/Ingalls_Lab_Standards.csv))
+using two independent and orthogonal checks. A mass feature must have a
+good match to a chemical standard on MS1, MS2, RT, column and z.
+
+The complete Ingalls Standards csv is located on the [Ingalls Standards
+Github](https://github.com/IngallsLabUW/Ingalls_Standards/blob/master/Ingalls_Lab_Standards.csv)
+and can be downloaded for the latest updated version. Like the
+experimental data, the theoretical data must be in the same specific
+format before comparison.
+
+**Tidy and setup**
+
+- Make sure all inputs (experimental and theoretical) are in a
+  standardized format.
+
+**Process**
+
+- Apply comparison function to each row (each compound @ each voltage)
+  of the experimetnal data frame.
+- Filter the potential matches on m/z by user-defined ppm error.
+- Match polarity and column.
+- Rowwise: MS1 (m/z) and retention time (RT) Similarity Scores: exp(-0.5
+  \* (((experimental value - theoretical value) / user-defined
+  flexibility) ^ 2)) MS2 cosine similarity. If both sets of MS2 values
+  are present, calculate the similarity using the 2015 MSDial paper
+  similarity equations. Total Similarity Score, according to which other
+  similarity scores are present, also taken from 2015 MSDial paper.
+
+Notes on CL1: Prepping the data can be a big step. See the production of
+experimental.data for details. Need to make an adjustment for “n
+consensus files”, maybe not the current 4:6/9:11 being used for the
+testing. How many “intensity clusters” at mz points do we have? Now
+we’re accounting for two intensity clusters, but it’s possible we’d have
+three, four… TODO: Randomize the 4:1 experimental:theoretical choices.
+TODO: The flex arguments in the similarity score calculations are hard
+coded within the big ConfLevel1 function. Should we change that? TODO: I
+have a progress bar wrapped around the MS2 Sim Score function but this
+could be better. TODO: The med_sim_overall function is choosing some
+incorrect top choices. Going with the max sim score has fewer wrong
+choices, but still a decent amount. TODO: Not so much for CL1, but in
+the later levels we might want to include the original theoretical data
+in the output columns. There’s poor matching going on and it’s difficult
+to see what is being matched. TODO: Have “clean = TRUE” argument to drop
+the nested dataframe altogether.
+
+------------------------------------------------------------------------
+
+### Confidence Level 2
+
+Compounds that receive a confidence level of 2 are considered putatively
+annotated compounds; there are no available chemical reference
+standards, but they have good z, MS1 and MS2 spectral similarity with
+public/commercial spectral libraries. The current library used for
+confidence level 2 is [Massbank of North
+America](https://mona.fiehnlab.ucdavis.edu/).
+
+The ready-to-compare MoNA spectra can be found on the shared Ingalls Lab
+Google Drive under Collaborative_Projects –\> MARS_Project –\>
+MoNA_RelationalSpreadsheets, but the public data can also be downloaded
+directly from the [public
+website](https://mona.fiehnlab.ucdavis.edu/downloads) for the most
+recent version. They are downloaded in JSON form and so require
+transformation to csv for input to phobos. The original code to do this
+is located in the R folder of this repository, but please be aware that
+this code is not up to date with MoNA’s latest changes.
+
+**Tidy and setup**
+
+- Make sure all inputs (experimental and theoretical) are in a
+  standardized format.
+- The MoNA data requires hydrogen manipulation. See script for details.
+
+**Process**
+
+- Apply comparison function to each row (each compound @ each voltage)
+  of the experimental data frame.
+- Filter the potential matches on m/z by user-defined ppm error.
+- Match polarity and column.
+- Rowwise: MS1 (m/z) Similarity Score: exp(-0.5 \* (((experimental
+  value - theoretical value) / user-defined flexibility) ^ 2)) MS2
+  cosine similarity. If both sets of MS2 values are present, calculate
+  the similarity using the 2015 MSDial paper similarity equations. Total
+  Similarity Score, according to which other similarity scores are
+  present, also taken from 2015 MSDial paper.
+
+Notes on CL2: Voltage needs to be considered since MoNA doesn’t always
+match with the voltages we use, but the columns are still included in
+the download and associated data. Filters should be adjusted for this
+level; too small no good matches are made, too big and the process takes
+a very long time (around 40 minutes). TODO: The MoNA spreadsheets are
+still in the original KRH download, located in the example_data folder.
+The formatting code no longer works, so that part will need to be
+rewritten. TODO: The total similarity score needs to be more flexible
+depending on what is present/absent. Messy right now.
+
+------------------------------------------------------------------------
+
+### Confidence Level 3
+
+Compounds that receive a confidence level of 3 are also considered
+putatively annotated, but based on fewer restrictions. phobos defines
+confidence level 3 as a good MS1 and z match from MoNA or KEGG.
+
+As with MoNA, the KEGG data can found on the shared Ingalls Lab Google
+Drive under Collaborative_Projects –\> MARS_Project –\> KEGG. The public
+data is also available on the [KEGG](https://www.kegg.jp/kegg/) website,
+but requires a subscription. Additionally, the KEGG script for managing
+the download is out of date with KEGG’s new subscription process.
+
+Notes on Confidence Level 3: Still adjusting the mass in MoNA to account
+for hydrogen. Should probably make the cutoffs even more flexible here.
+TODO: Progress bar needs to be added now that there is no MS2 similarity
+function.
+
+------------------------------------------------------------------------
+
+### Confidence Level 4
+
+Confidence level 4 is everything else!

@@ -3,4 +3,6 @@
 .Rdata
 .httr-oauth
 .DS_Store
-data/
+
+example_data/KEGG_Data.csv
+example_data/MoNA_RelationalSpreadsheets/*
